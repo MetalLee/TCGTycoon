@@ -106,7 +106,7 @@ tests/
 - Consumes: none.
 - Produces: branded ID types and constructors `CardId`, `DeckId`, `FactionId`, `PlayerId`, `MatchId`, `PrintingId`; constants `RULE_VERSION = "1"` and the ten-keyword `Keyword` union used by every later task.
 
-- [ ] **Step 1: Create the workspace manifests and install test/tool dependencies**
+- [x] **Step 1: Create the workspace manifests and install test/tool dependencies**
 
 Root `package.json` must include these scripts:
 
@@ -152,7 +152,7 @@ pnpm install
 
 Expected: lockfile created and install exits 0.
 
-- [ ] **Step 2: Write the failing branded-ID test**
+- [x] **Step 2: Write the failing branded-ID test**
 
 Create `packages/domain/src/ids.test.ts`:
 
@@ -168,7 +168,7 @@ describe("domain ids", () => {
 });
 ```
 
-- [ ] **Step 3: Run the test and confirm it fails because the module does not exist**
+- [x] **Step 3: Run the test and confirm it fails because the module does not exist**
 
 Run:
 
@@ -178,7 +178,7 @@ pnpm vitest run packages/domain/src/ids.test.ts
 
 Expected: FAIL resolving `./ids`.
 
-- [ ] **Step 4: Implement branded IDs and Core Rules enums**
+- [x] **Step 4: Implement branded IDs and Core Rules enums**
 
 `packages/domain/src/ids.ts` must use a lightweight brand rather than runtime UUID generation:
 
@@ -223,7 +223,7 @@ export type CardType = "UNIT" | "SPELL";
 export type Rarity = "COMMON" | "UNCOMMON" | "RARE" | "LEGENDARY";
 ```
 
-- [ ] **Step 5: Run domain tests, typecheck and lint**
+- [x] **Step 5: Run domain tests, typecheck and lint**
 
 Run:
 
@@ -235,7 +235,7 @@ pnpm lint
 
 Expected: all PASS/exit 0.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json eslint.config.mjs prettier.config.mjs .gitignore packages/domain
@@ -255,7 +255,7 @@ git commit -m "chore: bootstrap typed domain workspace"
 - Consumes: `CardId`, `FactionId`, `Keyword`, `CardType`, `Rarity` from Task 1.
 - Produces: `CardDefinition`, `CardEffect`, `CardTrigger`, `TargetSelector`, `TriggerType`, `Condition`, `cardDefinitionSchema` and `parseCardDefinition(input: unknown): CardDefinition`.
 
-- [ ] **Step 1: Add Zod to the domain package**
+- [x] **Step 1: Add Zod to the domain package**
 
 Run:
 
@@ -265,7 +265,7 @@ pnpm --filter @tcgtycoon/domain add zod
 
 Ensure `packages/domain/package.json` is named `@tcgtycoon/domain` and exports `./src/index.ts`.
 
-- [ ] **Step 2: Write failing tests for a legal unit and unsupported mechanic**
+- [x] **Step 2: Write failing tests for a legal unit and unsupported mechanic**
 
 Create `packages/domain/src/cards.test.ts`:
 
@@ -311,7 +311,7 @@ describe("CardDefinition DSL", () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests and verify the parser is missing**
+- [x] **Step 3: Run the tests and verify the parser is missing**
 
 ```bash
 pnpm vitest run packages/domain/src/cards.test.ts
@@ -319,7 +319,7 @@ pnpm vitest run packages/domain/src/cards.test.ts
 
 Expected: FAIL resolving `./cards`.
 
-- [ ] **Step 4: Implement exact DSL unions and schema limits**
+- [x] **Step 4: Implement exact DSL unions and schema limits**
 
 `cards.ts` must define these selector values at minimum:
 
@@ -400,7 +400,7 @@ export function parseCardDefinition(input: unknown): CardDefinition {
 }
 ```
 
-- [ ] **Step 5: Run parser tests and typecheck**
+- [x] **Step 5: Run parser tests and typecheck**
 
 ```bash
 pnpm vitest run packages/domain/src/cards.test.ts
@@ -409,7 +409,7 @@ pnpm typecheck
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/domain
@@ -435,7 +435,7 @@ git add packages/domain
 - Consumes: no simulation behavior.
 - Produces: `DeterministicRng`, `deriveSeed(parts: readonly (string | number)[]): bigint`, `RULES_CONFIG`, and fixed chain limits.
 
-- [ ] **Step 1: Write deterministic sequence tests**
+- [x] **Step 1: Write deterministic sequence tests**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -456,7 +456,7 @@ describe("DeterministicRng", () => {
 });
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/rules-engine/src/rng/deterministic-rng.test.ts
@@ -464,7 +464,7 @@ pnpm vitest run packages/rules-engine/src/rng/deterministic-rng.test.ts
 
 Expected: FAIL because implementation does not exist.
 
-- [ ] **Step 3: Implement a versioned integer PRNG without Math.random**
+- [x] **Step 3: Implement a versioned integer PRNG without Math.random**
 
 Use a self-contained 64-bit algorithm so browser and Node agree. Example API:
 
@@ -515,7 +515,7 @@ export const RULES_CONFIG = {
 } as const;
 ```
 
-- [ ] **Step 4: Verify deterministic tests and grep for forbidden randomness**
+- [x] **Step 4: Verify deterministic tests and grep for forbidden randomness**
 
 ```bash
 pnpm vitest run packages/rules-engine/src/rng/deterministic-rng.test.ts
@@ -525,7 +525,7 @@ pnpm typecheck
 
 Expected: PASS and grep finds nothing.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/balance packages/rules-engine
@@ -552,7 +552,7 @@ git add packages/balance packages/rules-engine
 - Consumes: `CardDefinition`, branded IDs, `RULES_CONFIG`.
 - Produces: `DeckDefinition`, `validateCardDefinition(card)`, `validateDeck(deck, cards): ValidationResult`, and deterministic legal fixture decks used throughout later plans.
 
-- [ ] **Step 1: Write failing deck legality tests**
+- [x] **Step 1: Write failing deck legality tests**
 
 Tests must cover:
 
@@ -570,7 +570,7 @@ type ValidationIssue = { code: string; message: string; entityId?: string };
 type ValidationResult = { valid: true; issues: [] } | { valid: false; issues: ValidationIssue[] };
 ```
 
-- [ ] **Step 2: Run tests and verify failure**
+- [x] **Step 2: Run tests and verify failure**
 
 ```bash
 pnpm vitest run packages/rules-engine/src/validation/deck-validation.test.ts
@@ -578,7 +578,7 @@ pnpm vitest run packages/rules-engine/src/validation/deck-validation.test.ts
 
 Expected: FAIL because validators/fixtures are missing.
 
-- [ ] **Step 3: Implement `DeckDefinition` and validators**
+- [x] **Step 3: Implement `DeckDefinition` and validators**
 
 Deck domain shape:
 
@@ -595,11 +595,11 @@ export type DeckDefinition = {
 
 `validateDeck` must expand counts to exactly 20, verify referenced cards, copy limit and faction legality. Neutral faction uses the stable fixture ID `neutral`.
 
-- [ ] **Step 4: Add at least 24 simple legal fixture CardDefinitions and two legal decks**
+- [x] **Step 4: Add at least 24 simple legal fixture CardDefinitions and two legal decks**
 
 Fixtures should deliberately cover the ten keywords/effects over the suite without trying to model the full 48-card Launch Set yet. Use stable IDs such as `card-fire-cub`, `card-machine-guard`, `card-neutral-scout`.
 
-- [ ] **Step 5: Run focused and package tests**
+- [x] **Step 5: Run focused and package tests**
 
 ```bash
 pnpm vitest run packages/rules-engine/src/validation/deck-validation.test.ts
@@ -609,7 +609,7 @@ pnpm typecheck
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/domain packages/rules-engine packages/testkit
