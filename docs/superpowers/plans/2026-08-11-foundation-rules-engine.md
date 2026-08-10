@@ -631,7 +631,7 @@ git add packages/domain packages/rules-engine packages/testkit
 - Consumes: legal decks, CardDefinitions, `DeterministicRng`, `RULES_CONFIG`.
 - Produces: `MatchState`, `MatchPlayerState`, `BattleAction`, `ActionLogEntry`, `createMatchState(input)`, `startTurn(state)`, `drawCard(state, side)`, `endTurn(state)`.
 
-- [ ] **Step 1: Write failing tests for start hands, Coin, mana and fatigue**
+- [x] **Step 1: Write failing tests for start hands, Coin, mana and fatigue**
 
 Include these exact behaviors:
 
@@ -644,13 +644,13 @@ it("burns a drawn card when hand already contains 10 cards", () => {});
 
 Use stable seeds in every test.
 
-- [ ] **Step 2: Verify focused tests fail**
+- [x] **Step 2: Verify focused tests fail**
 
 ```bash
 pnpm vitest run packages/rules-engine/src/battle/turn.test.ts
 ```
 
-- [ ] **Step 3: Implement normalized battle state**
+- [x] **Step 3: Implement normalized battle state**
 
 Use per-match ephemeral instance IDs derived from match seed + sequence, not random UUIDs.
 
@@ -680,7 +680,7 @@ export type MatchState = {
 
 Implement deterministic shuffle and mulligan helpers in this module; no library random shuffle.
 
-- [ ] **Step 4: Run tests, rules suite and forbidden randomness check**
+- [x] **Step 4: Run tests, rules suite and forbidden randomness check**
 
 ```bash
 pnpm vitest run packages/rules-engine/src/battle/turn.test.ts
@@ -688,7 +688,7 @@ pnpm test:rules
 ! grep -R "Math.random" packages/rules-engine/src
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/rules-engine/src/battle packages/rules-engine/src/replay
