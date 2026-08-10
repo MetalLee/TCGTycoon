@@ -1,4 +1,4 @@
-import type { CardId, MatchId } from "@tcgtycoon/domain";
+import type { CardId, Keyword, MatchId } from "@tcgtycoon/domain";
 import type { ActionLogEntry, MatchSide } from "../replay/action-log";
 
 export type CardInstance = {
@@ -9,6 +9,11 @@ export type CardInstance = {
 export type UnitInstance = CardInstance & {
   attack: number;
   health: number;
+  maxHealth: number;
+  keywords: Keyword[];
+  summonedTurn: number;
+  attacksThisTurn: number;
+  lastAttackTurn: number;
 };
 
 export type MatchPlayerState = {

@@ -712,7 +712,7 @@ git add packages/rules-engine/src/battle packages/rules-engine/src/replay
 - Consumes: `MatchState`, Card DSL effects/triggers, `RULES_CONFIG`.
 - Produces: `getLegalTargets(state, source, selector)`, `resolveEffect(ctx, effect)`, `enqueueTriggers(ctx, event)`, `resolveTriggerQueue(ctx)`, `checkStateBasedDeaths(ctx)`, `performAttack(ctx, attackerId, targetId)`.
 
-- [ ] **Step 1: Write failing keyword tests**
+- [x] **Step 1: Write failing keyword tests**
 
 Cover every keyword with focused tests. Required edge cases:
 
@@ -729,7 +729,7 @@ it("STEALTH blocks enemy targeted effects and attacks until it attacks", () => {
 it("POISONOUS destroys a unit only after positive damage; Divine Shield prevention does not poison", () => {});
 ```
 
-- [ ] **Step 2: Write failing trigger safety-limit tests**
+- [x] **Step 2: Write failing trigger safety-limit tests**
 
 Construct fixture cards that intentionally loop and assert the match produces a structured warning instead of hanging:
 
@@ -739,19 +739,19 @@ expect(result.warnings).toContainEqual(expect.objectContaining({ code: "POTENTIA
 
 Also assert action count never exceeds configured limit.
 
-- [ ] **Step 3: Run tests and verify expected failures**
+- [x] **Step 3: Run tests and verify expected failures**
 
 ```bash
 pnpm vitest run packages/rules-engine/src/battle/keywords.test.ts packages/rules-engine/src/battle/trigger-chain.test.ts
 ```
 
-- [ ] **Step 4: Implement selector resolution and effect executors**
+- [x] **Step 4: Implement selector resolution and effect executors**
 
 Each effect executor must be a named function or switch branch over the discriminated union. Do not interpret display text.
 
 Damage flow must record actual prevented/dealt damage so Divine Shield, Lifesteal and Poisonous interact correctly.
 
-- [ ] **Step 5: Implement event/trigger queue with explicit depth/action/summon counters**
+- [x] **Step 5: Implement event/trigger queue with explicit depth/action/summon counters**
 
 Use a resolution context containing:
 
@@ -768,7 +768,7 @@ type ResolutionContext = {
 
 When a configured safety limit is crossed, append the warning and terminate the chain deterministically.
 
-- [ ] **Step 6: Run all focused rule tests**
+- [x] **Step 6: Run all focused rule tests**
 
 ```bash
 pnpm vitest run packages/rules-engine/src/battle/effects.test.ts
@@ -780,7 +780,7 @@ pnpm typecheck
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/rules-engine/src/battle packages/rules-engine/src/replay
