@@ -1,0 +1,23 @@
+{
+  "name": "tcgtycoon",
+  "private": true,
+  "packageManager": "pnpm@10.34.5",
+  "scripts": {
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:rules": "vitest run packages/rules-engine packages/domain",
+    "sim:match": "tsx scripts/simulate-match.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "latest",
+    "@types/node": "latest",
+    "eslint": "latest",
+    "prettier": "latest",
+    "tsx": "latest",
+    "typescript": "6.0.3",
+    "typescript-eslint": "latest",
+    "vitest": "latest"
+  }
+}
