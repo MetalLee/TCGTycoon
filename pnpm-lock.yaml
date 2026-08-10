@@ -33,11 +33,22 @@ importers:
         specifier: latest
         version: 4.1.10(@types/node@26.2.0)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(tsx@4.23.11))
 
+  packages/balance: {}
+
   packages/domain:
     dependencies:
       zod:
         specifier: ^4.4.3
         version: 4.4.3
+
+  packages/rules-engine:
+    dependencies:
+      '@tcgtycoon/balance':
+        specifier: workspace:*
+        version: link:../balance
+      '@tcgtycoon/domain':
+        specifier: workspace:*
+        version: link:../domain
 
 packages:
 
