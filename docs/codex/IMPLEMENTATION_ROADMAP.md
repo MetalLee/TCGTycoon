@@ -23,7 +23,8 @@ This roadmap translates the approved MVP design into an execution sequence optim
 |---|---|---|---|
 | 1 | `2026-08-11-foundation-rules-engine.md` | Deterministic playable headless TCG match engine | `agent/phase-1-foundation-rules` |
 | 2 | `2026-08-11-world-simulation-economy.md` | Headless Day loop with players, products, collections, market, Meta and saves | `agent/phase-2-world-simulation` |
-| 3 | `2026-08-11-publisher-operations-web-ui.md` | Fully playable offline Web publisher simulation from New Game through long-run play | `agent/phase-3-publisher-web` |
+| 3A | `2026-08-11-production-release-reprints.md` | Real production/release/reprint lifecycle and physical-economy regression gate | `agent/phase-3a-production-release` |
+| 3B | `2026-08-11-publisher-operations-web-ui.md` | Fully playable offline Web publisher simulation from New Game through long-run play | `agent/phase-3b-publisher-web` |
 | 4 | `2026-08-11-ai-desktop-release.md` | AI-assisted creation/community + Tauri/SQLite desktop parity + release hardening | `agent/phase-4-ai-desktop` |
 
 ---
@@ -117,13 +118,46 @@ Acceptance criteria:
 - No missing references.
 - No NaN/Infinity values.
 - Same initial save + commands => same next-state hash.
-- Market supply is conserved.
+- Market supply is conserved across trades/opened-card holdings.
 - Meta uses actual match results.
 - Active-player changes come from lifecycle flows, not direct scripted modifiers.
 
 ---
 
-# Phase 3 — Publisher Operations & Web Game
+# Phase 3A — Production, Release & Reprints
+
+## Goal
+
+Make the physical publishing chain complete before the UI depends on it.
+
+## Required outcomes
+
+- Costed Print Run quotations with scale economy.
+- Cash charged at production order time.
+- Non-cancellable PRINTING state.
+- First Edition identity on the first product run only.
+- Unlimited/Reprint identity on later production.
+- Announced release dates and delay events.
+- Low-inventory launch versus zero-inventory delay behavior.
+- Product Reprint and Targeted Reprint.
+- Reprints create new Printing identities while preserving immutable CardDefinition semantics.
+- Product Freshness and cross-release Product Fatigue.
+- Starter-arbitrage, overprint, shortage, Pack-EV and reprint-accessibility scenario tests.
+
+## Phase 3A exit gate
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:scenarios
+```
+
+Do not build UI flows that schedule printing/reprints until this gate is green.
+
+---
+
+# Phase 3B — Publisher Operations & Web Game
 
 ## Goal
 
@@ -141,7 +175,7 @@ Produce the first complete playable MVP: a player can create a TCG, launch it, o
 - Card revision invalidation.
 - Ban/Restrict policy with effective-day versions.
 - Standard Rotation: five most recent sets.
-- Reprint and targeted reprint support.
+- Reprint and targeted reprint support from Phase 3A.
 - Local Open / Regional / Major tournament simulation.
 - Five marketing campaign types.
 - Official announcement structure and commitments.
@@ -169,7 +203,7 @@ Produce the first complete playable MVP: a player can create a TCG, launch it, o
 - FACT / ESTIMATE / OPINION visual semantics.
 - Global search/command palette.
 
-## Phase 3 exit gate
+## Phase 3B exit gate
 
 ```bash
 pnpm lint
@@ -267,6 +301,7 @@ Tooling / workspace
   -> Deck evolution / Meta
   -> Population / metrics / Death Spiral
   -> simulateDay
+  -> Production / release / reprint lifecycle
   -> Expansion / Playtest / Operations
   -> Tournaments / Marketing
   -> React game shell / Worker
@@ -299,7 +334,7 @@ For each plan task, local Codex should use this pattern:
 Recommended prompt to start a phase in local Codex:
 
 ```text
-Read AGENTS.md, docs/superpowers/specs/2026-08-11-tcgtycoon-mvp-design.md, and the complete matching implementation plan in docs/superpowers/plans. Execute only the next unchecked task using TDD. Do not implement future tasks. Preserve deterministic simulation and the module boundaries in the plan. Run every command listed in the task before claiming completion, then summarize changed files, tests run, and the resulting commit.
+Read AGENTS.md, docs/superpowers/specs/2026-08-11-tcgtycoon-mvp-design.md, docs/codex/IMPLEMENTATION_ROADMAP.md, and the complete matching implementation plan(s) in docs/superpowers/plans. Execute only the next unchecked task using TDD. Do not implement future tasks. Preserve deterministic simulation and the module boundaries in the plan. Run every command listed in the task before claiming completion, then summarize changed files, tests run, and the resulting commit.
 ```
 
 Recommended prompt for continuing:
@@ -319,10 +354,11 @@ Require a human/Codex review at these points:
 3. **After WorldState/SaveEnvelope** — verify normalized state and versioning.
 4. **After Market clearing** — verify physical supply conservation.
 5. **After `simulateDay()`** — verify authoritative phase ordering.
-6. **After Expansion/Playtest pipeline** — verify irreversible Finalize behavior.
-7. **After Web vertical slice** — verify the game is usable without AI.
-8. **After AI integration** — prove AI prose cannot mutate simulation facts.
-9. **Before desktop release** — run migration/long-run/parity suites.
+6. **After Production/Release/Reprint** — verify edition identity and physical supply paths.
+7. **After Expansion/Playtest pipeline** — verify irreversible Finalize behavior.
+8. **After Web vertical slice** — verify the game is usable without AI.
+9. **After AI integration** — prove AI prose cannot mutate simulation facts.
+10. **Before desktop release** — run migration/long-run/parity suites.
 
 ---
 
@@ -341,6 +377,7 @@ Do not declare MVP complete because all pages render. The MVP is complete only w
 - New players, churn and return flows affect Active Players.
 - Named Agents can express simulation facts without creating new facts.
 - Player can develop, test, finalize, print and release another expansion.
+- First Edition identity survives later reprints.
 - Player can run tournaments and marketing.
 - Player can Ban, Restrict, Reprint and experience actual downstream consequences.
 - Cash can run out and ecosystem decline can become a Death Spiral.
