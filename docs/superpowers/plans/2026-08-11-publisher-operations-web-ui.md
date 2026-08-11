@@ -384,15 +384,15 @@ git commit -m "feat: simulate official tournaments"
 - Consumes: cohorts, product availability, operation scheduler, WorldEvent model.
 - Produces: five campaign types, daily exposure deltas, `OfficialAnnouncement`, finite structured `Commitment` types and fulfillment/breach events.
 
-- [ ] **Step 1: Write failing campaign tests**
+- [x] **Step 1: Write failing campaign tests**
 
 Campaign duration choices: 3, 7, 14 days. Assert campaign increases relevant exposure but never directly mutates Active Players.
 
-- [ ] **Step 2: Write stockout scenario**
+- [x] **Step 2: Write stockout scenario**
 
 New Player Campaign + all Starter products out of stock should increase Interested/awareness while Interested -> New conversion remains constrained.
 
-- [ ] **Step 3: Implement official announcement model**
+- [x] **Step 3: Implement official announcement model**
 
 Supported topics:
 
@@ -407,11 +407,11 @@ Supported topics:
 
 Free-form text is presentation data. Structured bound action/commitment drives future Trust evaluation.
 
-- [ ] **Step 4: Implement communication saturation as BalanceConfig attention decay**
+- [x] **Step 4: Implement communication saturation as BalanceConfig attention decay**
 
 Repeated low-impact announcements reduce incremental attention; they do not generate free Hype.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/marketing.test.ts tests/scenarios/marketing-stockout.test.ts

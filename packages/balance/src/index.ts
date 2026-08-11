@@ -1,5 +1,6 @@
 export * from "./economy-config";
 export * from "./metrics-config";
+export * from "./marketing-config";
 export * from "./operations-config";
 export * from "./playtest-config";
 export * from "./population-config";

@@ -19,6 +19,8 @@ export * from "./metrics/satisfaction";
 export * from "./metrics/world-metrics";
 export * from "./operations/scheduler";
 export * from "./operations/expansion-pipeline";
+export * from "./operations/announcements";
+export * from "./operations/marketing";
 export * from "./operations/playtest";
 export * from "./operations/policies";
 export * from "./operations/tournaments";
