@@ -7,6 +7,7 @@ import {
   type ExpansionId,
   type Printing,
   type PrintingId,
+  type ProductId,
   type Rarity,
   type WorldState,
 } from "@tcgtycoon/domain";
@@ -52,15 +53,20 @@ function launchCards(): CardDefinition[] {
 function launchPrintings(
   cards: readonly CardDefinition[],
   expansionId: ExpansionId,
+  sourceProductId: ProductId,
+  idPrefix = "printing",
 ): Printing[] {
   return cards.flatMap((card, index) => {
-    const prefix = `printing-${card.id}`;
+    const prefix = `${idPrefix}-${card.id}`;
     const normal: Printing = {
       id: printingId(
         `${prefix}${ECONOMY_CONFIG.printingVariantSuffixes.normal}`,
       ),
       cardId: card.id,
       expansionId,
+      edition: "FIRST_EDITION",
+      sourceProductId,
+      sourceExpansionId: expansionId,
     };
     const variants: Printing[] = [
       { ...normal, expansionId },
@@ -70,6 +76,9 @@ function launchPrintings(
         ),
         cardId: card.id,
         expansionId,
+        edition: "FIRST_EDITION",
+        sourceProductId,
+        sourceExpansionId: expansionId,
       },
     ];
     if (index < 8) {
@@ -79,15 +88,18 @@ function launchPrintings(
         ),
         cardId: card.id,
         expansionId,
+        edition: "FIRST_EDITION",
+        sourceProductId,
+        sourceExpansionId: expansionId,
       });
     }
     return variants;
   });
 }
 
-function normalPrintingId(cardId: string): PrintingId {
+function normalPrintingId(cardId: string, prefix = "printing"): PrintingId {
   return printingId(
-    `printing-${cardId}${ECONOMY_CONFIG.printingVariantSuffixes.normal}`,
+    `${prefix}-${cardId}${ECONOMY_CONFIG.printingVariantSuffixes.normal}`,
   );
 }
 
@@ -103,10 +115,9 @@ export function createProductFixtureWorld(
   const world = createTestWorld(seed);
   const cards = launchCards();
   const expansionId = world.products[launchBoosterProductId]!.expansionId;
-  const printings = launchPrintings(cards, expansionId);
   world.cards = Object.fromEntries(cards.map((card) => [card.id, card]));
-  world.printings = Object.fromEntries(
-    printings.map((printing) => [printing.id, printing]),
+  world.products[launchBoosterProductId]!.cardIds = cards.map(
+    (card) => card.id,
   );
   world.products[launchFireStarterProductId] = {
     id: launchFireStarterProductId,
@@ -114,11 +125,30 @@ export function createProductFixtureWorld(
     name: "Launch Fire Starter",
     kind: "STARTER",
     msrp: 15,
+    cardIds: fireFixtureDeck.cards.map((entry) => entry.cardId),
+    releaseStatus: "UNANNOUNCED",
+    internalReleaseDay: 0,
   };
+  const printings = [
+    ...launchPrintings(cards, expansionId, launchBoosterProductId),
+    ...launchPrintings(
+      cards.filter((card) =>
+        world.products[launchFireStarterProductId]!.cardIds.includes(card.id),
+      ),
+      expansionId,
+      launchFireStarterProductId,
+      "printing-starter-fire",
+    ),
+  ];
+  world.printings = Object.fromEntries(
+    printings.map((printing) => [printing.id, printing]),
+  );
 
   const starterPrintingIds = fireFixtureDeck.cards.flatMap(
     ({ cardId, count }) =>
-      Array.from({ length: count }, () => normalPrintingId(cardId)),
+      Array.from({ length: count }, () =>
+        normalPrintingId(cardId, "printing-starter-fire"),
+      ),
   );
   const owner = world.players[playerId("player-0001")]!;
   return { world, owner, starterPrintingIds };

@@ -167,7 +167,56 @@ export function validateWorldInvariants(
   });
 
   for (const productId of Object.keys(world.products).sort(compareIds)) {
-    requirePrice(world.products[productId]!.msrp, `products.${productId}.msrp`);
+    const product = world.products[productId]!;
+    requirePrice(product.msrp, `products.${productId}.msrp`);
+    requireQuantity(
+      product.internalReleaseDay,
+      `products.${productId}.internalReleaseDay`,
+    );
+    if (product.announcedReleaseDay !== undefined) {
+      requireQuantity(
+        product.announcedReleaseDay,
+        `products.${productId}.announcedReleaseDay`,
+      );
+    }
+    if (product.releasedDay !== undefined) {
+      requireQuantity(product.releasedDay, `products.${productId}.releasedDay`);
+    }
+    if (
+      product.releaseStatus === "UNANNOUNCED" &&
+      product.announcedReleaseDay !== undefined
+    ) {
+      fail(
+        "OUT_OF_RANGE",
+        `products.${productId}.announcedReleaseDay`,
+        "UNANNOUNCED products cannot have a public release day.",
+      );
+    }
+    if (
+      (product.releaseStatus === "ANNOUNCED" ||
+        product.releaseStatus === "DELAYED") &&
+      product.announcedReleaseDay === undefined
+    ) {
+      fail(
+        "MISSING_REFERENCE",
+        `products.${productId}.announcedReleaseDay`,
+        "Announced or delayed products require a public release day.",
+      );
+    }
+    if (product.releaseStatus === "LIVE" && product.releasedDay === undefined) {
+      fail(
+        "MISSING_REFERENCE",
+        `products.${productId}.releasedDay`,
+        "LIVE products require their actual release day.",
+      );
+    }
+    if (product.releaseStatus !== "LIVE" && product.releasedDay !== undefined) {
+      fail(
+        "OUT_OF_RANGE",
+        `products.${productId}.releasedDay`,
+        "Only LIVE products may have an actual release day.",
+      );
+    }
   }
   world.market.listings.forEach((listing, index) => {
     requirePrice(listing.price, `market.listings[${index}].price`);
@@ -264,8 +313,36 @@ export function validateWorldInvariants(
   }
   for (const runId of Object.keys(world.printRuns).sort(compareIds)) {
     const run = world.printRuns[runId]!;
+    requireQuantity(run.orderedQuantity, `printRuns.${runId}.orderedQuantity`);
     requireQuantity(run.quantity, `printRuns.${runId}.quantity`);
+    requireQuantity(run.orderedDay, `printRuns.${runId}.orderedDay`);
     requireQuantity(run.completionDay, `printRuns.${runId}.completionDay`);
+    requirePrice(run.unitCost, `printRuns.${runId}.unitCost`);
+    requirePrice(run.totalCost, `printRuns.${runId}.totalCost`);
+    if (
+      run.status === "PRINTING" &&
+      (run.quantity !== 0 ||
+        run.edition !== undefined ||
+        run.printingIds.length !== 0)
+    ) {
+      fail(
+        "OUT_OF_RANGE",
+        `printRuns.${runId}`,
+        "PRINTING runs cannot expose inventory or edition identities.",
+      );
+    }
+    if (
+      run.status === "COMPLETED" &&
+      (run.edition === undefined ||
+        (world.products[run.productId]?.cardIds.length !== 0 &&
+          run.printingIds.length === 0))
+    ) {
+      fail(
+        "MISSING_REFERENCE",
+        `printRuns.${runId}.printingIds`,
+        "COMPLETED runs require edition Printing identities.",
+      );
+    }
   }
   world.cohorts.forEach((cohort, index) =>
     requireQuantity(cohort.count, `cohorts[${index}].count`),
@@ -291,6 +368,27 @@ export function validateWorldInvariants(
       `printings.${printingId}.expansionId`,
       printing.expansionId,
     );
+    requireReference(
+      world.products[printing.sourceProductId] !== undefined,
+      `printings.${printingId}.sourceProductId`,
+      printing.sourceProductId,
+    );
+    requireReference(
+      world.expansions[printing.sourceExpansionId] !== undefined,
+      `printings.${printingId}.sourceExpansionId`,
+      printing.sourceExpansionId,
+    );
+    const sourceProduct = world.products[printing.sourceProductId];
+    if (
+      sourceProduct !== undefined &&
+      sourceProduct.expansionId !== printing.sourceExpansionId
+    ) {
+      fail(
+        "MISSING_REFERENCE",
+        `printings.${printingId}.sourceExpansionId`,
+        "Printing source Product and Expansion must agree.",
+      );
+    }
   }
   for (const productId of Object.keys(world.products).sort(compareIds)) {
     const product = world.products[productId]!;
@@ -299,14 +397,69 @@ export function validateWorldInvariants(
       `products.${productId}.expansionId`,
       product.expansionId,
     );
+    requireUnique(product.cardIds, `products.${productId}.cardIds`);
+    for (const cardId of product.cardIds) {
+      requireReference(
+        world.cards[cardId] !== undefined,
+        `products.${productId}.cardIds`,
+        cardId,
+      );
+    }
   }
   for (const runId of Object.keys(world.printRuns).sort(compareIds)) {
     const run = world.printRuns[runId]!;
+    const product = world.products[run.productId];
     requireReference(
-      world.products[run.productId] !== undefined,
+      product !== undefined,
       `printRuns.${runId}.productId`,
       run.productId,
     );
+    requireReference(
+      world.expansions[run.sourceExpansionId] !== undefined,
+      `printRuns.${runId}.sourceExpansionId`,
+      run.sourceExpansionId,
+    );
+    requireUnique(run.cardIds, `printRuns.${runId}.cardIds`);
+    for (const cardId of run.cardIds) {
+      requireReference(
+        world.cards[cardId] !== undefined,
+        `printRuns.${runId}.cardIds`,
+        cardId,
+      );
+    }
+    if (
+      product !== undefined &&
+      (product.expansionId !== run.sourceExpansionId ||
+        product.kind !== run.productKind ||
+        product.cardIds.length !== run.cardIds.length ||
+        run.cardIds.some((cardId, index) => cardId !== product.cardIds[index]))
+    ) {
+      fail(
+        "MISSING_REFERENCE",
+        `printRuns.${runId}`,
+        "Print Run snapshot must match its locked Product contents.",
+      );
+    }
+    requireUnique(run.printingIds, `printRuns.${runId}.printingIds`);
+    for (const printingId of run.printingIds) {
+      const printing = world.printings[printingId];
+      requireReference(
+        printing !== undefined,
+        `printRuns.${runId}.printingIds`,
+        printingId,
+      );
+      if (
+        printing !== undefined &&
+        (printing.sourceProductId !== run.productId ||
+          (printing.edition !== run.edition && printing.edition !== "REPRINT"))
+      ) {
+        fail(
+          "MISSING_REFERENCE",
+          `printRuns.${runId}.printingIds`,
+          `Printing ${printingId} does not match its Print Run source and edition.`,
+        );
+      }
+    }
   }
 
   const cards = Object.values(world.cards);

@@ -57,7 +57,7 @@ tests/scenarios/*
 - Consumes: finalized ProductSku/Expansion, Cash Ledger, scheduler.
 - Produces: `quotePrintRun`, `orderPrintRun`, `advancePrintRuns`, `completePrintRuns`, First Edition/Unlimited edition assignment.
 
-- [ ] **Step 1: Write failing production tests**
+- [x] **Step 1: Write failing production tests**
 
 Required cases:
 
@@ -70,13 +70,13 @@ it("later product reprint uses UNLIMITED/REPRINT identity without increasing Fir
 it("larger quantity has lower unit cost but larger total cash commitment", () => {});
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/production.test.ts
 ```
 
-- [ ] **Step 3: Implement production quote**
+- [x] **Step 3: Implement production quote**
 
 Use a BalanceConfig function with explicit monotonic quantity tiers/curve. Example starting structure:
 
@@ -97,7 +97,7 @@ export function quotePrintRun(
 
 No hard-coded “free inventory.” `orderPrintRun` appends a negative `PRINTING` CashLedger entry immediately.
 
-- [ ] **Step 4: Implement edition identity**
+- [x] **Step 4: Implement edition identity**
 
 `Printing` includes:
 
@@ -109,7 +109,7 @@ sourceExpansionId: ExpansionId;
 
 First Edition eligibility is determined by product's first production run only and is persistent historical state.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/production.test.ts
@@ -133,7 +133,7 @@ git commit -m "feat: produce costed physical print runs"
 - Consumes: release commands, Publisher Inventory, WorldEvent/Trust context.
 - Produces: `announceRelease`, `rescheduleRelease`, `executeReleasesDueToday`, `ReleaseStatus`, structured delay/shortage events.
 
-- [ ] **Step 1: Write failing release tests**
+- [x] **Step 1: Write failing release tests**
 
 Required:
 
@@ -144,13 +144,13 @@ it("rescheduling a publicly announced date emits RELEASE_DELAY", () => {});
 it("rescheduling an unannounced internal target does not emit public trust penalty context", () => {});
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/releases.test.ts
 ```
 
-- [ ] **Step 3: Implement explicit release state**
+- [x] **Step 3: Implement explicit release state**
 
 ```ts
 export type ReleaseStatus = "UNANNOUNCED" | "ANNOUNCED" | "LIVE" | "DELAYED";
@@ -158,11 +158,11 @@ export type ReleaseStatus = "UNANNOUNCED" | "ANNOUNCED" | "LIVE" | "DELAYED";
 
 Announcement stores the committed public day. Trust/Hype changes are still computed by metric systems from structured events, not directly inside release code.
 
-- [ ] **Step 4: Integrate release before daily primary sales**
+- [x] **Step 4: Integrate release before daily primary sales**
 
 A product released today becomes sellable before today's demand phase. A product delayed/not released cannot generate primary sales even if warehouse inventory exists.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/releases.test.ts tests/scenarios/release-delay.test.ts
@@ -186,7 +186,7 @@ git commit -m "feat: schedule and execute physical releases"
 - Consumes: old Products/CardDefinitions, new Starter/Expansion product definitions, production flow.
 - Produces: `createProductReprintOrder`, `createTargetedReprintPrinting`, reprint history, same gameplay CardDefinition with new Printing ID.
 
-- [ ] **Step 1: Write failing reprint tests**
+- [x] **Step 1: Write failing reprint tests**
 
 Required:
 
@@ -197,21 +197,21 @@ it("competitive deck legality treats old and new Printing as the same CardDefini
 it("collector market keeps First Edition and Reprint as independent price series", () => {});
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/reprints.test.ts
 ```
 
-- [ ] **Step 3: Implement product reprint path using normal Production**
+- [x] **Step 3: Implement product reprint path using normal Production**
 
 Do not special-case market supply. Reprinted cards become available only after the relevant product is produced, sold and opened (or Starter opened).
 
-- [ ] **Step 4: Implement Targeted Reprint inclusion**
+- [x] **Step 4: Implement Targeted Reprint inclusion**
 
 A later Starter/Expansion may include a CardDefinition from an older set. It creates a new Printing tied to the new product/edition. The old CardDefinition `rulesLocked` remains unchanged.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/reprints.test.ts tests/scenarios/targeted-reprint.test.ts
@@ -237,7 +237,7 @@ git commit -m "feat: reprint cards without changing rules"
 - Consumes: release history, recent cohort spend/budgets, product similarity tags if available.
 - Produces: `calculateSetFreshness`, `calculateProductFatigue`, demand modifiers used by Primary Market.
 
-- [ ] **Step 1: Write failing freshness tests**
+- [x] **Step 1: Write failing freshness tests**
 
 Assert:
 
@@ -245,19 +245,19 @@ Assert:
 - Freshness decays with age.
 - Marketing attention may modify demand/exposure but cannot set an old set back to launch freshness.
 
-- [ ] **Step 2: Write rapid-cadence fatigue scenario**
+- [x] **Step 2: Write rapid-cadence fatigue scenario**
 
 Compare otherwise equal worlds with expansions every ~15 days versus a moderate cadence. Rapid world should show higher recent player spend pressure/fatigue and lower later-product purchase propensity, not a direct arbitrary Trust subtraction.
 
-- [ ] **Step 3: Implement lifecycle curves in BalanceConfig**
+- [x] **Step 3: Implement lifecycle curves in BalanceConfig**
 
 Keep functions pure and testable. Product Fatigue responds to recent release frequency and spending capacity; it does not mutate products.
 
-- [ ] **Step 4: Integrate into product demand**
+- [x] **Step 4: Integrate into product demand**
 
 Primary demand reads freshness/fatigue as inputs alongside Need/Interest/Affordability/Exposure.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/product-lifecycle.test.ts tests/scenarios/product-cadence.test.ts
@@ -284,31 +284,31 @@ git commit -m "feat: model product freshness and fatigue"
 - Consumes: production/release/reprint + Phase 2 economy + Phase 3 policies when available.
 - Produces: stable regression coverage for the primary physical-economy stories required by the product spec.
 
-- [ ] **Step 1: Implement Starter arbitrage scenario**
+- [x] **Step 1: Implement Starter arbitrage scenario**
 
 A Starter priced below the contained competitive singles' prevailing aggregate market value must attract existing player demand, sell through more rapidly and increase supply of those single-card Printings after opening. Do not assert an exact price; assert direction and physical supply change.
 
-- [ ] **Step 2: Implement overprint scenario**
+- [x] **Step 2: Implement overprint scenario**
 
 A low-demand product ordered at 10x reasonable quantity must consume more cash, leave larger unsold inventory and incur higher holding cost than control world.
 
-- [ ] **Step 3: Implement prolonged shortage scenario**
+- [x] **Step 3: Implement prolonged shortage scenario**
 
 Extremely low Starter/Booster supply may initially raise scarcity attention but must reduce accessibility and new-player conversion if stockout persists.
 
-- [ ] **Step 4: Implement Pack EV scenario**
+- [x] **Step 4: Implement Pack EV scenario**
 
 A product whose expected singles value substantially exceeds MSRP should receive stronger market-aware demand; increased opening raises singles supply and reduces the EV gap over subsequent simulated days.
 
-- [ ] **Step 5: Implement Ban + collector-value scenario**
+- [x] **Step 5: Implement Ban + collector-value scenario**
 
 After a competitive core card is banned, competitive demand must fall. A historically significant First Edition/Foil may retain nonzero or stronger relative collector demand; no direct `price = 0` rule is allowed.
 
-- [ ] **Step 6: Implement reprint-accessibility scenario**
+- [x] **Step 6: Implement reprint-accessibility scenario**
 
 Targeted reprint must lower the cheapest legal CardDefinition acquisition cost/deck cost and permit increased deck adoption while preserving separate First Edition market history.
 
-- [ ] **Step 7: Run the suite and commit**
+- [x] **Step 7: Run the suite and commit**
 
 ```bash
 pnpm vitest run tests/scenarios/starter-arbitrage.test.ts tests/scenarios/overprint.test.ts tests/scenarios/shortage.test.ts tests/scenarios/pack-ev.test.ts tests/scenarios/ban-collector-value.test.ts tests/scenarios/reprint-accessibility.test.ts

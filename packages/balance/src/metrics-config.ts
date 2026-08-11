@@ -57,6 +57,9 @@ export const METRICS_CONFIG = {
   signals: {
     matchAttentionDivisor: 10,
     dissatisfactionAttentionWeight: 0.25,
+    releaseNegativeAttentionPerEvent: 0.2,
+    releaseTrustPenaltyPerEvent: 20,
+    releaseTrustBonusPerEvent: 5,
     neutralPriceMomentum: 0.5,
     productFreshnessWithSales: 0.8,
     productFreshnessWithoutSales: 0.2,

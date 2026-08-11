@@ -13,7 +13,6 @@ export const ECONOMY_CONFIG = {
   },
   primaryMarket: {
     publisherShare: 0.65,
-    productFreshnessPlaceholder: 1,
     maxUnitsPerPlayerProductDemand: 1,
   },
   secondaryMarket: {
@@ -22,6 +21,15 @@ export const ECONOMY_CONFIG = {
     maxCollectorQuantity: 1,
     budgetSellerThreshold: 0.75,
     maxBudgetSellerQuantity: 1,
+    maxEndogenousListingQuantity: 1,
+    endogenousAskDiscount: 0.8,
+    minimumEndogenousAsk: 0.25,
+    fallbackAskByRarity: {
+      COMMON: 1,
+      UNCOMMON: 2,
+      RARE: 5,
+      LEGENDARY: 10,
+    },
     maxPriceHistoryDays: 365,
   },
   printingVariantSuffixes: {

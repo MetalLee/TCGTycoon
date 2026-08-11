@@ -21,12 +21,16 @@ import {
 import { calculateAdoptionScore } from "../deck-evolution/adoption";
 import { toDeckDefinition } from "../deck-evolution/deck-genome";
 import { appendCashEntry, toCurrency } from "../economy/cash-ledger";
+import { calculateDeckMarketCost } from "../market/deck-cost";
 import { createDailyReport, type DailyReport } from "../history/daily-report";
 import {
   applyMarketTrades,
   clearPrintingAuction,
 } from "../market/call-auction";
-import { generateMarketIntents } from "../market/market-intents";
+import {
+  generateMarketIntents,
+  refreshEndogenousListings,
+} from "../market/market-intents";
 import {
   updateMetaState,
   type MetaAggregationResult,
@@ -51,10 +55,16 @@ import {
 } from "../metrics/world-metrics";
 import { processLifecycleDay } from "../population/lifecycle";
 import { openBooster, openStarter } from "../products/open-product";
+import { orderPrintRun } from "../products/production";
+import {
+  announceRelease,
+  executeReleasesDueToday,
+  rescheduleRelease,
+} from "../products/releases";
 import {
   completePrintRunsDueToday,
   generatePrimaryDemand,
-  getAvailableProductInventory,
+  getSellableProductInventory,
   resolvePrimarySales,
   type CompletedPrintRun,
   type PrimarySalesResult,
@@ -121,6 +131,18 @@ function addNotableEvent(context: DayContext, type: string): void {
   context.state.history.events.push(event);
 }
 
+function recordReleaseEvents(
+  context: DayContext,
+  events: readonly WorldEvent[],
+): void {
+  context.notableEvents.push(
+    ...events.map((event) => ({
+      ...event,
+      ...(event.context === undefined ? {} : { context: { ...event.context } }),
+    })),
+  );
+}
+
 function validateBalanceConfig(config: BalanceConfig): void {
   for (const [name, value] of [
     ["dailyOperatingCost", config.dailyOperatingCost],
@@ -151,35 +173,38 @@ function applyPublisherCommand(
       break;
     }
     case "ORDER_PRINT_RUN": {
-      if (context.state.products[command.productId] === undefined) {
-        throw new Error(`Unknown product ${command.productId}.`);
-      }
-      if (!Number.isInteger(command.quantity) || command.quantity <= 0) {
-        throw new RangeError("Print Run quantity must be a positive integer.");
-      }
-      if (
-        !Number.isInteger(command.completionDay) ||
-        command.completionDay < context.previousDay
-      ) {
-        throw new RangeError(
-          "Print Run completion day must be today or a future integer day.",
-        );
-      }
       const id = printRunId(
         `print-run-${context.previousDay}-${command.productId}-${String(
           index + 1,
         ).padStart(4, "0")}`,
       );
-      if (context.state.printRuns[id] !== undefined) {
-        throw new Error(`Print Run ID collision: ${id}.`);
-      }
-      context.state.printRuns[id] = {
-        id,
-        productId: command.productId,
-        quantity: command.quantity,
-        completionDay: command.completionDay,
-      };
+      orderPrintRun(
+        context.state,
+        {
+          id,
+          productId: command.productId,
+          quantity: command.quantity,
+        },
+        context.config.production,
+      );
       addNotableEvent(context, "PRINT_RUN_ORDERED");
+      break;
+    }
+    case "ANNOUNCE_RELEASE": {
+      recordReleaseEvents(context, [
+        announceRelease(context.state, command.productId, command.releaseDay),
+      ]);
+      break;
+    }
+    case "RESCHEDULE_RELEASE": {
+      recordReleaseEvents(
+        context,
+        rescheduleRelease(
+          context.state,
+          command.productId,
+          command.newReleaseDay,
+        ),
+      );
       break;
     }
   }
@@ -192,6 +217,10 @@ function phase01CommandsAndPrintCompletion(context: DayContext): void {
   context.completedPrintRuns = completePrintRunsDueToday(context.state);
   context.completedPrintRuns.forEach(() =>
     addNotableEvent(context, "PRINT_RUN_COMPLETED"),
+  );
+  recordReleaseEvents(
+    context,
+    executeReleasesDueToday(context.state, context.config.release),
   );
 }
 
@@ -259,6 +288,7 @@ function openPurchasedProducts(context: DayContext): void {
           product.id,
           request.buyerId,
           phaseRng(context.state, "product-opening", openingSequence),
+          request.printingIds,
         );
       } else {
         const contents = context.config.starterContents[product.id];
@@ -267,7 +297,13 @@ function openPurchasedProducts(context: DayContext): void {
             `Starter product ${product.id} has no configured physical contents.`,
           );
         }
-        openStarter(context.state, product.id, request.buyerId, contents);
+        openStarter(
+          context.state,
+          product.id,
+          request.buyerId,
+          contents,
+          request.printingIds,
+        );
       }
       openingSequence += 1;
       context.productsOpened += 1;
@@ -279,6 +315,8 @@ function phase03PrimarySalesAndProductOpening(context: DayContext): void {
   const demand = generatePrimaryDemand(
     context.state,
     phaseRng(context.state, "primary-demand"),
+    context.config.productLifecycle,
+    context.config.starterContents,
   );
   context.sales = resolvePrimarySales(
     context.state,
@@ -329,7 +367,7 @@ function adoptionContext(
       ? DECK_EVOLUTION_CONFIG.namedAgentInfluencerExposure
       : 0,
     novelty,
-    deckPrice: deckMarketCost(context, deckId),
+    deckPrice: calculateDeckMarketCost(context.state, deckId),
     missingCardCount: 0,
     complexity: deckComplexity(context, deckId),
   };
@@ -419,6 +457,7 @@ function phase06AggregateMetaAndKnowledge(context: DayContext): void {
 }
 
 function phase07ClearSecondaryMarket(context: DayContext): void {
+  refreshEndogenousListings(context.state);
   const intents = generateMarketIntents(context.state);
   const printingIds = [
     ...new Set([
@@ -463,32 +502,6 @@ function physicalCardSupply(context: DayContext, cardId: string): number {
   );
 }
 
-function deckMarketCost(context: DayContext, deckId: string): number {
-  const deck = context.state.decks[deckId];
-  if (deck === undefined) {
-    return METRICS_CONFIG.accessibility.comfortableMedianMetaDeckCost * 2;
-  }
-  return deck.cards.reduce((total, entry) => {
-    const printingIds = Object.values(context.state.printings)
-      .filter((printing) => printing.cardId === entry.cardId)
-      .map((printing) => printing.id);
-    const prices = [
-      ...printingIds.flatMap((printingId) => {
-        const snapshot = context.state.market.snapshots[printingId];
-        return snapshot === undefined ? [] : [snapshot.lastPrice];
-      }),
-      ...context.state.market.listings
-        .filter((listing) => printingIds.includes(listing.printingId))
-        .map((listing) => listing.price),
-    ];
-    const price =
-      prices.length === 0
-        ? METRICS_CONFIG.accessibility.comfortableMedianMetaDeckCost * 2
-        : Math.min(...prices);
-    return total + price * entry.count;
-  }, 0);
-}
-
 function median(values: readonly number[], fallback: number): number {
   if (values.length === 0) {
     return fallback;
@@ -500,6 +513,58 @@ function median(values: readonly number[], fallback: number): number {
     : sorted[middle]!;
 }
 
+function sealedStarterDeckCost(
+  context: DayContext,
+  deckId: string,
+): number | undefined {
+  const deck = context.state.decks[deckId];
+  if (deck === undefined) {
+    return undefined;
+  }
+
+  const required = new Map(
+    deck.cards.map((entry) => [entry.cardId, entry.count] as const),
+  );
+  const prices = Object.entries(context.config.starterContents).flatMap(
+    ([productId, printingIds]) => {
+      const product = context.state.products[productId];
+      if (
+        product?.kind !== "STARTER" ||
+        product.releaseStatus !== "LIVE" ||
+        getSellableProductInventory(context.state, product.id) <= 0
+      ) {
+        return [];
+      }
+      const contents = new Map<string, number>();
+      for (const printingId of printingIds) {
+        const cardId = context.state.printings[printingId]?.cardId;
+        if (cardId !== undefined) {
+          contents.set(cardId, (contents.get(cardId) ?? 0) + 1);
+        }
+      }
+      return [...required].every(
+        ([cardId, count]) => (contents.get(cardId) ?? 0) >= count,
+      )
+        ? [product.msrp]
+        : [];
+    },
+  );
+  return prices.length === 0 ? undefined : Math.min(...prices);
+}
+
+function availableSealedStarterPrices(context: DayContext): number[] {
+  return Object.keys(context.config.starterContents).flatMap((productId) => {
+    const product = context.state.products[productId];
+    const contents = context.config.starterContents[productId]!;
+    return product?.kind === "STARTER" &&
+      product.releaseStatus === "LIVE" &&
+      contents.length === RULES_CONFIG.deckSize &&
+      getSellableProductInventory(context.state, product.id) > 0
+      ? [product.msrp]
+      : [];
+  });
+}
+
 function deriveAccessibility(context: DayContext): number {
   const starterProducts = Object.values(context.state.products)
     .filter((product) => product.kind === "STARTER")
@@ -509,7 +574,7 @@ function deriveAccessibility(context: DayContext): number {
       ? 0
       : starterProducts.filter(
           (product) =>
-            getAvailableProductInventory(context.state, product.id) > 0,
+            getSellableProductInventory(context.state, product.id) > 0,
         ).length / starterProducts.length;
   const starterPrice =
     starterProducts.length === 0
@@ -520,7 +585,15 @@ function deriveAccessibility(context: DayContext): number {
     metaDeckIds.length === 0
       ? Object.keys(context.state.decks).sort(compareIds)
       : metaDeckIds;
-  const deckCosts = deckIds.map((id) => deckMarketCost(context, id));
+  const deckCosts = [
+    ...deckIds.map((id) =>
+      Math.min(
+        calculateDeckMarketCost(context.state, id),
+        sealedStarterDeckCost(context, id) ?? Number.POSITIVE_INFINITY,
+      ),
+    ),
+    ...availableSealedStarterPrices(context),
+  ];
   const deckEntries = deckIds.flatMap(
     (id) => context.state.decks[id]?.cards ?? [],
   );
@@ -671,11 +744,29 @@ function marketPriceMomentum(context: DayContext): number {
   return average(movements, METRICS_CONFIG.signals.neutralPriceMomentum);
 }
 
+function releaseTrustSignals(context: DayContext): {
+  negative: number;
+  positive: number;
+} {
+  return context.notableEvents.reduce(
+    (counts, event) => {
+      if (event.context?.trustSignal === "NEGATIVE") {
+        counts.negative += 1;
+      } else if (event.context?.trustSignal === "POSITIVE") {
+        counts.positive += 1;
+      }
+      return counts;
+    },
+    { negative: 0, positive: 0 },
+  );
+}
+
 function phase10UpdateCoreWorldMetrics(context: DayContext): void {
   const metrics = context.state.metrics;
   const satisfaction = averagePlayerSatisfaction(context.state);
   const playerCount = Math.max(1, metrics.activePlayers);
   const snapshots = Object.values(context.state.market.snapshots);
+  const releaseSignals = releaseTrustSignals(context);
   const nextHealth = updateWorldMetrics(metrics, {
     positiveAttention: clampUnit(
       (context.sales.unitsSold +
@@ -684,7 +775,9 @@ function phase10UpdateCoreWorldMetrics(context: DayContext): void {
     ),
     negativeAttention: clampUnit(
       (1 - satisfaction) *
-        METRICS_CONFIG.signals.dissatisfactionAttentionWeight,
+        METRICS_CONFIG.signals.dissatisfactionAttentionWeight +
+        releaseSignals.negative *
+          METRICS_CONFIG.signals.releaseNegativeAttentionPerEvent,
     ),
     sentimentTarget: satisfaction * 100,
     collector: {
@@ -702,7 +795,12 @@ function phase10UpdateCoreWorldMetrics(context: DayContext): void {
       collectorConfidence: satisfaction,
     },
     metaHealthTarget: context.metaHealth,
-    brandTrustTarget: satisfaction * 100,
+    brandTrustTarget:
+      satisfaction * 100 -
+      releaseSignals.negative *
+        METRICS_CONFIG.signals.releaseTrustPenaltyPerEvent +
+      releaseSignals.positive *
+        METRICS_CONFIG.signals.releaseTrustBonusPerEvent,
   });
   Object.assign(metrics, nextHealth);
   metrics.accessibility = context.accessibility;
@@ -737,8 +835,7 @@ function phase11ApplyCashExpenses(context: DayContext): void {
     });
   }
   const inventoryUnits = Object.values(context.state.printRuns).reduce(
-    (total, run) =>
-      run.completionDay <= context.previousDay ? total + run.quantity : total,
+    (total, run) => (run.status === "COMPLETED" ? total + run.quantity : total),
     0,
   );
   const holdingCost = toCurrency(

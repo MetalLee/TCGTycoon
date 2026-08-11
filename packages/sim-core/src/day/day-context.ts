@@ -1,3 +1,11 @@
+import {
+  PRODUCT_LIFECYCLE_CONFIG,
+  PRODUCTION_CONFIG,
+  RELEASE_CONFIG,
+  type ProductLifecycleConfig,
+  type ProductionConfig,
+  type ReleaseConfig,
+} from "@tcgtycoon/balance";
 import type { PrintingId, WorldState } from "@tcgtycoon/domain";
 import { DeterministicRng, deriveSeed } from "@tcgtycoon/rules-engine";
 
@@ -5,12 +13,18 @@ export type BalanceConfig = {
   starterContents: Readonly<Record<string, readonly PrintingId[]>>;
   dailyOperatingCost: number;
   inventoryHoldingCostPerUnit: number;
+  production: ProductionConfig;
+  productLifecycle: ProductLifecycleConfig;
+  release: ReleaseConfig;
 };
 
 export const DEFAULT_BALANCE_CONFIG: BalanceConfig = {
   starterContents: {},
   dailyOperatingCost: 0,
   inventoryHoldingCostPerUnit: 0,
+  production: PRODUCTION_CONFIG,
+  productLifecycle: PRODUCT_LIFECYCLE_CONFIG,
+  release: RELEASE_CONFIG,
 };
 
 export function phaseRng(

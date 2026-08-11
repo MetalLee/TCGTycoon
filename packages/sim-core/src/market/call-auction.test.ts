@@ -5,6 +5,7 @@ import {
   factionId,
   playerId,
   printingId,
+  productId,
   type WorldState,
 } from "@tcgtycoon/domain";
 import { describe, expect, it } from "vitest";
@@ -14,6 +15,7 @@ import { applyMarketTrades, clearPrintingAuction } from "./call-auction";
 import { generateMarketIntents } from "./market-intents";
 
 const marketPrintingId = printingId("printing-market-normal");
+const marketProductId = productId("product-market");
 
 function createMarketWorld(): WorldState {
   const population = createInitialPopulation("market-test");
@@ -24,7 +26,7 @@ function createMarketWorld(): WorldState {
   seller.collection[marketPrintingId] = 3;
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 5,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -50,11 +52,17 @@ function createMarketWorld(): WorldState {
         id: marketPrintingId,
         cardId: cardId("card-market"),
         expansionId: expansionId("set-market"),
+        edition: "FIRST_EDITION",
+        sourceProductId: marketProductId,
+        sourceExpansionId: expansionId("set-market"),
       },
       "printing-market-foil": {
         id: printingId("printing-market-foil"),
         cardId: cardId("card-market"),
         expansionId: expansionId("set-market"),
+        edition: "FIRST_EDITION",
+        sourceProductId: marketProductId,
+        sourceExpansionId: expansionId("set-market"),
       },
     },
     expansions: {
@@ -63,7 +71,19 @@ function createMarketWorld(): WorldState {
         name: "Market Set",
       },
     },
-    products: {},
+    products: {
+      [marketProductId]: {
+        id: marketProductId,
+        expansionId: expansionId("set-market"),
+        name: "Market Booster",
+        kind: "BOOSTER",
+        msrp: 5,
+        cardIds: [cardId("card-market")],
+        releaseStatus: "LIVE",
+        internalReleaseDay: 0,
+        releasedDay: 0,
+      },
+    },
     printRuns: {},
     players: population.players,
     agents: population.agents,

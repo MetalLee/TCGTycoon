@@ -1,14 +1,26 @@
-import { ECONOMY_CONFIG } from "@tcgtycoon/balance";
+import {
+  ECONOMY_CONFIG,
+  PRODUCT_LIFECYCLE_CONFIG,
+  type ProductLifecycleConfig,
+} from "@tcgtycoon/balance";
 import {
   type PersistentPlayer,
   type PlayerId,
   type PrintRun,
   type PrintRunId,
+  type PrintingId,
   type ProductId,
+  type ProductSku,
   type WorldState,
 } from "@tcgtycoon/domain";
 import type { DeterministicRng } from "@tcgtycoon/rules-engine";
 import { appendCashEntry, toCurrency } from "../economy/cash-ledger";
+import {
+  calculateProductFatigue,
+  calculateSetFreshness,
+} from "./product-lifecycle";
+import { calculateProductExpectedValue } from "./product-value";
+import { advancePrintRuns } from "./production";
 
 export type CompletedPrintRun = {
   printRunId: PrintRunId;
@@ -22,7 +34,10 @@ export type PrimaryDemand = {
   quantity: number;
 };
 
-export type ProductOpeningRequest = PrimaryDemand;
+export type ProductOpeningRequest = PrimaryDemand & {
+  printRunId: PrintRunId;
+  printingIds: PrintingId[];
+};
 
 export type PrimarySalesResult = {
   unitsSold: number;
@@ -38,18 +53,26 @@ function compareBigInts(left: bigint, right: bigint): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-function productRuns(world: WorldState, productId: ProductId): PrintRun[] {
-  // Until the production phase adds richer warehouse state, quantity on a
-  // completed PrintRun is its remaining sellable product inventory.
+function completedProductRuns(
+  world: WorldState,
+  productId: ProductId,
+): PrintRun[] {
   return Object.values(world.printRuns)
-    .filter(
-      (run) => run.productId === productId && run.completionDay <= world.day,
-    )
+    .filter((run) => run.productId === productId && run.status === "COMPLETED")
     .sort(
       (left, right) =>
         left.completionDay - right.completionDay ||
         compareIds(left.id, right.id),
     );
+}
+
+function sellableProductRuns(
+  world: WorldState,
+  productId: ProductId,
+): PrintRun[] {
+  return world.products[productId]?.releaseStatus === "LIVE"
+    ? completedProductRuns(world, productId)
+    : [];
 }
 
 function validatePrintRunQuantity(run: PrintRun): void {
@@ -61,24 +84,32 @@ function validatePrintRunQuantity(run: PrintRun): void {
 export function completePrintRunsDueToday(
   world: WorldState,
 ): CompletedPrintRun[] {
-  return Object.values(world.printRuns)
-    .filter((run) => run.completionDay === world.day)
-    .sort((left, right) => compareIds(left.id, right.id))
-    .map((run) => {
-      validatePrintRunQuantity(run);
-      return {
-        printRunId: run.id,
-        productId: run.productId,
-        quantity: run.quantity,
-      };
-    });
+  return advancePrintRuns(world, world.day).map((id) => {
+    const run = world.printRuns[id]!;
+    validatePrintRunQuantity(run);
+    return {
+      printRunId: run.id,
+      productId: run.productId,
+      quantity: run.quantity,
+    };
+  });
 }
 
 export function getAvailableProductInventory(
   world: WorldState,
   productId: ProductId,
 ): number {
-  return productRuns(world, productId).reduce((total, run) => {
+  return completedProductRuns(world, productId).reduce((total, run) => {
+    validatePrintRunQuantity(run);
+    return total + run.quantity;
+  }, 0);
+}
+
+export function getSellableProductInventory(
+  world: WorldState,
+  productId: ProductId,
+): number {
+  return sellableProductRuns(world, productId).reduce((total, run) => {
     validatePrintRunQuantity(run);
     return total + run.quantity;
   }, 0);
@@ -86,18 +117,22 @@ export function getAvailableProductInventory(
 
 function demandProbability(
   player: PersistentPlayer,
-  kind: "BOOSTER" | "STARTER",
-  msrp: number,
+  product: ProductSku,
+  exposure: number,
+  freshness: number,
+  fatigue: number,
+  expectedValue: number,
+  config: ProductLifecycleConfig,
 ): number {
-  if (player.activity === "CHURNED" || player.tcgWallet < msrp) {
+  if (player.activity === "CHURNED" || player.tcgWallet < product.msrp) {
     return 0;
   }
 
   const pricePressure =
-    player.tcgWallet === 0 ? 1 : Math.min(1, msrp / player.tcgWallet);
+    player.tcgWallet === 0 ? 1 : Math.min(1, product.msrp / player.tcgWallet);
   const priceFit = 1 - player.motivation.budgetSensitivity * pricePressure;
   const motivationFit =
-    kind === "BOOSTER"
+    product.kind === "BOOSTER"
       ? (player.motivation.competitive +
           player.motivation.collector +
           player.motivation.brewer) /
@@ -106,34 +141,128 @@ function demandProbability(
           player.motivation.budgetSensitivity +
           (player.activity === "NEW" ? 1 : 0)) /
         3;
-
+  const baseProbability =
+    motivationFit * config.demand.motivationWeight +
+    priceFit * config.demand.affordabilityWeight +
+    exposure * config.demand.exposureWeight +
+    freshness * config.demand.freshnessWeight;
+  const valueAdvantage =
+    product.msrp === 0
+      ? expectedValue > 0
+        ? 1
+        : 0
+      : Math.min(1, Math.max(0, (expectedValue - product.msrp) / product.msrp));
+  const marketAwareness =
+    (player.motivation.competitive +
+      player.motivation.collector +
+      player.motivation.whale) /
+    3;
+  const marketValueBonus =
+    valueAdvantage * marketAwareness * config.demand.marketValueBonusWeight;
   return Math.min(
     1,
     Math.max(
       0,
-      (motivationFit +
-        priceFit +
-        ECONOMY_CONFIG.primaryMarket.productFreshnessPlaceholder) /
-        3,
+      (baseProbability + marketValueBonus) *
+        (1 - fatigue * config.demand.fatiguePenaltyWeight),
     ),
+  );
+}
+
+function releaseDays(world: WorldState): number[] {
+  return world.history.events
+    .filter((event) => event.type === "PRODUCT_RELEASED")
+    .map((event) => event.day);
+}
+
+function recentAveragePlayerSpend(
+  world: WorldState,
+  config: ProductLifecycleConfig,
+): number {
+  const earliestRecentDay = world.day - config.fatigue.lookbackDays;
+  const primaryRevenue = world.cash.ledger
+    .filter(
+      (entry) =>
+        entry.day > earliestRecentDay &&
+        entry.day <= world.day &&
+        (entry.category === "BOOSTER_REVENUE" ||
+          entry.category === "STARTER_REVENUE") &&
+        entry.amount > 0,
+    )
+    .reduce((total, entry) => total + entry.amount, 0);
+  const activePlayerCount = Object.values(world.players).filter(
+    (player) => player.activity !== "CHURNED",
+  ).length;
+  if (activePlayerCount === 0) {
+    return 0;
+  }
+  return (
+    primaryRevenue /
+    ECONOMY_CONFIG.primaryMarket.publisherShare /
+    activePlayerCount
   );
 }
 
 export function generatePrimaryDemand(
   world: WorldState,
   rng: DeterministicRng,
+  config: ProductLifecycleConfig = PRODUCT_LIFECYCLE_CONFIG,
+  starterContents: Readonly<Record<string, readonly PrintingId[]>> = {},
 ): PrimaryDemand[] {
   const players = Object.values(world.players).sort((left, right) =>
     compareIds(left.id, right.id),
   );
-  const products = Object.values(world.products).sort((left, right) =>
-    compareIds(left.id, right.id),
-  );
+  const products = Object.values(world.products)
+    .filter((product) => product.releaseStatus === "LIVE")
+    .sort((left, right) => compareIds(left.id, right.id));
   const demand: PrimaryDemand[] = [];
+  const exposure = Math.min(1, Math.max(0, world.metrics.hype / 100));
+  const recentReleases = releaseDays(world);
+  const recentSpend = recentAveragePlayerSpend(world, config);
+  const freshnessByProduct = new Map(
+    products.map((product) => [
+      product.id,
+      calculateSetFreshness(
+        {
+          currentDay: world.day,
+          releaseDay: product.releasedDay ?? world.day,
+          marketingAttention: exposure,
+        },
+        config,
+      ),
+    ]),
+  );
+  const expectedValueByProduct = new Map(
+    products.map((product) => [
+      product.id,
+      calculateProductExpectedValue(
+        world,
+        product.id,
+        product.kind === "STARTER" ? starterContents[product.id] : undefined,
+      ),
+    ]),
+  );
 
   for (const player of players) {
+    const fatigue = calculateProductFatigue(
+      {
+        currentDay: world.day,
+        releaseDays: recentReleases,
+        recentSpend,
+        spendingCapacity: player.tcgWallet + recentSpend,
+      },
+      config,
+    );
     for (const product of products) {
-      const probability = demandProbability(player, product.kind, product.msrp);
+      const probability = demandProbability(
+        player,
+        product,
+        exposure,
+        freshnessByProduct.get(product.id)!,
+        fatigue,
+        expectedValueByProduct.get(product.id)!,
+        config,
+      );
       if (rng.nextFloat() < probability) {
         demand.push({
           buyerId: player.id,
@@ -202,22 +331,31 @@ function orderedDemand(
     .map(({ request }) => request);
 }
 
+type InventoryAllocation = {
+  run: PrintRun;
+  quantity: number;
+};
+
 function removeInventory(
   world: WorldState,
   productId: ProductId,
   requestedQuantity: number,
-): number {
+): InventoryAllocation[] {
   let remaining = requestedQuantity;
-  for (const run of productRuns(world, productId)) {
+  const allocations: InventoryAllocation[] = [];
+  for (const run of sellableProductRuns(world, productId)) {
     validatePrintRunQuantity(run);
     const quantity = Math.min(run.quantity, remaining);
     run.quantity -= quantity;
     remaining -= quantity;
+    if (quantity > 0) {
+      allocations.push({ run, quantity });
+    }
     if (remaining === 0) {
       break;
     }
   }
-  return requestedQuantity - remaining;
+  return allocations;
 }
 
 export function resolvePrimarySales(
@@ -238,7 +376,11 @@ export function resolvePrimarySales(
         ? request.quantity
         : Math.floor(buyer.tcgWallet / product.msrp);
     const quantity = Math.min(request.quantity, affordableQuantity);
-    const sold = removeInventory(world, product.id, quantity);
+    const allocations = removeInventory(world, product.id, quantity);
+    const sold = allocations.reduce(
+      (total, allocation) => total + allocation.quantity,
+      0,
+    );
     if (sold === 0) {
       continue;
     }
@@ -255,11 +397,15 @@ export function resolvePrimarySales(
       sourceId: product.id,
       amount: publisherRevenue,
     });
-    openingRequests.push({
-      buyerId: buyer.id,
-      productId: product.id,
-      quantity: sold,
-    });
+    for (const allocation of allocations) {
+      openingRequests.push({
+        buyerId: buyer.id,
+        productId: product.id,
+        quantity: allocation.quantity,
+        printRunId: allocation.run.id,
+        printingIds: [...allocation.run.printingIds],
+      });
+    }
     unitsSold += sold;
     revenue = toCurrency(revenue + publisherRevenue);
   }

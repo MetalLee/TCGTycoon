@@ -1,4 +1,10 @@
-import { ECONOMY_CONFIG, POPULATION_CONFIG } from "@tcgtycoon/balance";
+import {
+  ECONOMY_CONFIG,
+  POPULATION_CONFIG,
+  PRODUCT_LIFECYCLE_CONFIG,
+  PRODUCTION_CONFIG,
+  RELEASE_CONFIG,
+} from "@tcgtycoon/balance";
 import {
   playerId,
   printingId,
@@ -53,9 +59,14 @@ function normalPrintingId(cardId: string): PrintingId {
 
 function starterContents(
   cards: readonly { cardId: string; count: number }[],
+  prefix: string,
 ): PrintingId[] {
   return cards.flatMap(({ cardId, count }) =>
-    Array.from({ length: count }, () => normalPrintingId(cardId)),
+    Array.from({ length: count }, () =>
+      printingId(
+        `${prefix}-${cardId}${ECONOMY_CONFIG.printingVariantSuffixes.normal}`,
+      ),
+    ),
   );
 }
 
@@ -85,11 +96,25 @@ function addInitialInventory(world: WorldState): void {
     ["machine-starter", launchMachineStarterProductId, 12],
   ] as const) {
     const id = printRunId(`print-run-scenario-${suffix}`);
+    const product = world.products[productId]!;
     world.printRuns[id] = {
       id,
       productId,
+      sourceExpansionId: product.expansionId,
+      productKind: product.kind,
+      cardIds: [...product.cardIds],
+      orderedQuantity: quantity,
       quantity,
+      orderedDay: 0,
       completionDay: world.day,
+      unitCost: 0,
+      totalCost: 0,
+      status: "COMPLETED",
+      edition: "FIRST_EDITION",
+      printingIds: Object.values(world.printings)
+        .filter((printing) => printing.sourceProductId === productId)
+        .map((printing) => printing.id)
+        .sort(compareIds),
     };
   }
 }
@@ -119,8 +144,14 @@ export function createBalancedWorld(seed = "balanced-world"): WorldScenario {
   world.cash = { balance: 25_000, ledger: [] };
   retainScenarioPopulation(world);
 
-  const fireContents = starterContents(fireFixtureDeck.cards);
-  const machineContents = starterContents(machineFixtureDeck.cards);
+  const fireContents = starterContents(
+    fireFixtureDeck.cards,
+    "printing-starter-fire",
+  );
+  const machineContents = starterContents(
+    machineFixtureDeck.cards,
+    "printing-starter-machine",
+  );
   const expansionId = world.products[launchBoosterProductId]!.expansionId;
   world.products[launchMachineStarterProductId] = {
     id: launchMachineStarterProductId,
@@ -128,7 +159,32 @@ export function createBalancedWorld(seed = "balanced-world"): WorldScenario {
     name: "Launch Machine Starter",
     kind: "STARTER",
     msrp: 15,
+    cardIds: machineFixtureDeck.cards.map((entry) => entry.cardId),
+    releaseStatus: "LIVE",
+    internalReleaseDay: world.day,
+    releasedDay: world.day,
   };
+  for (const product of Object.values(world.products)) {
+    product.releaseStatus = "LIVE";
+    product.internalReleaseDay = world.day;
+    product.releasedDay = world.day;
+  }
+  for (const cardId of [
+    ...new Set(machineFixtureDeck.cards.map((entry) => entry.cardId)),
+  ].sort(compareIds)) {
+    const id = normalPrintingId(cardId).replace(
+      "printing-",
+      "printing-starter-machine-",
+    ) as PrintingId;
+    world.printings[id] = {
+      id,
+      cardId,
+      expansionId,
+      edition: "FIRST_EDITION",
+      sourceProductId: launchMachineStarterProductId,
+      sourceExpansionId: expansionId,
+    };
+  }
   addInitialInventory(world);
 
   const firePlayer = world.players[playerId("player-0001")]!;
@@ -188,11 +244,13 @@ export function createBalancedWorld(seed = "balanced-world"): WorldScenario {
       },
       dailyOperatingCost: 1,
       inventoryHoldingCostPerUnit: 0,
+      production: PRODUCTION_CONFIG,
+      productLifecycle: PRODUCT_LIFECYCLE_CONFIG,
+      release: RELEASE_CONFIG,
     },
     botConfig: {
       stockThreshold: 8,
       reprintQuantity: 12,
-      leadTimeDays: 2,
       minimumCashReserve: 1_000,
       estimatedPrintCostPerUnit: 2,
     },

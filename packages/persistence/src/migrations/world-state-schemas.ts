@@ -10,11 +10,11 @@ const metricNumberSchema = finiteNumberSchema.min(0).max(100);
 const recordOf = <T extends z.ZodType>(schema: T) =>
   z.record(z.string(), schema);
 
-const printingSchema = z
+const printingV2Schema = z
   .object({ id: idSchema, cardId: idSchema, expansionId: idSchema })
   .strict();
 const expansionSchema = z.object({ id: idSchema, name: z.string() }).strict();
-const productSchema = z
+const productV2Schema = z
   .object({
     id: idSchema,
     expansionId: idSchema,
@@ -23,7 +23,7 @@ const productSchema = z
     msrp: nonNegativeNumberSchema,
   })
   .strict();
-const printRunSchema = z
+const printRunV2Schema = z
   .object({
     id: idSchema,
     productId: idSchema,
@@ -31,6 +31,127 @@ const printRunSchema = z
     completionDay: nonNegativeIntegerSchema,
   })
   .strict();
+const printingEditionSchema = z.enum(["FIRST_EDITION", "UNLIMITED", "REPRINT"]);
+const printingV3Schema = z
+  .object({
+    id: idSchema,
+    cardId: idSchema,
+    expansionId: idSchema,
+    edition: printingEditionSchema,
+    sourceProductId: idSchema,
+    sourceExpansionId: idSchema,
+  })
+  .strict();
+const productV3Schema = productV2Schema.extend({
+  cardIds: z.array(idSchema),
+});
+const releaseStatusSchema = z.enum([
+  "UNANNOUNCED",
+  "ANNOUNCED",
+  "LIVE",
+  "DELAYED",
+]);
+const productV4Schema = productV3Schema
+  .extend({
+    releaseStatus: releaseStatusSchema,
+    internalReleaseDay: nonNegativeIntegerSchema,
+    announcedReleaseDay: nonNegativeIntegerSchema.optional(),
+    releasedDay: nonNegativeIntegerSchema.optional(),
+  })
+  .superRefine((product, context) => {
+    if (
+      product.releaseStatus === "UNANNOUNCED" &&
+      product.announcedReleaseDay !== undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["announcedReleaseDay"],
+        message: "UNANNOUNCED products cannot have a public release day.",
+      });
+    }
+    if (
+      (product.releaseStatus === "ANNOUNCED" ||
+        product.releaseStatus === "DELAYED") &&
+      product.announcedReleaseDay === undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["announcedReleaseDay"],
+        message: "Announced or delayed products require a public release day.",
+      });
+    }
+    if (product.releaseStatus === "LIVE" && product.releasedDay === undefined) {
+      context.addIssue({
+        code: "custom",
+        path: ["releasedDay"],
+        message: "LIVE products require their actual release day.",
+      });
+    }
+    if (product.releaseStatus !== "LIVE" && product.releasedDay !== undefined) {
+      context.addIssue({
+        code: "custom",
+        path: ["releasedDay"],
+        message: "Only LIVE products may have an actual release day.",
+      });
+    }
+  });
+const printRunV3BaseSchema = z
+  .object({
+    id: idSchema,
+    productId: idSchema,
+    orderedQuantity: nonNegativeIntegerSchema,
+    quantity: nonNegativeIntegerSchema,
+    orderedDay: nonNegativeIntegerSchema,
+    completionDay: nonNegativeIntegerSchema,
+    unitCost: nonNegativeNumberSchema,
+    totalCost: nonNegativeNumberSchema,
+    status: z.enum(["PRINTING", "COMPLETED"]),
+    edition: printingEditionSchema.optional(),
+    printingIds: z.array(idSchema),
+  })
+  .strict();
+
+function validatePrintRunState(
+  run: z.infer<typeof printRunV3BaseSchema>,
+  context: z.RefinementCtx,
+): void {
+  if (run.status === "PRINTING") {
+    if (run.quantity !== 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["quantity"],
+        message: "PRINTING runs cannot contain sellable inventory.",
+      });
+    }
+    if (run.edition !== undefined || run.printingIds.length !== 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["status"],
+        message: "PRINTING runs cannot have completed edition identity.",
+      });
+    }
+  } else if (run.edition === undefined) {
+    context.addIssue({
+      code: "custom",
+      path: ["status"],
+      message: "COMPLETED runs require edition identity.",
+    });
+  }
+}
+
+const printRunV3Schema = printRunV3BaseSchema.superRefine(
+  validatePrintRunState,
+);
+const printRunV5Schema = printRunV3BaseSchema
+  .extend({
+    sourceExpansionId: idSchema,
+    productKind: z.enum(["BOOSTER", "STARTER"]),
+    cardIds: z.array(idSchema),
+  })
+  .superRefine((run, context) => {
+    validatePrintRunState(run, context);
+    validateUniqueIds(context, run.cardIds, ["cardIds"]);
+  });
 const knowledgeSchema = z
   .object({
     knownCardIds: z.array(idSchema),
@@ -174,6 +295,27 @@ const eventSchema = z
   .object({ id: idSchema, day: nonNegativeIntegerSchema, type: idSchema })
   .strict();
 const historySchema = z.object({ events: z.array(eventSchema) }).strict();
+const eventContextV4Schema = z
+  .object({
+    productId: idSchema.optional(),
+    reason: z.string().optional(),
+    publicCommitment: z.boolean().optional(),
+    trustSignal: z.enum(["NEGATIVE", "POSITIVE", "NONE"]).optional(),
+    previousReleaseDay: nonNegativeIntegerSchema.optional(),
+    newReleaseDay: nonNegativeIntegerSchema.optional(),
+    availableInventory: nonNegativeIntegerSchema.optional(),
+    shortSupplyThreshold: nonNegativeIntegerSchema.optional(),
+  })
+  .strict();
+const eventV4Schema = z
+  .object({
+    id: idSchema,
+    day: nonNegativeIntegerSchema,
+    type: idSchema,
+    context: eventContextV4Schema.optional(),
+  })
+  .strict();
+const historyV4Schema = z.object({ events: z.array(eventV4Schema) }).strict();
 const lifecycleStateSchema = z
   .object({
     potential: nonNegativeIntegerSchema,
@@ -201,11 +343,37 @@ type WorldReferenceShape = {
   cards: Record<string, { id: string }>;
   printings: Record<
     string,
-    { id: string; cardId: string; expansionId: string }
+    {
+      id: string;
+      cardId: string;
+      expansionId: string;
+      sourceProductId?: string;
+      sourceExpansionId?: string;
+      edition?: string | undefined;
+    }
   >;
   expansions: Record<string, { id: string }>;
-  products: Record<string, { id: string; expansionId: string }>;
-  printRuns: Record<string, { id: string; productId: string }>;
+  products: Record<
+    string,
+    {
+      id: string;
+      expansionId: string;
+      kind?: "BOOSTER" | "STARTER";
+      cardIds?: string[];
+    }
+  >;
+  printRuns: Record<
+    string,
+    {
+      id: string;
+      productId: string;
+      sourceExpansionId?: string;
+      productKind?: "BOOSTER" | "STARTER";
+      cardIds?: string[];
+      printingIds?: string[];
+      edition?: string | undefined;
+    }
+  >;
   players: Record<
     string,
     {
@@ -312,6 +480,34 @@ function validateWorldReferences(
       ["printings", id, "expansionId"],
       printing.expansionId,
     );
+    if (printing.sourceProductId !== undefined) {
+      const sourceProduct = world.products[printing.sourceProductId];
+      addReferenceIssue(
+        context,
+        sourceProduct !== undefined,
+        ["printings", id, "sourceProductId"],
+        printing.sourceProductId,
+      );
+      if (
+        sourceProduct !== undefined &&
+        printing.sourceExpansionId !== undefined &&
+        sourceProduct.expansionId !== printing.sourceExpansionId
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["printings", id, "sourceExpansionId"],
+          message: "Printing source Product and Expansion must agree.",
+        });
+      }
+    }
+    if (printing.sourceExpansionId !== undefined) {
+      addReferenceIssue(
+        context,
+        world.expansions[printing.sourceExpansionId] !== undefined,
+        ["printings", id, "sourceExpansionId"],
+        printing.sourceExpansionId,
+      );
+    }
   }
   for (const [id, product] of Object.entries(world.products)) {
     addReferenceIssue(
@@ -320,14 +516,115 @@ function validateWorldReferences(
       ["products", id, "expansionId"],
       product.expansionId,
     );
+    for (const cardId of product.cardIds ?? []) {
+      addReferenceIssue(
+        context,
+        world.cards[cardId] !== undefined,
+        ["products", id, "cardIds"],
+        cardId,
+      );
+    }
+    if (product.cardIds !== undefined) {
+      validateUniqueIds(context, product.cardIds, ["products", id, "cardIds"]);
+    }
   }
   for (const [id, run] of Object.entries(world.printRuns)) {
+    const product = world.products[run.productId];
     addReferenceIssue(
       context,
-      world.products[run.productId] !== undefined,
+      product !== undefined,
       ["printRuns", id, "productId"],
       run.productId,
     );
+    if (run.sourceExpansionId !== undefined) {
+      addReferenceIssue(
+        context,
+        world.expansions[run.sourceExpansionId] !== undefined,
+        ["printRuns", id, "sourceExpansionId"],
+        run.sourceExpansionId,
+      );
+      if (
+        product !== undefined &&
+        product.expansionId !== run.sourceExpansionId
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["printRuns", id, "sourceExpansionId"],
+          message: "Print Run snapshot must match its Product expansion.",
+        });
+      }
+    }
+    if (
+      product !== undefined &&
+      run.productKind !== undefined &&
+      product.kind !== run.productKind
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["printRuns", id, "productKind"],
+        message: "Print Run snapshot must match its Product kind.",
+      });
+    }
+    for (const cardId of run.cardIds ?? []) {
+      addReferenceIssue(
+        context,
+        world.cards[cardId] !== undefined,
+        ["printRuns", id, "cardIds"],
+        cardId,
+      );
+    }
+    if (run.cardIds !== undefined) {
+      validateUniqueIds(context, run.cardIds, ["printRuns", id, "cardIds"]);
+      if (
+        product !== undefined &&
+        JSON.stringify(product.cardIds) !== JSON.stringify(run.cardIds)
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["printRuns", id, "cardIds"],
+          message: "Print Run snapshot must match its Product card contents.",
+        });
+      }
+    }
+    for (const printingId of run.printingIds ?? []) {
+      const printing = world.printings[printingId];
+      addReferenceIssue(
+        context,
+        printing !== undefined,
+        ["printRuns", id, "printingIds"],
+        printingId,
+      );
+      if (
+        printing !== undefined &&
+        run.edition !== undefined &&
+        printing.edition !== run.edition &&
+        printing.edition !== "REPRINT"
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["printRuns", id, "printingIds"],
+          message: `Printing ${printingId} must match run edition ${run.edition}.`,
+        });
+      }
+      if (
+        printing !== undefined &&
+        printing.sourceProductId !== undefined &&
+        printing.sourceProductId !== run.productId
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["printRuns", id, "printingIds"],
+          message: `Printing ${printingId} must belong to Product ${run.productId}.`,
+        });
+      }
+    }
+    if (run.printingIds !== undefined) {
+      validateUniqueIds(context, run.printingIds, [
+        "printRuns",
+        id,
+        "printingIds",
+      ]);
+    }
   }
   for (const [id, player] of Object.entries(world.players)) {
     for (const printingId of Object.keys(player.collection)) {
@@ -475,7 +772,7 @@ function validateWorldReferences(
   );
 }
 
-const commonWorldShape = {
+const commonWorldShapeV2 = {
   simulationVersion: idSchema,
   ruleVersion: idSchema,
   balanceVersion: idSchema,
@@ -483,10 +780,10 @@ const commonWorldShape = {
   day: nonNegativeIntegerSchema,
   status: z.enum(["SETUP", "LIVE", "GAME_OVER"]),
   cards: recordOf(cardDefinitionSchema),
-  printings: recordOf(printingSchema),
+  printings: recordOf(printingV2Schema),
   expansions: recordOf(expansionSchema),
-  products: recordOf(productSchema),
-  printRuns: recordOf(printRunSchema),
+  products: recordOf(productV2Schema),
+  printRuns: recordOf(printRunV2Schema),
   players: recordOf(playerSchema),
   agents: recordOf(agentSchema),
   decks: recordOf(deckGenomeSchema),
@@ -498,7 +795,7 @@ const commonWorldShape = {
 export const worldStateV1Schema = z
   .object({
     schemaVersion: z.literal(1),
-    ...commonWorldShape,
+    ...commonWorldShapeV2,
     market: z.object({ listings: z.array(marketListingSchema) }).strict(),
     meta: z.object({ deckStats: recordOf(metaDeckStatsV1Schema) }).strict(),
     metrics: z.object({ activePlayers: nonNegativeIntegerSchema }).strict(),
@@ -509,7 +806,7 @@ export const worldStateV1Schema = z
 export const worldStateV2Schema = z
   .object({
     schemaVersion: z.literal(2),
-    ...commonWorldShape,
+    ...commonWorldShapeV2,
     market: z
       .object({
         listings: z.array(marketListingSchema),
@@ -553,3 +850,152 @@ export const worldStateV2Schema = z
   .superRefine(validateWorldReferences);
 
 export type WorldStateV1 = z.infer<typeof worldStateV1Schema>;
+
+export const worldStateV3Schema = z
+  .object({
+    schemaVersion: z.literal(3),
+    ...commonWorldShapeV2,
+    printings: recordOf(printingV3Schema),
+    products: recordOf(productV3Schema),
+    printRuns: recordOf(printRunV3Schema),
+    market: z
+      .object({
+        listings: z.array(marketListingSchema),
+        snapshots: recordOf(printingMarketSnapshotSchema),
+      })
+      .strict(),
+    meta: z
+      .object({
+        deckStats: recordOf(metaDeckStatsV2Schema),
+        matchups: recordOf(matchupStatsSchema),
+      })
+      .strict(),
+    metrics: z
+      .object({
+        activePlayers: nonNegativeIntegerSchema,
+        previousActivePlayers: nonNegativeIntegerSchema,
+        hype: metricNumberSchema,
+        collectorHeat: metricNumberSchema,
+        metaHealth: metricNumberSchema,
+        brandTrust: metricNumberSchema,
+        sentiment: metricNumberSchema,
+        accessibility: metricNumberSchema,
+        lifecycle: lifecycleStateSchema,
+        lifecycleDeltas: lifecycleDeltasSchema,
+        acquisitionToChurnRatio: nonNegativeNumberSchema,
+        retentionRate: unitNumberSchema,
+        activePlayerTrend: finiteNumberSchema,
+        consecutiveDeclineDays: nonNegativeIntegerSchema,
+        consecutiveLowActivityDays: nonNegativeIntegerSchema,
+        ecosystemRisk: z.enum([
+          "STABLE",
+          "STRAINED",
+          "DECLINING",
+          "DEATH_SPIRAL",
+          "TERMINAL",
+        ]),
+      })
+      .strict(),
+  })
+  .strict()
+  .superRefine(validateWorldReferences);
+
+export const worldStateV4Schema = z
+  .object({
+    schemaVersion: z.literal(4),
+    ...commonWorldShapeV2,
+    printings: recordOf(printingV3Schema),
+    products: recordOf(productV4Schema),
+    printRuns: recordOf(printRunV3Schema),
+    history: historyV4Schema,
+    market: z
+      .object({
+        listings: z.array(marketListingSchema),
+        snapshots: recordOf(printingMarketSnapshotSchema),
+      })
+      .strict(),
+    meta: z
+      .object({
+        deckStats: recordOf(metaDeckStatsV2Schema),
+        matchups: recordOf(matchupStatsSchema),
+      })
+      .strict(),
+    metrics: z
+      .object({
+        activePlayers: nonNegativeIntegerSchema,
+        previousActivePlayers: nonNegativeIntegerSchema,
+        hype: metricNumberSchema,
+        collectorHeat: metricNumberSchema,
+        metaHealth: metricNumberSchema,
+        brandTrust: metricNumberSchema,
+        sentiment: metricNumberSchema,
+        accessibility: metricNumberSchema,
+        lifecycle: lifecycleStateSchema,
+        lifecycleDeltas: lifecycleDeltasSchema,
+        acquisitionToChurnRatio: nonNegativeNumberSchema,
+        retentionRate: unitNumberSchema,
+        activePlayerTrend: finiteNumberSchema,
+        consecutiveDeclineDays: nonNegativeIntegerSchema,
+        consecutiveLowActivityDays: nonNegativeIntegerSchema,
+        ecosystemRisk: z.enum([
+          "STABLE",
+          "STRAINED",
+          "DECLINING",
+          "DEATH_SPIRAL",
+          "TERMINAL",
+        ]),
+      })
+      .strict(),
+  })
+  .strict()
+  .superRefine(validateWorldReferences);
+
+export const worldStateV5Schema = z
+  .object({
+    schemaVersion: z.literal(5),
+    ...commonWorldShapeV2,
+    printings: recordOf(printingV3Schema),
+    products: recordOf(productV4Schema),
+    printRuns: recordOf(printRunV5Schema),
+    history: historyV4Schema,
+    market: z
+      .object({
+        listings: z.array(marketListingSchema),
+        snapshots: recordOf(printingMarketSnapshotSchema),
+      })
+      .strict(),
+    meta: z
+      .object({
+        deckStats: recordOf(metaDeckStatsV2Schema),
+        matchups: recordOf(matchupStatsSchema),
+      })
+      .strict(),
+    metrics: z
+      .object({
+        activePlayers: nonNegativeIntegerSchema,
+        previousActivePlayers: nonNegativeIntegerSchema,
+        hype: metricNumberSchema,
+        collectorHeat: metricNumberSchema,
+        metaHealth: metricNumberSchema,
+        brandTrust: metricNumberSchema,
+        sentiment: metricNumberSchema,
+        accessibility: metricNumberSchema,
+        lifecycle: lifecycleStateSchema,
+        lifecycleDeltas: lifecycleDeltasSchema,
+        acquisitionToChurnRatio: nonNegativeNumberSchema,
+        retentionRate: unitNumberSchema,
+        activePlayerTrend: finiteNumberSchema,
+        consecutiveDeclineDays: nonNegativeIntegerSchema,
+        consecutiveLowActivityDays: nonNegativeIntegerSchema,
+        ecosystemRisk: z.enum([
+          "STABLE",
+          "STRAINED",
+          "DECLINING",
+          "DEATH_SPIRAL",
+          "TERMINAL",
+        ]),
+      })
+      .strict(),
+  })
+  .strict()
+  .superRefine(validateWorldReferences);
