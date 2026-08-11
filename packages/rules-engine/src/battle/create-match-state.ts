@@ -7,6 +7,7 @@ import {
   type DeckDefinition,
 } from "@tcgtycoon/domain";
 import { DeterministicRng, deriveSeed } from "../rng/deterministic-rng";
+import { validateCardDefinition } from "../validation/card-validation";
 import { validateDeck } from "../validation/deck-validation";
 import { drawCard } from "./turn";
 import type {
@@ -77,6 +78,52 @@ function assertLegalDeck(
   }
 }
 
+function assertLegalCardPool(
+  cards: ReadonlyMap<CardId, CardDefinition>,
+): void {
+  for (const [mapCardId, definition] of cards) {
+    const validation = validateCardDefinition(definition);
+    if (!validation.valid) {
+      const details = validation.issues
+        .map((issue) => issue.message)
+        .join("; ");
+      throw new RangeError(
+        `Invalid card definition ${definition.id}: ${details}`,
+      );
+    }
+    if (mapCardId !== definition.id) {
+      throw new RangeError(
+        `Card map key ${mapCardId} does not match definition ${definition.id}.`,
+      );
+    }
+  }
+
+  for (const definition of cards.values()) {
+    for (const trigger of definition.triggers) {
+      for (const effect of trigger.effects) {
+        if (effect.type === "CREATE_CARD" && !cards.has(effect.cardId)) {
+          throw new RangeError(
+            `Card ${definition.id} references missing card definition ${effect.cardId}.`,
+          );
+        }
+        if (effect.type === "SUMMON") {
+          const tokenDefinition = cards.get(effect.tokenCardId);
+          if (tokenDefinition === undefined) {
+            throw new RangeError(
+              `Card ${definition.id} references missing card definition ${effect.tokenCardId}.`,
+            );
+          }
+          if (tokenDefinition.type !== "UNIT") {
+            throw new RangeError(
+              `Card ${definition.id} cannot summon non-Unit card ${effect.tokenCardId}.`,
+            );
+          }
+        }
+      }
+    }
+  }
+}
+
 function createCoin(state: MatchState): CardInstance {
   const sequence = state.nextInstanceSequence++;
   return {
@@ -86,6 +133,7 @@ function createCoin(state: MatchState): CardInstance {
 }
 
 export function createMatchState(input: CreateMatchStateInput): MatchState {
+  assertLegalCardPool(input.cards);
   const cardDefinitions = [...input.cards.values()];
   assertLegalDeck(input.deckA, cardDefinitions);
   assertLegalDeck(input.deckB, cardDefinitions);

@@ -131,4 +131,48 @@ describe("validateDeck", () => {
       ]),
     });
   });
+
+  it("rejects erased runtime counts outside the 1-or-2 contract", () => {
+    const firstCardId = legalDeck.cards[0]!.cardId;
+    const deck = {
+      ...legalDeck,
+      cards: [
+        ...legalDeck.cards,
+        { cardId: firstCardId, count: 2 },
+        { cardId: firstCardId, count: -2 },
+      ],
+    } as unknown as DeckDefinition;
+
+    expect(validateDeck(deck, cardPool)).toMatchObject({
+      valid: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({
+          code: "INVALID_COUNT",
+          entityId: firstCardId,
+        }),
+      ]),
+    });
+  });
+
+  it("rejects Neutral as the deck's chosen faction", () => {
+    const neutralCards = Array.from({ length: 10 }, (_, index) =>
+      makeUnit(`card-neutral-${index + 1}`, neutralFactionId),
+    );
+    const deck: DeckDefinition = {
+      id: deckId("deck-neutral-invalid"),
+      name: "Neutral Invalid",
+      factionId: neutralFactionId,
+      cards: neutralCards.map((card) => ({ cardId: card.id, count: 2 })),
+    };
+
+    expect(validateDeck(deck, neutralCards)).toMatchObject({
+      valid: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({
+          code: "INVALID_DECK_FACTION",
+          entityId: deck.id,
+        }),
+      ]),
+    });
+  });
 });

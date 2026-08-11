@@ -239,4 +239,60 @@ describe("match setup and turns", () => {
       ),
     ).toBe(false);
   });
+
+  it("rejects invalid Card DSL before creating match state", () => {
+    const invalidCard = {
+      ...cardDefinitions[0]!,
+      cost: -1,
+    } as CardDefinition;
+    const invalidCards = new Map(
+      cardDefinitions.map((card) => [
+        card.id,
+        card.id === invalidCard.id ? invalidCard : card,
+      ]),
+    );
+
+    expect(() =>
+      createMatchState({
+        seed: 89012n,
+        deckA: fixtureDeck,
+        deckB: fixtureDeck,
+        cards: invalidCards,
+      }),
+    ).toThrow(/invalid card definition/i);
+  });
+
+  it("rejects missing Card DSL references before creating match state", () => {
+    const invalidCard: CardDefinition = {
+      ...cardDefinitions[0]!,
+      triggers: [
+        {
+          trigger: "ON_PLAY",
+          conditions: [],
+          effects: [
+            {
+              type: "SUMMON",
+              tokenCardId: cardId("card-missing-token"),
+              amount: 1,
+            },
+          ],
+        },
+      ],
+    };
+    const invalidCards = new Map(
+      cardDefinitions.map((card) => [
+        card.id,
+        card.id === invalidCard.id ? invalidCard : card,
+      ]),
+    );
+
+    expect(() =>
+      createMatchState({
+        seed: 90123n,
+        deckA: fixtureDeck,
+        deckB: fixtureDeck,
+        cards: invalidCards,
+      }),
+    ).toThrow(/missing card definition/i);
+  });
 });
