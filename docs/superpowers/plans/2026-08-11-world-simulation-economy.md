@@ -250,21 +250,21 @@ export function migrateSave(input: unknown): SaveEnvelope;
 export function canonicalStringify(value: unknown): string;
 ```
 
-- [ ] **Step 1: Write failing migration and round-trip tests**
+- [x] **Step 1: Write failing migration and round-trip tests**
 
 Test a literal v1 fixture and assert `migrateSave` returns the current schema. Test `MemorySaveRepository.save/load` returns a deep-equal clone rather than the same object reference.
 
-- [ ] **Step 2: Run tests and confirm missing implementation**
+- [x] **Step 2: Run tests and confirm missing implementation**
 
 ```bash
 pnpm vitest run packages/persistence
 ```
 
-- [ ] **Step 3: Implement canonical JSON with sorted object keys**
+- [x] **Step 3: Implement canonical JSON with sorted object keys**
 
 Arrays preserve order; object keys sort lexicographically. Throw on `undefined`, `NaN` and Infinity in canonical persisted state.
 
-- [ ] **Step 4: Implement v1 migration pipeline**
+- [x] **Step 4: Implement v1 migration pipeline**
 
 Use explicit sequential structure even though only v1 exists:
 
@@ -279,14 +279,14 @@ export function migrateSave(input: unknown): SaveEnvelope {
 
 Later versions must append `v1 -> v2`, not replace the pipeline.
 
-- [ ] **Step 5: Run persistence tests and typecheck**
+- [x] **Step 5: Run persistence tests and typecheck**
 
 ```bash
 pnpm vitest run packages/persistence
 pnpm typecheck
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/domain/src/saves.ts packages/persistence
