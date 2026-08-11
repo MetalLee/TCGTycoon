@@ -471,7 +471,7 @@ git add packages/balance/src/economy-config.ts packages/sim-core/src/products pa
 - Consumes: product inventory, player budgets/preferences, World metrics inputs.
 - Produces: `completePrintRunsDueToday(world)`, `generatePrimaryDemand(world, rng)`, `resolvePrimarySales(world, demand, rng)`, `appendCashEntry(state, entry)`, daily publisher revenue and product-opening requests.
 
-- [ ] **Step 1: Write failing inventory/sales tests**
+- [x] **Step 1: Write failing inventory/sales tests**
 
 Cover:
 
@@ -481,13 +481,13 @@ Cover:
 - A sale reduces inventory and buyer budget and queues the matching product opening.
 - Negative sale quantity is rejected.
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/primary-market.test.ts packages/sim-core/src/economy/cash-ledger.test.ts
 ```
 
-- [ ] **Step 3: Implement Cash Ledger as source of cash changes**
+- [x] **Step 3: Implement Cash Ledger as source of cash changes**
 
 ```ts
 export type CashLedgerEntry = {
@@ -500,11 +500,11 @@ export type CashLedgerEntry = {
 
 `cash.balance` is updated only by applying ledger entries.
 
-- [ ] **Step 4: Implement deterministic primary-market resolution**
+- [x] **Step 4: Implement deterministic primary-market resolution**
 
 Demand uses player/cohort budget, product freshness placeholder input, competitive need, collector interest and price sensitivity. Do not directly modify Active Players or Hype here.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/primary-market.test.ts packages/sim-core/src/economy/cash-ledger.test.ts

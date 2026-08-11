@@ -11,6 +11,11 @@ export const ECONOMY_CONFIG = {
   starter: {
     cardsPerProduct: 20,
   },
+  primaryMarket: {
+    publisherShare: 0.65,
+    productFreshnessPlaceholder: 1,
+    maxUnitsPerPlayerProductDemand: 1,
+  },
   printingVariantSuffixes: {
     normal: "-normal",
     foil: "-foil",
