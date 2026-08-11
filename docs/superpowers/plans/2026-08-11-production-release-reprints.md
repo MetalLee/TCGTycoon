@@ -237,7 +237,7 @@ git commit -m "feat: reprint cards without changing rules"
 - Consumes: release history, recent cohort spend/budgets, product similarity tags if available.
 - Produces: `calculateSetFreshness`, `calculateProductFatigue`, demand modifiers used by Primary Market.
 
-- [ ] **Step 1: Write failing freshness tests**
+- [x] **Step 1: Write failing freshness tests**
 
 Assert:
 
@@ -245,19 +245,19 @@ Assert:
 - Freshness decays with age.
 - Marketing attention may modify demand/exposure but cannot set an old set back to launch freshness.
 
-- [ ] **Step 2: Write rapid-cadence fatigue scenario**
+- [x] **Step 2: Write rapid-cadence fatigue scenario**
 
 Compare otherwise equal worlds with expansions every ~15 days versus a moderate cadence. Rapid world should show higher recent player spend pressure/fatigue and lower later-product purchase propensity, not a direct arbitrary Trust subtraction.
 
-- [ ] **Step 3: Implement lifecycle curves in BalanceConfig**
+- [x] **Step 3: Implement lifecycle curves in BalanceConfig**
 
 Keep functions pure and testable. Product Fatigue responds to recent release frequency and spending capacity; it does not mutate products.
 
-- [ ] **Step 4: Integrate into product demand**
+- [x] **Step 4: Integrate into product demand**
 
 Primary demand reads freshness/fatigue as inputs alongside Need/Interest/Affordability/Exposure.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/product-lifecycle.test.ts tests/scenarios/product-cadence.test.ts

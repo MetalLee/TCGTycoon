@@ -1,6 +1,7 @@
 import {
   ECONOMY_CONFIG,
   POPULATION_CONFIG,
+  PRODUCT_LIFECYCLE_CONFIG,
   PRODUCTION_CONFIG,
   RELEASE_CONFIG,
 } from "@tcgtycoon/balance";
@@ -240,6 +241,7 @@ export function createBalancedWorld(seed = "balanced-world"): WorldScenario {
       dailyOperatingCost: 1,
       inventoryHoldingCostPerUnit: 0,
       production: PRODUCTION_CONFIG,
+      productLifecycle: PRODUCT_LIFECYCLE_CONFIG,
       release: RELEASE_CONFIG,
     },
     botConfig: {

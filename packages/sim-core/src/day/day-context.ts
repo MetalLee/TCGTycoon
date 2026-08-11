@@ -1,6 +1,8 @@
 import {
+  PRODUCT_LIFECYCLE_CONFIG,
   PRODUCTION_CONFIG,
   RELEASE_CONFIG,
+  type ProductLifecycleConfig,
   type ProductionConfig,
   type ReleaseConfig,
 } from "@tcgtycoon/balance";
@@ -12,6 +14,7 @@ export type BalanceConfig = {
   dailyOperatingCost: number;
   inventoryHoldingCostPerUnit: number;
   production: ProductionConfig;
+  productLifecycle: ProductLifecycleConfig;
   release: ReleaseConfig;
 };
 
@@ -20,6 +23,7 @@ export const DEFAULT_BALANCE_CONFIG: BalanceConfig = {
   dailyOperatingCost: 0,
   inventoryHoldingCostPerUnit: 0,
   production: PRODUCTION_CONFIG,
+  productLifecycle: PRODUCT_LIFECYCLE_CONFIG,
   release: RELEASE_CONFIG,
 };
 

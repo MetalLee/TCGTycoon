@@ -1,4 +1,8 @@
-import { ECONOMY_CONFIG } from "@tcgtycoon/balance";
+import {
+  ECONOMY_CONFIG,
+  PRODUCT_LIFECYCLE_CONFIG,
+  type ProductLifecycleConfig,
+} from "@tcgtycoon/balance";
 import {
   type PersistentPlayer,
   type PlayerId,
@@ -6,10 +10,15 @@ import {
   type PrintRunId,
   type PrintingId,
   type ProductId,
+  type ProductSku,
   type WorldState,
 } from "@tcgtycoon/domain";
 import type { DeterministicRng } from "@tcgtycoon/rules-engine";
 import { appendCashEntry, toCurrency } from "../economy/cash-ledger";
+import {
+  calculateProductFatigue,
+  calculateSetFreshness,
+} from "./product-lifecycle";
 import { advancePrintRuns } from "./production";
 
 export type CompletedPrintRun = {
@@ -107,18 +116,21 @@ export function getSellableProductInventory(
 
 function demandProbability(
   player: PersistentPlayer,
-  kind: "BOOSTER" | "STARTER",
-  msrp: number,
+  product: ProductSku,
+  exposure: number,
+  freshness: number,
+  fatigue: number,
+  config: ProductLifecycleConfig,
 ): number {
-  if (player.activity === "CHURNED" || player.tcgWallet < msrp) {
+  if (player.activity === "CHURNED" || player.tcgWallet < product.msrp) {
     return 0;
   }
 
   const pricePressure =
-    player.tcgWallet === 0 ? 1 : Math.min(1, msrp / player.tcgWallet);
+    player.tcgWallet === 0 ? 1 : Math.min(1, product.msrp / player.tcgWallet);
   const priceFit = 1 - player.motivation.budgetSensitivity * pricePressure;
   const motivationFit =
-    kind === "BOOSTER"
+    product.kind === "BOOSTER"
       ? (player.motivation.competitive +
           player.motivation.collector +
           player.motivation.brewer) /
@@ -127,22 +139,58 @@ function demandProbability(
           player.motivation.budgetSensitivity +
           (player.activity === "NEW" ? 1 : 0)) /
         3;
-
+  const baseProbability =
+    motivationFit * config.demand.motivationWeight +
+    priceFit * config.demand.affordabilityWeight +
+    exposure * config.demand.exposureWeight +
+    freshness * config.demand.freshnessWeight;
   return Math.min(
     1,
     Math.max(
       0,
-      (motivationFit +
-        priceFit +
-        ECONOMY_CONFIG.primaryMarket.productFreshnessPlaceholder) /
-        3,
+      baseProbability * (1 - fatigue * config.demand.fatiguePenaltyWeight),
     ),
+  );
+}
+
+function releaseDays(world: WorldState): number[] {
+  return world.history.events
+    .filter((event) => event.type === "PRODUCT_RELEASED")
+    .map((event) => event.day);
+}
+
+function recentAveragePlayerSpend(
+  world: WorldState,
+  config: ProductLifecycleConfig,
+): number {
+  const earliestRecentDay = world.day - config.fatigue.lookbackDays;
+  const primaryRevenue = world.cash.ledger
+    .filter(
+      (entry) =>
+        entry.day > earliestRecentDay &&
+        entry.day <= world.day &&
+        (entry.category === "BOOSTER_REVENUE" ||
+          entry.category === "STARTER_REVENUE") &&
+        entry.amount > 0,
+    )
+    .reduce((total, entry) => total + entry.amount, 0);
+  const activePlayerCount = Object.values(world.players).filter(
+    (player) => player.activity !== "CHURNED",
+  ).length;
+  if (activePlayerCount === 0) {
+    return 0;
+  }
+  return (
+    primaryRevenue /
+    ECONOMY_CONFIG.primaryMarket.publisherShare /
+    activePlayerCount
   );
 }
 
 export function generatePrimaryDemand(
   world: WorldState,
   rng: DeterministicRng,
+  config: ProductLifecycleConfig = PRODUCT_LIFECYCLE_CONFIG,
 ): PrimaryDemand[] {
   const players = Object.values(world.players).sort((left, right) =>
     compareIds(left.id, right.id),
@@ -151,10 +199,42 @@ export function generatePrimaryDemand(
     .filter((product) => product.releaseStatus === "LIVE")
     .sort((left, right) => compareIds(left.id, right.id));
   const demand: PrimaryDemand[] = [];
+  const exposure = Math.min(1, Math.max(0, world.metrics.hype / 100));
+  const recentReleases = releaseDays(world);
+  const recentSpend = recentAveragePlayerSpend(world, config);
+  const freshnessByProduct = new Map(
+    products.map((product) => [
+      product.id,
+      calculateSetFreshness(
+        {
+          currentDay: world.day,
+          releaseDay: product.releasedDay ?? world.day,
+          marketingAttention: exposure,
+        },
+        config,
+      ),
+    ]),
+  );
 
   for (const player of players) {
+    const fatigue = calculateProductFatigue(
+      {
+        currentDay: world.day,
+        releaseDays: recentReleases,
+        recentSpend,
+        spendingCapacity: player.tcgWallet + recentSpend,
+      },
+      config,
+    );
     for (const product of products) {
-      const probability = demandProbability(player, product.kind, product.msrp);
+      const probability = demandProbability(
+        player,
+        product,
+        exposure,
+        freshnessByProduct.get(product.id)!,
+        fatigue,
+        config,
+      );
       if (rng.nextFloat() < probability) {
         demand.push({
           buyerId: player.id,

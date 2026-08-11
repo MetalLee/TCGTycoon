@@ -13,7 +13,6 @@ export const ECONOMY_CONFIG = {
   },
   primaryMarket: {
     publisherShare: 0.65,
-    productFreshnessPlaceholder: 1,
     maxUnitsPerPlayerProductDemand: 1,
   },
   secondaryMarket: {

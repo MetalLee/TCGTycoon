@@ -311,6 +311,7 @@ function phase03PrimarySalesAndProductOpening(context: DayContext): void {
   const demand = generatePrimaryDemand(
     context.state,
     phaseRng(context.state, "primary-demand"),
+    context.config.productLifecycle,
   );
   context.sales = resolvePrimarySales(
     context.state,

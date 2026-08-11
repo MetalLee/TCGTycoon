@@ -20,6 +20,7 @@ export * from "./population/create-population";
 export * from "./population/lifecycle";
 export * from "./products/open-product";
 export * from "./products/primary-market";
+export * from "./products/product-lifecycle";
 export * from "./products/production";
 export * from "./products/releases";
 export * from "./products/reprints";
