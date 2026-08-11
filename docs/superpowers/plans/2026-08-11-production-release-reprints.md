@@ -57,7 +57,7 @@ tests/scenarios/*
 - Consumes: finalized ProductSku/Expansion, Cash Ledger, scheduler.
 - Produces: `quotePrintRun`, `orderPrintRun`, `advancePrintRuns`, `completePrintRuns`, First Edition/Unlimited edition assignment.
 
-- [ ] **Step 1: Write failing production tests**
+- [x] **Step 1: Write failing production tests**
 
 Required cases:
 
@@ -70,13 +70,13 @@ it("later product reprint uses UNLIMITED/REPRINT identity without increasing Fir
 it("larger quantity has lower unit cost but larger total cash commitment", () => {});
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/production.test.ts
 ```
 
-- [ ] **Step 3: Implement production quote**
+- [x] **Step 3: Implement production quote**
 
 Use a BalanceConfig function with explicit monotonic quantity tiers/curve. Example starting structure:
 
@@ -97,7 +97,7 @@ export function quotePrintRun(
 
 No hard-coded “free inventory.” `orderPrintRun` appends a negative `PRINTING` CashLedger entry immediately.
 
-- [ ] **Step 4: Implement edition identity**
+- [x] **Step 4: Implement edition identity**
 
 `Printing` includes:
 
@@ -109,7 +109,7 @@ sourceExpansionId: ExpansionId;
 
 First Edition eligibility is determined by product's first production run only and is persistent historical state.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/production.test.ts

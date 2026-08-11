@@ -54,6 +54,7 @@ function productPrintings(
   world: WorldState,
   productId: ProductId,
   expectedKind: "BOOSTER" | "STARTER",
+  eligiblePrintingIds?: readonly PrintingId[],
 ): Printing[] {
   const product = world.products[productId];
   if (product === undefined) {
@@ -63,8 +64,25 @@ function productPrintings(
     throw new Error(`Product ${productId} is not a ${expectedKind}`);
   }
 
+  if (eligiblePrintingIds !== undefined) {
+    return eligiblePrintingIds
+      .map((id) => {
+        const printing = world.printings[id];
+        if (printing === undefined) {
+          throw new Error(`Product references unknown Printing: ${id}`);
+        }
+        if (printing.sourceProductId !== productId) {
+          throw new Error(
+            `Printing ${id} does not belong to product ${productId}`,
+          );
+        }
+        return printing;
+      })
+      .sort((left, right) => compareIds(left.id, right.id));
+  }
+
   return Object.values(world.printings)
-    .filter((printing) => printing.expansionId === product.expansionId)
+    .filter((printing) => printing.sourceProductId === product.id)
     .sort((left, right) => compareIds(left.id, right.id));
 }
 
@@ -153,8 +171,14 @@ export function openBooster(
   productId: ProductId,
   owner: ProductOwner,
   rng: DeterministicRng,
+  eligiblePrintingIds?: readonly PrintingId[],
 ): ProductOpenResult {
-  const printings = productPrintings(world, productId, "BOOSTER");
+  const printings = productPrintings(
+    world,
+    productId,
+    "BOOSTER",
+    eligiblePrintingIds,
+  );
   const normalPrintings = printings.filter(
     (printing) => printingVariant(printing) === "NORMAL",
   );
@@ -206,8 +230,14 @@ export function openStarter(
   productId: ProductId,
   owner: ProductOwner,
   listedPrintingIds: readonly PrintingId[],
+  eligiblePrintingIds?: readonly PrintingId[],
 ): ProductOpenResult {
-  const printings = productPrintings(world, productId, "STARTER");
+  const printings = productPrintings(
+    world,
+    productId,
+    "STARTER",
+    eligiblePrintingIds,
+  );
   if (listedPrintingIds.length !== ECONOMY_CONFIG.starter.cardsPerProduct) {
     throw new Error("Starter products must list exactly 20 physical Printings");
   }
@@ -216,7 +246,17 @@ export function openStarter(
     printings.map((printing) => [printing.id, printing] as const),
   );
   const listedPrintings = listedPrintingIds.map((id) => {
-    const printing = includedById.get(id);
+    const listed = world.printings[id];
+    const printing =
+      eligiblePrintingIds === undefined
+        ? includedById.get(id)
+        : listed === undefined
+          ? undefined
+          : printings.find(
+              (candidate) =>
+                candidate.cardId === listed.cardId &&
+                printingVariant(candidate) === printingVariant(listed),
+            );
     if (printing === undefined) {
       throw new Error(
         `Starter lists a Printing outside its product set: ${id}`,

@@ -10,7 +10,7 @@ import {
 import type { WorldState } from "./world";
 
 const createEmptyWorldFixture = (): WorldState => ({
-  schemaVersion: 2,
+  schemaVersion: 3,
   simulationVersion: "2",
   ruleVersion: "1",
   balanceVersion: "1",
@@ -42,6 +42,7 @@ const createEmptyWorldFixture = (): WorldState => ({
       name: "Launch Booster",
       kind: "BOOSTER",
       msrp: 5,
+      cardIds: [cardId("card-fire-cub")],
     },
   },
   printRuns: {},

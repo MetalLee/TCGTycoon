@@ -53,10 +53,13 @@ function createDayWorld(): WorldState {
     id: printingId(`printing-${card.id}-normal`),
     cardId: card.id,
     expansionId: launchExpansionId,
+    edition: "FIRST_EDITION" as const,
+    sourceProductId: boosterProductId,
+    sourceExpansionId: launchExpansionId,
   }));
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -80,14 +83,21 @@ function createDayWorld(): WorldState {
         name: "Day Test Booster",
         kind: "BOOSTER",
         msrp: 5,
+        cardIds: cards.map((card) => card.id),
       },
     },
     printRuns: {
       [duePrintRunId]: {
         id: duePrintRunId,
         productId: boosterProductId,
-        quantity: 1,
+        orderedQuantity: 1,
+        quantity: 0,
+        orderedDay: 0,
         completionDay: 1,
+        unitCost: 0,
+        totalCost: 0,
+        status: "PRINTING",
+        printingIds: [],
       },
     },
     players: {
@@ -142,6 +152,40 @@ function deepFreeze(value: unknown): void {
 }
 
 describe("simulateDay", () => {
+  it("orders Print Runs through paid non-cancellable production", () => {
+    const world = createDayWorld();
+    world.printRuns = {};
+    world.cash = { balance: 1_000, ledger: [] };
+
+    const result = simulateDay(
+      world,
+      [
+        {
+          type: "ORDER_PRINT_RUN",
+          productId: boosterProductId,
+          quantity: 10,
+        },
+      ],
+      DEFAULT_BALANCE_CONFIG,
+    );
+    const orderedRun = Object.values(result.nextState.printRuns)[0]!;
+
+    expect(orderedRun).toMatchObject({
+      productId: boosterProductId,
+      orderedQuantity: 10,
+      quantity: 0,
+      status: "PRINTING",
+    });
+    expect(result.nextState.cash.balance).toBeLessThan(1_000);
+    expect(result.nextState.cash.ledger).toContainEqual(
+      expect.objectContaining({
+        category: "PRINTING",
+        sourceId: orderedRun.id,
+        amount: expect.any(Number),
+      }),
+    );
+  });
+
   it("makes a Print Run completing today available for sales and opening today", () => {
     const world = createDayWorld();
 

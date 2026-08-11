@@ -3,7 +3,6 @@ import type { PublisherCommand, WorldState } from "@tcgtycoon/domain";
 export type BasicPublisherBotConfig = {
   stockThreshold: number;
   reprintQuantity: number;
-  leadTimeDays: number;
   minimumCashReserve: number;
   estimatedPrintCostPerUnit: number;
 };
@@ -11,7 +10,6 @@ export type BasicPublisherBotConfig = {
 export const DEFAULT_BASIC_PUBLISHER_BOT_CONFIG: BasicPublisherBotConfig = {
   stockThreshold: 8,
   reprintQuantity: 12,
-  leadTimeDays: 2,
   minimumCashReserve: 1_000,
   estimatedPrintCostPerUnit: 2,
 };
@@ -39,15 +37,17 @@ function validateConfig(config: BasicPublisherBotConfig): void {
   ) {
     throw new RangeError("reprintQuantity must be a positive integer.");
   }
-  if (!Number.isInteger(config.leadTimeDays) || config.leadTimeDays < 0) {
-    throw new RangeError("leadTimeDays must be a non-negative integer.");
-  }
 }
 
 function projectedStock(world: WorldState, productId: string): number {
   return Object.values(world.printRuns)
     .filter((run) => run.productId === productId)
-    .reduce((total, run) => total + run.quantity, 0);
+    .reduce(
+      (total, run) =>
+        total +
+        (run.status === "PRINTING" ? run.orderedQuantity : run.quantity),
+      0,
+    );
 }
 
 export class BasicPublisherBot {
@@ -84,7 +84,6 @@ export class BasicPublisherBot {
         type: "ORDER_PRINT_RUN",
         productId: product.id,
         quantity: this.config.reprintQuantity,
-        completionDay: world.day + this.config.leadTimeDays,
       });
       availableCash -= estimatedOrderCost;
     }

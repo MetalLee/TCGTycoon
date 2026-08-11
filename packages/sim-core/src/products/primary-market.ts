@@ -4,11 +4,13 @@ import {
   type PlayerId,
   type PrintRun,
   type PrintRunId,
+  type PrintingId,
   type ProductId,
   type WorldState,
 } from "@tcgtycoon/domain";
 import type { DeterministicRng } from "@tcgtycoon/rules-engine";
 import { appendCashEntry, toCurrency } from "../economy/cash-ledger";
+import { advancePrintRuns } from "./production";
 
 export type CompletedPrintRun = {
   printRunId: PrintRunId;
@@ -22,7 +24,10 @@ export type PrimaryDemand = {
   quantity: number;
 };
 
-export type ProductOpeningRequest = PrimaryDemand;
+export type ProductOpeningRequest = PrimaryDemand & {
+  printRunId: PrintRunId;
+  printingIds: PrintingId[];
+};
 
 export type PrimarySalesResult = {
   unitsSold: number;
@@ -39,12 +44,8 @@ function compareBigInts(left: bigint, right: bigint): number {
 }
 
 function productRuns(world: WorldState, productId: ProductId): PrintRun[] {
-  // Until the production phase adds richer warehouse state, quantity on a
-  // completed PrintRun is its remaining sellable product inventory.
   return Object.values(world.printRuns)
-    .filter(
-      (run) => run.productId === productId && run.completionDay <= world.day,
-    )
+    .filter((run) => run.productId === productId && run.status === "COMPLETED")
     .sort(
       (left, right) =>
         left.completionDay - right.completionDay ||
@@ -61,17 +62,15 @@ function validatePrintRunQuantity(run: PrintRun): void {
 export function completePrintRunsDueToday(
   world: WorldState,
 ): CompletedPrintRun[] {
-  return Object.values(world.printRuns)
-    .filter((run) => run.completionDay === world.day)
-    .sort((left, right) => compareIds(left.id, right.id))
-    .map((run) => {
-      validatePrintRunQuantity(run);
-      return {
-        printRunId: run.id,
-        productId: run.productId,
-        quantity: run.quantity,
-      };
-    });
+  return advancePrintRuns(world, world.day).map((id) => {
+    const run = world.printRuns[id]!;
+    validatePrintRunQuantity(run);
+    return {
+      printRunId: run.id,
+      productId: run.productId,
+      quantity: run.quantity,
+    };
+  });
 }
 
 export function getAvailableProductInventory(
@@ -202,22 +201,31 @@ function orderedDemand(
     .map(({ request }) => request);
 }
 
+type InventoryAllocation = {
+  run: PrintRun;
+  quantity: number;
+};
+
 function removeInventory(
   world: WorldState,
   productId: ProductId,
   requestedQuantity: number,
-): number {
+): InventoryAllocation[] {
   let remaining = requestedQuantity;
+  const allocations: InventoryAllocation[] = [];
   for (const run of productRuns(world, productId)) {
     validatePrintRunQuantity(run);
     const quantity = Math.min(run.quantity, remaining);
     run.quantity -= quantity;
     remaining -= quantity;
+    if (quantity > 0) {
+      allocations.push({ run, quantity });
+    }
     if (remaining === 0) {
       break;
     }
   }
-  return requestedQuantity - remaining;
+  return allocations;
 }
 
 export function resolvePrimarySales(
@@ -238,7 +246,11 @@ export function resolvePrimarySales(
         ? request.quantity
         : Math.floor(buyer.tcgWallet / product.msrp);
     const quantity = Math.min(request.quantity, affordableQuantity);
-    const sold = removeInventory(world, product.id, quantity);
+    const allocations = removeInventory(world, product.id, quantity);
+    const sold = allocations.reduce(
+      (total, allocation) => total + allocation.quantity,
+      0,
+    );
     if (sold === 0) {
       continue;
     }
@@ -255,11 +267,15 @@ export function resolvePrimarySales(
       sourceId: product.id,
       amount: publisherRevenue,
     });
-    openingRequests.push({
-      buyerId: buyer.id,
-      productId: product.id,
-      quantity: sold,
-    });
+    for (const allocation of allocations) {
+      openingRequests.push({
+        buyerId: buyer.id,
+        productId: product.id,
+        quantity: allocation.quantity,
+        printRunId: allocation.run.id,
+        printingIds: [...allocation.run.printingIds],
+      });
+    }
     unitsSold += sold;
     revenue = toCurrency(revenue + publisherRevenue);
   }

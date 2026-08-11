@@ -1,6 +1,8 @@
 import { ECONOMY_CONFIG } from "@tcgtycoon/balance";
 import {
+  cardId,
   expansionId,
+  factionId,
   printRunId,
   productId,
   type WorldState,
@@ -22,14 +24,27 @@ const boosterPrintRunId = printRunId("print-run-primary-booster");
 function createPrimaryMarketWorld(): WorldState {
   const population = createInitialPopulation("primary-market-test");
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
     worldSeed: "primary-market-test",
     day: 1,
     status: "LIVE",
-    cards: {},
+    cards: {
+      "card-primary": {
+        id: cardId("card-primary"),
+        name: "Primary Card",
+        type: "UNIT",
+        factionId: factionId("fire"),
+        rarity: "COMMON",
+        cost: 1,
+        attack: 1,
+        health: 1,
+        keywords: [],
+        triggers: [],
+      },
+    },
     printings: {},
     expansions: {
       "set-primary": {
@@ -44,14 +59,21 @@ function createPrimaryMarketWorld(): WorldState {
         name: "Primary Market Booster",
         kind: "BOOSTER",
         msrp: 10,
+        cardIds: [cardId("card-primary")],
       },
     },
     printRuns: {
       [boosterPrintRunId]: {
         id: boosterPrintRunId,
         productId: boosterProductId,
-        quantity: 5,
+        orderedQuantity: 5,
+        quantity: 0,
+        orderedDay: 0,
         completionDay: 2,
+        unitCost: 0,
+        totalCost: 0,
+        status: "PRINTING",
+        printingIds: [],
       },
     },
     players: population.players,
@@ -114,6 +136,7 @@ describe("primary product demand and sales", () => {
   it("caps sales at inventory, charges the buyer and queues opening requests", () => {
     const world = createPrimaryMarketWorld();
     world.day = 2;
+    completePrintRunsDueToday(world);
     const buyer = world.players["player-0001"]!;
     buyer.tcgWallet = 100;
 
@@ -139,7 +162,13 @@ describe("primary product demand and sales", () => {
       },
     ]);
     expect(result.openingRequests).toEqual([
-      { buyerId: buyer.id, productId: boosterProductId, quantity: 5 },
+      {
+        buyerId: buyer.id,
+        productId: boosterProductId,
+        quantity: 5,
+        printRunId: boosterPrintRunId,
+        printingIds: world.printRuns[boosterPrintRunId]!.printingIds,
+      },
     ]);
   });
 

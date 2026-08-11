@@ -51,6 +51,7 @@ import {
 } from "../metrics/world-metrics";
 import { processLifecycleDay } from "../population/lifecycle";
 import { openBooster, openStarter } from "../products/open-product";
+import { orderPrintRun } from "../products/production";
 import {
   completePrintRunsDueToday,
   generatePrimaryDemand,
@@ -151,34 +152,20 @@ function applyPublisherCommand(
       break;
     }
     case "ORDER_PRINT_RUN": {
-      if (context.state.products[command.productId] === undefined) {
-        throw new Error(`Unknown product ${command.productId}.`);
-      }
-      if (!Number.isInteger(command.quantity) || command.quantity <= 0) {
-        throw new RangeError("Print Run quantity must be a positive integer.");
-      }
-      if (
-        !Number.isInteger(command.completionDay) ||
-        command.completionDay < context.previousDay
-      ) {
-        throw new RangeError(
-          "Print Run completion day must be today or a future integer day.",
-        );
-      }
       const id = printRunId(
         `print-run-${context.previousDay}-${command.productId}-${String(
           index + 1,
         ).padStart(4, "0")}`,
       );
-      if (context.state.printRuns[id] !== undefined) {
-        throw new Error(`Print Run ID collision: ${id}.`);
-      }
-      context.state.printRuns[id] = {
-        id,
-        productId: command.productId,
-        quantity: command.quantity,
-        completionDay: command.completionDay,
-      };
+      orderPrintRun(
+        context.state,
+        {
+          id,
+          productId: command.productId,
+          quantity: command.quantity,
+        },
+        context.config.production,
+      );
       addNotableEvent(context, "PRINT_RUN_ORDERED");
       break;
     }
@@ -259,6 +246,7 @@ function openPurchasedProducts(context: DayContext): void {
           product.id,
           request.buyerId,
           phaseRng(context.state, "product-opening", openingSequence),
+          request.printingIds,
         );
       } else {
         const contents = context.config.starterContents[product.id];
@@ -267,7 +255,13 @@ function openPurchasedProducts(context: DayContext): void {
             `Starter product ${product.id} has no configured physical contents.`,
           );
         }
-        openStarter(context.state, product.id, request.buyerId, contents);
+        openStarter(
+          context.state,
+          product.id,
+          request.buyerId,
+          contents,
+          request.printingIds,
+        );
       }
       openingSequence += 1;
       context.productsOpened += 1;
@@ -737,8 +731,7 @@ function phase11ApplyCashExpenses(context: DayContext): void {
     });
   }
   const inventoryUnits = Object.values(context.state.printRuns).reduce(
-    (total, run) =>
-      run.completionDay <= context.previousDay ? total + run.quantity : total,
+    (total, run) => (run.status === "COMPLETED" ? total + run.quantity : total),
     0,
   );
   const holdingCost = toCurrency(

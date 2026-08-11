@@ -3,6 +3,7 @@ import {
   expansionId,
   factionId,
   printingId,
+  productId,
   type CardDefinition,
   type CardId,
   type PersistentPlayer,
@@ -53,11 +54,15 @@ function createDeckBuilderWorld(): {
   const cards = [...fireCards, ...machineCards, ...neutralCards, unownedCard];
   const ownedCards = cards.filter((card) => card.id !== unownedCard.id);
   const population = createInitialPopulation("deck-builder-test");
+  const sourceProductId = productId("product-deck-builder");
   const player = population.players["player-0001"]!;
   const printings = ownedCards.map((card) => ({
     id: printingId(`printing-${card.id}-normal`),
     cardId: card.id,
     expansionId: expansionId("set-deck-builder"),
+    edition: "FIRST_EDITION" as const,
+    sourceProductId,
+    sourceExpansionId: expansionId("set-deck-builder"),
   }));
   for (const printing of printings) {
     player.collection[printing.id] = 2;
@@ -67,7 +72,7 @@ function createDeckBuilderWorld(): {
     player,
     unownedCardId: unownedCard.id,
     world: {
-      schemaVersion: 2,
+      schemaVersion: 3,
       simulationVersion: "1",
       ruleVersion: "1",
       balanceVersion: "1",
@@ -84,7 +89,16 @@ function createDeckBuilderWorld(): {
           name: "Deck Builder Set",
         },
       },
-      products: {},
+      products: {
+        [sourceProductId]: {
+          id: sourceProductId,
+          expansionId: expansionId("set-deck-builder"),
+          name: "Deck Builder Booster",
+          kind: "BOOSTER",
+          msrp: 5,
+          cardIds: cards.map((card) => card.id),
+        },
+      },
       printRuns: {},
       players: population.players,
       agents: population.agents,

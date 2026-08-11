@@ -6,7 +6,7 @@ import type { SampledMatchResult } from "./sample-matches";
 
 function createMetaWorld(): WorldState {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",

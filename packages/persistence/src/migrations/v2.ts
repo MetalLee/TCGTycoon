@@ -1,4 +1,3 @@
-import type { SaveEnvelope } from "@tcgtycoon/domain";
 import { z } from "zod";
 import type { SaveEnvelopeV1 } from "./v1";
 import { worldStateV2Schema } from "./world-state-schemas";
@@ -34,6 +33,8 @@ export const saveEnvelopeV2Schema = z
     }
   });
 
+export type SaveEnvelopeV2 = z.infer<typeof saveEnvelopeV2Schema>;
+
 function confidenceForSamples(samples: number) {
   return samples >= 200
     ? "HIGH"
@@ -44,7 +45,7 @@ function confidenceForSamples(samples: number) {
         : "VERY_LOW";
 }
 
-export function migrateV1ToV2(save: SaveEnvelopeV1): SaveEnvelope {
+export function migrateV1ToV2(save: SaveEnvelopeV1): SaveEnvelopeV2 {
   const activePlayers = save.state.metrics.activePlayers;
   const deckStats = Object.fromEntries(
     Object.entries(save.state.meta.deckStats).map(([id, stats]) => [
@@ -106,6 +107,6 @@ export function migrateV1ToV2(save: SaveEnvelopeV1): SaveEnvelope {
   });
 }
 
-export function parseSaveEnvelopeV2(input: unknown): SaveEnvelope {
-  return saveEnvelopeV2Schema.parse(input) as SaveEnvelope;
+export function parseSaveEnvelopeV2(input: unknown): SaveEnvelopeV2 {
+  return saveEnvelopeV2Schema.parse(input);
 }

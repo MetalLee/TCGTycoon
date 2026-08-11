@@ -7,7 +7,6 @@ export type PublisherCommand =
       type: "ORDER_PRINT_RUN";
       productId: ProductId;
       quantity: number;
-      completionDay: number;
     };
 
 const productIdSchema = z.string().min(1).transform(productId);
@@ -25,7 +24,6 @@ export const publisherCommandSchema = z.discriminatedUnion("type", [
       type: z.literal("ORDER_PRINT_RUN"),
       productId: productIdSchema,
       quantity: z.number().int().positive(),
-      completionDay: z.number().int().nonnegative(),
     })
     .strict(),
 ]);

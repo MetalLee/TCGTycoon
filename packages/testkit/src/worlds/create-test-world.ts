@@ -55,7 +55,7 @@ export function createTestWorld(seed: string): WorldState {
   }));
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     simulationVersion: SIMULATION_VERSION,
     ruleVersion: RULE_VERSION,
     balanceVersion: BALANCE_VERSION,
@@ -77,6 +77,7 @@ export function createTestWorld(seed: string): WorldState {
         name: "Launch Booster",
         kind: "BOOSTER",
         msrp: POPULATION_CONFIG.launchBoosterMsrp,
+        cardIds: coreCardFixtures.map((card) => card.id),
       },
     },
     printRuns: {},

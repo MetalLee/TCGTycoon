@@ -1,3 +1,4 @@
+import { PRODUCTION_CONFIG, type ProductionConfig } from "@tcgtycoon/balance";
 import type { PrintingId, WorldState } from "@tcgtycoon/domain";
 import { DeterministicRng, deriveSeed } from "@tcgtycoon/rules-engine";
 
@@ -5,12 +6,14 @@ export type BalanceConfig = {
   starterContents: Readonly<Record<string, readonly PrintingId[]>>;
   dailyOperatingCost: number;
   inventoryHoldingCostPerUnit: number;
+  production: ProductionConfig;
 };
 
 export const DEFAULT_BALANCE_CONFIG: BalanceConfig = {
   starterContents: {},
   dailyOperatingCost: 0,
   inventoryHoldingCostPerUnit: 0,
+  production: PRODUCTION_CONFIG,
 };
 
 export function phaseRng(

@@ -53,19 +53,35 @@ function createProductWorld(): {
     createCard(7, "RARE"),
     createCard(8, "LEGENDARY"),
   ];
-  const printings: Printing[] = cards.flatMap((card, index) => {
+  const boosterPrintings: Printing[] = cards.flatMap((card, index) => {
     const variants =
       index === 0 ? ["normal", "foil", "alt-art"] : ["normal", "foil"];
     return variants.map((variant) => ({
       id: printingId(`printing-${card.id}-${variant}`),
       cardId: card.id,
       expansionId: launchExpansionId,
+      edition: "FIRST_EDITION",
+      sourceProductId: boosterProductId,
+      sourceExpansionId: launchExpansionId,
     }));
   });
+  const starterPrintings: Printing[] = cards.map((card) => ({
+    id: printingId(`printing-starter-${card.id}-normal`),
+    cardId: card.id,
+    expansionId: launchExpansionId,
+    edition: "FIRST_EDITION",
+    sourceProductId: starterProductId,
+    sourceExpansionId: launchExpansionId,
+  }));
+  const printings = [...boosterPrintings, ...starterPrintings];
   const population = createInitialPopulation("product-test");
   const owner = population.players["player-0001"]!;
   const normalPrintingIds = printings
-    .filter((printing) => printing.id.endsWith("-normal"))
+    .filter(
+      (printing) =>
+        printing.sourceProductId === starterProductId &&
+        printing.id.endsWith("-normal"),
+    )
     .map((printing) => printing.id)
     .sort(compareIds);
   const starterPrintingIds = Array.from(
@@ -77,7 +93,7 @@ function createProductWorld(): {
     owner,
     starterPrintingIds,
     world: {
-      schemaVersion: 2,
+      schemaVersion: 3,
       simulationVersion: "1",
       ruleVersion: "1",
       balanceVersion: "1",
@@ -101,6 +117,7 @@ function createProductWorld(): {
           name: "Product Test Booster",
           kind: "BOOSTER",
           msrp: 5,
+          cardIds: cards.map((card) => card.id),
         },
         [starterProductId]: {
           id: starterProductId,
@@ -108,6 +125,7 @@ function createProductWorld(): {
           name: "Product Test Starter",
           kind: "STARTER",
           msrp: 15,
+          cardIds: cards.map((card) => card.id),
         },
       },
       printRuns: {},
