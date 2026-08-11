@@ -1,4 +1,9 @@
 {
   "files": [],
-  "references": [{ "path": "./packages/domain" }]
+  "references": [
+    { "path": "./packages/domain" },
+    { "path": "./packages/persistence" },
+    { "path": "./packages/sim-core" },
+    { "path": "./packages/testkit" }
+  ]
 }

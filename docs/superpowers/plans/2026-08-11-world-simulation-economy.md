@@ -114,7 +114,7 @@ tests/determinism/world-determinism.test.ts
 - Consumes: Phase 1 IDs/cards/decks/rules.
 - Produces: normalized `WorldState`, new entity ID types, `PublisherCommand`, `WorldEvent`, `WorldMetrics`, product/player/market/meta core types.
 
-- [ ] **Step 1: Add stable IDs required by the world**
+- [x] **Step 1: Add stable IDs required by the world**
 
 Add branded types and constructors for:
 
@@ -131,7 +131,7 @@ SaveId
 
 No random ID generator is added.
 
-- [ ] **Step 2: Write a failing normalization test**
+- [x] **Step 2: Write a failing normalization test**
 
 ```ts
 it("stores canonical entities by ID and references related entities by ID", () => {
@@ -142,13 +142,13 @@ it("stores canonical entities by ID and references related entities by ID", () =
 });
 ```
 
-- [ ] **Step 3: Run and verify failure**
+- [x] **Step 3: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/domain/src/world.test.ts
 ```
 
-- [ ] **Step 4: Implement canonical type families**
+- [x] **Step 4: Implement canonical type families**
 
 Minimum `WorldState` shape:
 
@@ -190,14 +190,14 @@ export type PublisherCommand =
 
 Phase 3 will extend this union in the authoritative domain module rather than creating parallel command types.
 
-- [ ] **Step 5: Run domain tests and typecheck**
+- [x] **Step 5: Run domain tests and typecheck**
 
 ```bash
 pnpm vitest run packages/domain/src/world.test.ts
 pnpm typecheck
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/domain
@@ -250,21 +250,21 @@ export function migrateSave(input: unknown): SaveEnvelope;
 export function canonicalStringify(value: unknown): string;
 ```
 
-- [ ] **Step 1: Write failing migration and round-trip tests**
+- [x] **Step 1: Write failing migration and round-trip tests**
 
 Test a literal v1 fixture and assert `migrateSave` returns the current schema. Test `MemorySaveRepository.save/load` returns a deep-equal clone rather than the same object reference.
 
-- [ ] **Step 2: Run tests and confirm missing implementation**
+- [x] **Step 2: Run tests and confirm missing implementation**
 
 ```bash
 pnpm vitest run packages/persistence
 ```
 
-- [ ] **Step 3: Implement canonical JSON with sorted object keys**
+- [x] **Step 3: Implement canonical JSON with sorted object keys**
 
 Arrays preserve order; object keys sort lexicographically. Throw on `undefined`, `NaN` and Infinity in canonical persisted state.
 
-- [ ] **Step 4: Implement v1 migration pipeline**
+- [x] **Step 4: Implement v1 migration pipeline**
 
 Use explicit sequential structure even though only v1 exists:
 
@@ -279,14 +279,14 @@ export function migrateSave(input: unknown): SaveEnvelope {
 
 Later versions must append `v1 -> v2`, not replace the pipeline.
 
-- [ ] **Step 5: Run persistence tests and typecheck**
+- [x] **Step 5: Run persistence tests and typecheck**
 
 ```bash
 pnpm vitest run packages/persistence
 pnpm typecheck
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/domain/src/saves.ts packages/persistence
@@ -311,7 +311,7 @@ git add packages/domain/src/saves.ts packages/persistence
 - Consumes: deterministic seed utilities and WorldState domain types.
 - Produces: `createInitialPopulation(seed, count = 400)`, deterministic persistent player profiles, six motivation vectors, `KnowledgeState`, and 24 deterministic structural Named Agents for standard test fixtures.
 
-- [ ] **Step 1: Write failing deterministic population tests**
+- [x] **Step 1: Write failing deterministic population tests**
 
 Required assertions:
 
@@ -323,13 +323,13 @@ expect(createInitialPopulation("seed-a")).toEqual(createInitialPopulation("seed-
 
 Also verify motivation values are in `[0,1]` and no generated player owns cards yet.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/population/create-population.test.ts
 ```
 
-- [ ] **Step 3: Implement player motivation/profile structures**
+- [x] **Step 3: Implement player motivation/profile structures**
 
 Each Persistent Player includes at least:
 
@@ -355,18 +355,18 @@ satisfaction: number;
 
 NamedAgent adds role, influence, followers, brand attitude, recent structured memories and long-term summary string, but no LLM fields/calls.
 
-- [ ] **Step 4: Implement `createTestWorld(seed)`**
+- [x] **Step 4: Implement `createTestWorld(seed)`**
 
 This fixture assembles Phase 1 cards/decks, Launch Expansion/Product skeleton, 400 players, 24 agents, empty ownership/market and starting company cash. It must be deterministic.
 
-- [ ] **Step 5: Run focused tests and typecheck**
+- [x] **Step 5: Run focused tests and typecheck**
 
 ```bash
 pnpm vitest run packages/sim-core/src/population/create-population.test.ts
 pnpm typecheck
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/balance packages/sim-core packages/testkit
@@ -387,7 +387,7 @@ git add packages/balance packages/sim-core packages/testkit
 - Consumes: `ProductSku`, `Printing`, player/cohort holdings, `DeterministicRng`.
 - Produces: `openBooster(world, productId, owner, rng): ProductOpenResult`, `openStarter(...)`, exact five-card output, and ownership deltas.
 
-- [ ] **Step 1: Write failing five-card Booster tests**
+- [x] **Step 1: Write failing five-card Booster tests**
 
 Required:
 
@@ -405,13 +405,13 @@ it("uses 3 Common, 1 Uncommon and 1 Rare+ base slots", () => {
 
 Also assert Foil/Alt-Art upgrades replace a selected Printing variant rather than increasing count beyond five.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/open-product.test.ts
 ```
 
-- [ ] **Step 3: Implement product slot generation from BalanceConfig**
+- [x] **Step 3: Implement product slot generation from BalanceConfig**
 
 Default config:
 
@@ -429,11 +429,11 @@ booster: {
 
 Only eligible signature cards may receive Alt-Art variants. Product open chooses from Printings actually included in the product/set.
 
-- [ ] **Step 4: Implement Starter opening**
+- [x] **Step 4: Implement Starter opening**
 
 A Starter creates exactly the listed 20 physical Printings in the buyer collection. Cards are not bound and can later be sold.
 
-- [ ] **Step 5: Add physical supply accounting helper**
+- [x] **Step 5: Add physical supply accounting helper**
 
 Export:
 
@@ -443,14 +443,14 @@ export function countWorldSupply(world: WorldState, printingId: PrintingId): num
 
 It must count publisher product/card inventory as modeled plus cohort/persistent ownership and market seller ownership without double counting.
 
-- [ ] **Step 6: Run tests**
+- [x] **Step 6: Run tests**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/open-product.test.ts
 pnpm typecheck
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/balance/src/economy-config.ts packages/sim-core/src/products packages/testkit/src/scenarios/product-fixtures.ts
@@ -471,7 +471,7 @@ git add packages/balance/src/economy-config.ts packages/sim-core/src/products pa
 - Consumes: product inventory, player budgets/preferences, World metrics inputs.
 - Produces: `completePrintRunsDueToday(world)`, `generatePrimaryDemand(world, rng)`, `resolvePrimarySales(world, demand, rng)`, `appendCashEntry(state, entry)`, daily publisher revenue and product-opening requests.
 
-- [ ] **Step 1: Write failing inventory/sales tests**
+- [x] **Step 1: Write failing inventory/sales tests**
 
 Cover:
 
@@ -481,13 +481,13 @@ Cover:
 - A sale reduces inventory and buyer budget and queues the matching product opening.
 - Negative sale quantity is rejected.
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/primary-market.test.ts packages/sim-core/src/economy/cash-ledger.test.ts
 ```
 
-- [ ] **Step 3: Implement Cash Ledger as source of cash changes**
+- [x] **Step 3: Implement Cash Ledger as source of cash changes**
 
 ```ts
 export type CashLedgerEntry = {
@@ -500,11 +500,11 @@ export type CashLedgerEntry = {
 
 `cash.balance` is updated only by applying ledger entries.
 
-- [ ] **Step 4: Implement deterministic primary-market resolution**
+- [x] **Step 4: Implement deterministic primary-market resolution**
 
 Demand uses player/cohort budget, product freshness placeholder input, competitive need, collector interest and price sensitivity. Do not directly modify Active Players or Hype here.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/primary-market.test.ts packages/sim-core/src/economy/cash-ledger.test.ts
@@ -527,7 +527,7 @@ git commit -m "feat: resolve primary product sales and cash"
 - Consumes: actual Collection holdings, deck needs, collector preferences, market snapshots.
 - Produces: `BuyIntent`, `SellIntent`, `clearPrintingAuction(input): AuctionResult`, `applyMarketTrades(world, results)`.
 
-- [ ] **Step 1: Write failing clearing-price tests**
+- [x] **Step 1: Write failing clearing-price tests**
 
 Use a fixed order book and assert:
 
@@ -549,13 +549,13 @@ const sells = [
 ];
 ```
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/market/call-auction.test.ts
 ```
 
-- [ ] **Step 3: Implement stable call-auction clearing**
+- [x] **Step 3: Implement stable call-auction clearing**
 
 Sort buys by descending `maxPrice`, then owner ID; sells by ascending `minPrice`, then owner ID. Match while top bid >= top ask. Use a documented deterministic clearing-price rule, e.g. midpoint rounded to cents:
 
@@ -565,11 +565,11 @@ const price = Math.round(((buy.maxPrice + sell.minPrice) / 2) * 100) / 100;
 
 Transfer actual Printing quantity and currency. Do not create an independent NPC market inventory.
 
-- [ ] **Step 4: Generate intents from competitive and collector needs**
+- [x] **Step 4: Generate intents from competitive and collector needs**
 
 Competitive demand prefers the cheapest legal Printing for a needed CardDefinition. Collector demand may target premium Printings. Budget-sensitive players may sell valuable cards and abandon/rebuild expensive decks later.
 
-- [ ] **Step 5: Run market and conservation tests**
+- [x] **Step 5: Run market and conservation tests**
 
 ```bash
 pnpm vitest run packages/sim-core/src/market
@@ -577,7 +577,7 @@ pnpm vitest run tests/scenarios/physical-supply-conservation.test.ts
 pnpm typecheck
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/sim-core/src/market tests/scenarios/physical-supply-conservation.test.ts
@@ -600,7 +600,7 @@ git add packages/sim-core/src/market tests/scenarios/physical-supply-conservatio
 - Consumes: CardDefinitions, player Collections, known cards/decks, Phase 1 deck validator and match engine.
 - Produces: `DeckGenome`, `generateCandidateDecks(player, world, rng)`, `mutateDeck(parent, player, world, rng)`, `calculateAdoptionScore(player, deck, context)`.
 
-- [ ] **Step 1: Write ownership and single-faction failing tests**
+- [x] **Step 1: Write ownership and single-faction failing tests**
 
 Required:
 
@@ -610,14 +610,14 @@ it("never mixes two non-neutral factions", () => {});
 it("mutates only a small bounded number of entries", () => {});
 ```
 
-- [ ] **Step 2: Write adoption-score tests**
+- [x] **Step 2: Write adoption-score tests**
 
 Construct a Competitive and Budget player. For the same strong expensive deck:
 
 - Competitive score should be higher than a weak deck if affordable/owned.
 - Budget player's score should drop materially with high missing-card/price penalty.
 
-- [ ] **Step 3: Implement DeckGenome lineage**
+- [x] **Step 3: Implement DeckGenome lineage**
 
 ```ts
 export type DeckGenome = {
@@ -632,15 +632,15 @@ export type DeckGenome = {
 };
 ```
 
-- [ ] **Step 4: Implement heuristic candidate generation and bounded mutation**
+- [x] **Step 4: Implement heuristic candidate generation and bounded mutation**
 
 Use Card DSL features to derive simple card-role/synergy scores. Do not call LLMs and do not hard-code final named archetypes.
 
-- [ ] **Step 5: Implement KnowledgeState updates**
+- [x] **Step 5: Implement KnowledgeState updates**
 
 A player learns decks/cards only through owned cards, matches, public tournament-style events (Phase 3), or structured social exposure. World Ground Truth does not automatically enter player knowledge.
 
-- [ ] **Step 6: Run focused tests and commit**
+- [x] **Step 6: Run focused tests and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/deck-evolution
@@ -663,23 +663,23 @@ git commit -m "feat: evolve ownership-aware player decks"
 - Consumes: legal owned player Decks, player activity, `simulateMatch()`.
 - Produces: `sampleDailyMatches(world, rng)`, `MetaDeckStats`, `MatchupStats`, `updateMetaState(world, matchResults)` and discovery/knowledge events.
 
-- [ ] **Step 1: Write failing Meta aggregation tests**
+- [x] **Step 1: Write failing Meta aggregation tests**
 
 Use explicit match results and assert usage, wins/losses, observed win rate and matchup matrix are computed from actual samples.
 
-- [ ] **Step 2: Write hidden-discovery scenario**
+- [x] **Step 2: Write hidden-discovery scenario**
 
 Fixture includes a high-synergy deck known by only one brewer. Assert Day 1 public knowledge does not instantly include it for all players. After repeated match exposure, public knowledge/adoption may grow.
 
-- [ ] **Step 3: Implement deterministic match sampling**
+- [x] **Step 3: Implement deterministic match sampling**
 
 Normal daily sampling target comes from BalanceConfig, beginning in the 5k–15k range for full worlds but tests may use reduced deterministic counts. Do not simulate a Cartesian product of all players/decks.
 
-- [ ] **Step 4: Aggregate confidence metadata**
+- [x] **Step 4: Aggregate confidence metadata**
 
 Meta stats include sample count and a qualitative confidence bucket such as `VERY_LOW | LOW | MEDIUM | HIGH` so UI can later avoid false precision.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/meta
@@ -708,7 +708,7 @@ git commit -m "feat: derive live meta from real matches"
 - Consumes: market prices/supply, product availability, Meta samples, population/cohort state, publisher history/cash.
 - Produces: Accessibility, cohort target satisfaction, lifecycle deltas, Hype/CollectorHeat/MetaHealth/BrandTrust updates, `EcosystemRiskState`.
 
-- [ ] **Step 1: Write failing smoothing and independence tests**
+- [x] **Step 1: Write failing smoothing and independence tests**
 
 Required:
 
@@ -718,11 +718,11 @@ it("Brand Trust moves slower than Hype toward its target", () => {});
 it("healthy win rates with unaffordable decks lowers Accessibility without fabricating poor match balance", () => {});
 ```
 
-- [ ] **Step 2: Implement Accessibility**
+- [x] **Step 2: Implement Accessibility**
 
 Use Starter availability/price, cheapest competitive deck, median Meta deck cost and core-card scarcity. Return normalized 0–100.
 
-- [ ] **Step 3: Implement Meta Health components**
+- [x] **Step 3: Implement Meta Health components**
 
 Default conceptual weights:
 
@@ -738,7 +738,7 @@ Default conceptual weights:
 
 Apply a configurable staleness penalty separately. Ignore/discount insufficiently sampled decks for win-rate outlier health.
 
-- [ ] **Step 4: Implement target/smoothing metrics**
+- [x] **Step 4: Implement target/smoothing metrics**
 
 Use:
 
@@ -748,15 +748,15 @@ next = current + (target - current) * responseSpeed;
 
 Hype response speed > Collector Heat > Brand Trust.
 
-- [ ] **Step 5: Implement cohort lifecycle transitions**
+- [x] **Step 5: Implement cohort lifecycle transitions**
 
 Track Potential -> Interested -> New -> Active -> At Risk -> Churned and Churned -> Returning. Use deterministic Bernoulli draws from derived RNG sub-seeds. New-player onboarding/retention uses a 7-day age window.
 
-- [ ] **Step 6: Implement ecosystem risk states**
+- [x] **Step 6: Implement ecosystem risk states**
 
 Return one of `STABLE | STRAINED | DECLINING | DEATH_SPIRAL | TERMINAL` based on persisted trends/thresholds. Do not apply a blanket state multiplier to revenue or players.
 
-- [ ] **Step 7: Run metric/scenario tests and commit**
+- [x] **Step 7: Run metric/scenario tests and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/metrics
@@ -798,15 +798,15 @@ export function simulateDay(
 ): DaySimulationResult;
 ```
 
-- [ ] **Step 1: Write failing phase-order test**
+- [x] **Step 1: Write failing phase-order test**
 
 Construct a Print Run completing today and demand for that product. Assert completed inventory can be sold/opened **today**, proving completion occurs before primary sales.
 
-- [ ] **Step 2: Write failing atomic-source test**
+- [x] **Step 2: Write failing atomic-source test**
 
 Call `simulateDay` and verify input state is unchanged/frozen from caller perspective while result has `day + 1`.
 
-- [ ] **Step 3: Implement explicit phases in the approved order**
+- [x] **Step 3: Implement explicit phases in the approved order**
 
 For Phase 2 implement only currently available operations but preserve numbered phase functions. The order must cover:
 
@@ -830,7 +830,7 @@ daily report
 
 Phase 3 will insert tournaments/marketing/expansion operations into their approved positions rather than creating another `simulateDay`.
 
-- [ ] **Step 4: Implement `validateWorldInvariants()`**
+- [x] **Step 4: Implement `validateWorldInvariants()`**
 
 It must throw a structured `WorldInvariantError` on:
 
@@ -842,7 +842,7 @@ It must throw a structured `WorldInvariantError` on:
 - Duplicate IDs where represented as arrays.
 - Incorrect day increment.
 
-- [ ] **Step 5: Add deterministic world hash test**
+- [x] **Step 5: Add deterministic world hash test**
 
 ```ts
 const a = simulateDay(worldFixture(), [], config);
@@ -853,7 +853,7 @@ expect(a.nextState).toEqual(b.nextState);
 
 Run at least 25 repeated identical executions in the test.
 
-- [ ] **Step 6: Run tests and commit**
+- [x] **Step 6: Run tests and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/day
@@ -886,7 +886,7 @@ git commit -m "feat: orchestrate deterministic daily simulation"
 - Consumes: `simulateDay()`, Phase 2 commands, test fixtures.
 - Produces: `BasicPublisherBot.decide(world): PublisherCommand[]`, named deterministic scenarios, CLI `pnpm sim --days N --seed S`.
 
-- [ ] **Step 1: Write failing CLI parser and scenario smoke tests**
+- [x] **Step 1: Write failing CLI parser and scenario smoke tests**
 
 The CLI must accept:
 
@@ -898,7 +898,7 @@ The CLI must accept:
 
 Test 30-day balanced scenario returns finite metrics and valid state.
 
-- [ ] **Step 2: Implement BasicPublisherBot**
+- [x] **Step 2: Implement BasicPublisherBot**
 
 Its rules are intentionally simple and deterministic:
 
@@ -906,11 +906,11 @@ Its rules are intentionally simple and deterministic:
 - Do not arbitrarily change MSRP every day.
 - Do not implement Phase 3 Ban/Expansion decisions yet.
 
-- [ ] **Step 3: Implement scenario fixtures with explicit purposes**
+- [x] **Step 3: Implement scenario fixtures with explicit purposes**
 
 Each scenario must be constructed from legal world state, not by bypassing physical ownership invariants.
 
-- [ ] **Step 4: Add scripts**
+- [x] **Step 4: Add scripts**
 
 Root package scripts:
 
@@ -923,7 +923,7 @@ Root package scripts:
 
 CLI summary at minimum prints final day, Active Players, Hype, Meta Health, Brand Trust, Cash, market/deck counts, risk state and state hash.
 
-- [ ] **Step 5: Run Phase 2 exit gate**
+- [x] **Step 5: Run Phase 2 exit gate**
 
 ```bash
 pnpm lint
@@ -936,7 +936,7 @@ pnpm sim --days 1000 --seed 12345 --scenario balanced-world
 
 Then repeat the 100-day command and confirm identical final `stateHash`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/testkit scripts tests/scenarios package.json
