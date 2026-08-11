@@ -69,7 +69,9 @@ function legalAttackTargets(
   const visibleEnemies = ctx.state.players[enemySide].board.filter(
     (unit) => !unit.keywords.includes("STEALTH"),
   );
-  const taunts = visibleEnemies.filter((unit) => unit.keywords.includes("TAUNT"));
+  const taunts = visibleEnemies.filter((unit) =>
+    unit.keywords.includes("TAUNT"),
+  );
   if (taunts.length > 0) {
     return taunts.map((unit) => unit.instanceId);
   }
@@ -96,14 +98,18 @@ export function performAttack(
   resetAttackCounterForTurn(attacker, ctx.state.turnNumber);
   const attackLimit = attacker.keywords.includes("WINDFURY") ? 2 : 1;
   if (attacker.attacksThisTurn >= attackLimit) {
-    throw new RangeError(`Attacker ${attackerId} has reached its attack limit.`);
+    throw new RangeError(
+      `Attacker ${attackerId} has reached its attack limit.`,
+    );
   }
 
   const targetHeroSide = heroSideFromTarget(targetId);
   const enteredPlayThisTurn = attacker.summonedTurn === ctx.state.turnNumber;
   if (enteredPlayThisTurn && !attacker.keywords.includes("CHARGE")) {
     if (attacker.keywords.includes("RUSH") && targetHeroSide !== null) {
-      throw new RangeError("A Rush unit cannot attack the enemy hero immediately.");
+      throw new RangeError(
+        "A Rush unit cannot attack the enemy hero immediately.",
+      );
     }
     if (!attacker.keywords.includes("RUSH")) {
       throw new RangeError("A newly summoned unit cannot attack this turn.");
@@ -137,7 +143,9 @@ export function performAttack(
   const attackerDamage = attacker.attack;
   const defenderDamage = defender?.unit.attack ?? 0;
   const defenderSource =
-    defender === undefined ? undefined : unitSource(defender.side, defender.unit);
+    defender === undefined
+      ? undefined
+      : unitSource(defender.side, defender.unit);
 
   dealDamage(ctx, attackerSource, targetId, attackerDamage);
   if (defender !== undefined && defenderSource !== undefined) {

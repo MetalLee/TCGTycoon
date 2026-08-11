@@ -78,9 +78,7 @@ function assertLegalDeck(
   }
 }
 
-function assertLegalCardPool(
-  cards: ReadonlyMap<CardId, CardDefinition>,
-): void {
+function assertLegalCardPool(cards: ReadonlyMap<CardId, CardDefinition>): void {
   for (const [mapCardId, definition] of cards) {
     const validation = validateCardDefinition(definition);
     if (!validation.valid) {

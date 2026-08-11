@@ -56,16 +56,10 @@ function effectTargets(
   selector: TargetSelector,
 ): string[] {
   const legalTargets = getLegalTargets(ctx.state, ctx.source, selector);
-  if (
-    selector === "ALL_FRIENDLY_UNITS" ||
-    selector === "ALL_ENEMY_UNITS"
-  ) {
+  if (selector === "ALL_FRIENDLY_UNITS" || selector === "ALL_ENEMY_UNITS") {
     return legalTargets;
   }
-  if (
-    selector === "RANDOM_FRIENDLY_UNIT" ||
-    selector === "RANDOM_ENEMY_UNIT"
-  ) {
+  if (selector === "RANDOM_FRIENDLY_UNIT" || selector === "RANDOM_ENEMY_UNIT") {
     const target = chooseRandomTarget(ctx, selector, legalTargets);
     return target === undefined ? [] : [target];
   }
@@ -86,10 +80,16 @@ function sourceHasKeyword(
   if (liveSource !== undefined) {
     return liveSource.unit.keywords.includes(keyword);
   }
-  return ctx.cardDefinitions.get(source.cardId)?.keywords.includes(keyword) ?? false;
+  return (
+    ctx.cardDefinitions.get(source.cardId)?.keywords.includes(keyword) ?? false
+  );
 }
 
-function healHero(ctx: ResolutionContext, side: MatchSide, amount: number): void {
+function healHero(
+  ctx: ResolutionContext,
+  side: MatchSide,
+  amount: number,
+): void {
   const player = ctx.state.players[side];
   player.heroHealth = Math.min(
     RULES_CONFIG.heroHealth,
@@ -147,10 +147,7 @@ export function dealDamage(
 
   const actualDamage = Math.min(located.unit.health, attemptedDamage);
   located.unit.health = Math.max(0, located.unit.health - attemptedDamage);
-  if (
-    actualDamage > 0 &&
-    sourceHasKeyword(ctx, source, "POISONOUS")
-  ) {
+  if (actualDamage > 0 && sourceHasKeyword(ctx, source, "POISONOUS")) {
     located.unit.health = 0;
   }
   applyLifesteal(ctx, source, actualDamage);
@@ -283,7 +280,10 @@ function changeUnitStats(
   }
 }
 
-export function resolveEffect(ctx: ResolutionContext, effect: CardEffect): void {
+export function resolveEffect(
+  ctx: ResolutionContext,
+  effect: CardEffect,
+): void {
   if (!beginEffect(ctx)) {
     return;
   }
@@ -303,7 +303,10 @@ export function resolveEffect(ctx: ResolutionContext, effect: CardEffect): void 
         } else {
           const unit = findUnit(ctx.state, targetId)?.unit;
           if (unit !== undefined) {
-            unit.health = Math.min(unit.maxHealth, unit.health + Math.max(0, effect.amount));
+            unit.health = Math.min(
+              unit.maxHealth,
+              unit.health + Math.max(0, effect.amount),
+            );
           }
         }
       }
@@ -312,7 +315,11 @@ export function resolveEffect(ctx: ResolutionContext, effect: CardEffect): void 
       for (const targetId of effectTargets(ctx, effect.target)) {
         const side = heroSideFromTarget(targetId);
         if (side !== null) {
-          for (let index = 0; index < Math.max(0, Math.trunc(effect.amount)); index += 1) {
+          for (
+            let index = 0;
+            index < Math.max(0, Math.trunc(effect.amount));
+            index += 1
+          ) {
             drawCard(ctx.state, side);
           }
         }
@@ -370,7 +377,11 @@ export function resolveEffect(ctx: ResolutionContext, effect: CardEffect): void 
       }
       break;
     case "CREATE_CARD":
-      for (let index = 0; index < Math.max(0, Math.trunc(effect.amount)); index += 1) {
+      for (
+        let index = 0;
+        index < Math.max(0, Math.trunc(effect.amount));
+        index += 1
+      ) {
         addCardToHand(
           ctx,
           ctx.source.side,

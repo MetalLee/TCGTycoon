@@ -102,7 +102,9 @@ describe("trigger-chain safety", () => {
       expect.objectContaining({ code: "POTENTIAL_INFINITE_COMBO" }),
     );
     expect(ctx.queue).toEqual([]);
-    expect(ctx.actionCount).toBeLessThanOrEqual(RULES_CONFIG.maxActionsPerChain);
+    expect(ctx.actionCount).toBeLessThanOrEqual(
+      RULES_CONFIG.maxActionsPerChain,
+    );
   });
 
   it("never executes more effects than the configured action limit", () => {

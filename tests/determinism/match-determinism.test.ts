@@ -52,10 +52,12 @@ describe("match determinism", () => {
     expect(JSON.parse(JSON.stringify(actionLog))).toEqual(actionLog);
     expect(
       actionLog?.filter((entry) => entry.type === "PLAY_CARD"),
-    ).toHaveLength(result.statistics.A.cardsPlayed + result.statistics.B.cardsPlayed);
-    expect(
-      actionLog?.filter((entry) => entry.type === "ATTACK"),
-    ).toHaveLength(result.statistics.A.attacks + result.statistics.B.attacks);
+    ).toHaveLength(
+      result.statistics.A.cardsPlayed + result.statistics.B.cardsPlayed,
+    );
+    expect(actionLog?.filter((entry) => entry.type === "ATTACK")).toHaveLength(
+      result.statistics.A.attacks + result.statistics.B.attacks,
+    );
     expect(result).toMatchObject({
       replay: {
         seed: "999",

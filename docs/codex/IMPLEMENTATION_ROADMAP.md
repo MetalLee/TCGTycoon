@@ -19,13 +19,13 @@ This roadmap translates the approved MVP design into an execution sequence optim
 
 ## Phase map
 
-| Phase | Plan | Primary deliverable | Recommended branch |
-|---|---|---|---|
-| 1 | `2026-08-11-foundation-rules-engine.md` | Deterministic playable headless TCG match engine | `agent/phase-1-foundation-rules` |
-| 2 | `2026-08-11-world-simulation-economy.md` | Headless Day loop with players, products, collections, market, Meta and saves | `agent/phase-2-world-simulation` |
-| 3A | `2026-08-11-production-release-reprints.md` | Real production/release/reprint lifecycle and physical-economy regression gate | `agent/phase-3a-production-release` |
-| 3B | `2026-08-11-publisher-operations-web-ui.md` | Fully playable offline Web publisher simulation from New Game through long-run play | `agent/phase-3b-publisher-web` |
-| 4 | `2026-08-11-ai-desktop-release.md` | AI-assisted creation/community + Tauri/SQLite desktop parity + release hardening | `agent/phase-4-ai-desktop` |
+| Phase | Plan                                        | Primary deliverable                                                                 | Recommended branch                  |
+| ----- | ------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------- |
+| 1     | `2026-08-11-foundation-rules-engine.md`     | Deterministic playable headless TCG match engine                                    | `agent/phase-1-foundation-rules`    |
+| 2     | `2026-08-11-world-simulation-economy.md`    | Headless Day loop with players, products, collections, market, Meta and saves       | `agent/phase-2-world-simulation`    |
+| 3A    | `2026-08-11-production-release-reprints.md` | Real production/release/reprint lifecycle and physical-economy regression gate      | `agent/phase-3a-production-release` |
+| 3B    | `2026-08-11-publisher-operations-web-ui.md` | Fully playable offline Web publisher simulation from New Game through long-run play | `agent/phase-3b-publisher-web`      |
+| 4     | `2026-08-11-ai-desktop-release.md`          | AI-assisted creation/community + Tauri/SQLite desktop parity + release hardening    | `agent/phase-4-ai-desktop`          |
 
 ---
 

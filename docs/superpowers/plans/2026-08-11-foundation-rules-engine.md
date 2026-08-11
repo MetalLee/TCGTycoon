@@ -89,6 +89,7 @@ tests/
 ### Task 1: Bootstrap workspace and typed domain IDs
 
 **Files:**
+
 - Create: `package.json`
 - Create: `pnpm-workspace.yaml`
 - Create: `tsconfig.base.json`
@@ -103,6 +104,7 @@ tests/
 - Test: `packages/domain/src/ids.test.ts`
 
 **Interfaces:**
+
 - Consumes: none.
 - Produces: branded ID types and constructors `CardId`, `DeckId`, `FactionId`, `PlayerId`, `MatchId`, `PrintingId`; constants `RULE_VERSION = "1"` and the ten-keyword `Keyword` union used by every later task.
 
@@ -247,11 +249,13 @@ git commit -m "chore: bootstrap typed domain workspace"
 ### Task 2: Define and validate the Card DSL
 
 **Files:**
+
 - Create: `packages/domain/src/cards.ts`
 - Modify: `packages/domain/src/index.ts`
 - Test: `packages/domain/src/cards.test.ts`
 
 **Interfaces:**
+
 - Consumes: `CardId`, `FactionId`, `Keyword`, `CardType`, `Rarity` from Task 1.
 - Produces: `CardDefinition`, `CardEffect`, `CardTrigger`, `TargetSelector`, `TriggerType`, `Condition`, `cardDefinitionSchema` and `parseCardDefinition(input: unknown): CardDefinition`.
 
@@ -289,24 +293,26 @@ describe("CardDefinition DSL", () => {
         {
           trigger: "ON_DEATH",
           conditions: [],
-          effects: [{ type: "DRAW", amount: 1, target: "FRIENDLY_HERO" }]
-        }
-      ]
+          effects: [{ type: "DRAW", amount: 1, target: "FRIENDLY_HERO" }],
+        },
+      ],
     });
     expect(card.cost).toBe(2);
   });
 
   it("rejects an unsupported SECRET keyword", () => {
-    expect(() => parseCardDefinition({
-      id: "card-invalid",
-      name: "Invalid",
-      type: "SPELL",
-      factionId: "neutral",
-      rarity: "COMMON",
-      cost: 1,
-      keywords: ["SECRET"],
-      triggers: []
-    })).toThrow();
+    expect(() =>
+      parseCardDefinition({
+        id: "card-invalid",
+        name: "Invalid",
+        type: "SPELL",
+        factionId: "neutral",
+        rarity: "COMMON",
+        cost: 1,
+        keywords: ["SECRET"],
+        triggers: [],
+      }),
+    ).toThrow();
   });
 });
 ```
@@ -335,7 +341,7 @@ export const targetSelectors = [
   "RANDOM_FRIENDLY_UNIT",
   "RANDOM_ENEMY_UNIT",
   "ALL_FRIENDLY_UNITS",
-  "ALL_ENEMY_UNITS"
+  "ALL_ENEMY_UNITS",
 ] as const;
 ```
 
@@ -424,6 +430,7 @@ git add packages/domain
 ### Task 3: Add deterministic RNG and rule balance constants
 
 **Files:**
+
 - Create: `packages/balance/package.json`
 - Create: `packages/balance/tsconfig.json`
 - Create: `packages/balance/src/rules-config.ts`
@@ -435,6 +442,7 @@ git add packages/domain
 - Test: `packages/rules-engine/src/rng/deterministic-rng.test.ts`
 
 **Interfaces:**
+
 - Consumes: no simulation behavior.
 - Produces: `DeterministicRng`, `deriveSeed(parts: readonly (string | number)[]): bigint`, `RULES_CONFIG`, and fixed chain limits.
 
@@ -449,8 +457,11 @@ describe("DeterministicRng", () => {
     const seed = deriveSeed(["world-1", 7, "match-42"]);
     const a = new DeterministicRng(seed);
     const b = new DeterministicRng(seed);
-    expect([a.nextInt(100), a.nextInt(100), a.nextFloat()])
-      .toEqual([b.nextInt(100), b.nextInt(100), b.nextFloat()]);
+    expect([a.nextInt(100), a.nextInt(100), a.nextFloat()]).toEqual([
+      b.nextInt(100),
+      b.nextInt(100),
+      b.nextFloat(),
+    ]);
   });
 
   it("derives different seeds for different stable parts", () => {
@@ -494,7 +505,8 @@ export class DeterministicRng {
   }
 
   nextInt(maxExclusive: number): number {
-    if (!Number.isInteger(maxExclusive) || maxExclusive <= 0) throw new RangeError("maxExclusive must be positive integer");
+    if (!Number.isInteger(maxExclusive) || maxExclusive <= 0)
+      throw new RangeError("maxExclusive must be positive integer");
     return Math.floor(this.nextFloat() * maxExclusive);
   }
 }
@@ -540,6 +552,7 @@ git add packages/balance packages/rules-engine
 ### Task 4: Implement Card and Deck legality validation
 
 **Files:**
+
 - Create: `packages/domain/src/decks.ts`
 - Modify: `packages/domain/src/index.ts`
 - Create: `packages/rules-engine/src/validation/card-validation.ts`
@@ -552,6 +565,7 @@ git add packages/balance packages/rules-engine
 - Create: `packages/testkit/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: `CardDefinition`, branded IDs, `RULES_CONFIG`.
 - Produces: `DeckDefinition`, `validateCardDefinition(card)`, `validateDeck(deck, cards): ValidationResult`, and deterministic legal fixture decks used throughout later plans.
 
@@ -560,17 +574,26 @@ git add packages/balance packages/rules-engine
 Tests must cover:
 
 ```ts
-it("accepts exactly 20 cards from one faction plus neutral", () => { /* fixture */ });
-it("rejects 19-card decks", () => { /* expect DECK_SIZE */ });
-it("rejects three copies of a normal card", () => { /* expect COPY_LIMIT */ });
-it("rejects cards from a second non-neutral faction", () => { /* expect FACTION_MISMATCH */ });
+it("accepts exactly 20 cards from one faction plus neutral", () => {
+  /* fixture */
+});
+it("rejects 19-card decks", () => {
+  /* expect DECK_SIZE */
+});
+it("rejects three copies of a normal card", () => {
+  /* expect COPY_LIMIT */
+});
+it("rejects cards from a second non-neutral faction", () => {
+  /* expect FACTION_MISMATCH */
+});
 ```
 
 Use an explicit result shape:
 
 ```ts
 type ValidationIssue = { code: string; message: string; entityId?: string };
-type ValidationResult = { valid: true; issues: [] } | { valid: false; issues: ValidationIssue[] };
+type ValidationResult =
+  { valid: true; issues: [] } | { valid: false; issues: ValidationIssue[] };
 ```
 
 - [x] **Step 2: Run tests and verify failure**
@@ -624,6 +647,7 @@ git add packages/domain packages/rules-engine packages/testkit
 ### Task 5: Build match state, mulligan, resources, draw and fatigue
 
 **Files:**
+
 - Create: `packages/rules-engine/src/battle/types.ts`
 - Create: `packages/rules-engine/src/battle/create-match-state.ts`
 - Create: `packages/rules-engine/src/battle/turn.ts`
@@ -631,6 +655,7 @@ git add packages/domain packages/rules-engine packages/testkit
 - Test: `packages/rules-engine/src/battle/turn.test.ts`
 
 **Interfaces:**
+
 - Consumes: legal decks, CardDefinitions, `DeterministicRng`, `RULES_CONFIG`.
 - Produces: `MatchState`, `MatchPlayerState`, `BattleAction`, `ActionLogEntry`, `createMatchState(input)`, `startTurn(state)`, `drawCard(state, side)`, `endTurn(state)`.
 
@@ -703,6 +728,7 @@ git add packages/rules-engine/src/battle packages/rules-engine/src/replay
 ### Task 6: Implement targeting, effects, triggers and all ten keywords
 
 **Files:**
+
 - Create: `packages/rules-engine/src/battle/targeting.ts`
 - Create: `packages/rules-engine/src/battle/effects.ts`
 - Create: `packages/rules-engine/src/battle/triggers.ts`
@@ -712,6 +738,7 @@ git add packages/rules-engine/src/battle packages/rules-engine/src/replay
 - Test: `packages/rules-engine/src/battle/trigger-chain.test.ts`
 
 **Interfaces:**
+
 - Consumes: `MatchState`, Card DSL effects/triggers, `RULES_CONFIG`.
 - Produces: `getLegalTargets(state, source, selector)`, `resolveEffect(ctx, effect)`, `enqueueTriggers(ctx, event)`, `resolveTriggerQueue(ctx)`, `checkStateBasedDeaths(ctx)`, `performAttack(ctx, attackerId, targetId)`.
 
@@ -737,7 +764,9 @@ it("POISONOUS destroys a unit only after positive damage; Divine Shield preventi
 Construct fixture cards that intentionally loop and assert the match produces a structured warning instead of hanging:
 
 ```ts
-expect(result.warnings).toContainEqual(expect.objectContaining({ code: "POTENTIAL_INFINITE_COMBO" }));
+expect(result.warnings).toContainEqual(
+  expect.objectContaining({ code: "POTENTIAL_INFINITE_COMBO" }),
+);
 ```
 
 Also assert action count never exceeds configured limit.
@@ -795,19 +824,21 @@ git add packages/rules-engine/src/battle packages/rules-engine/src/replay
 ### Task 7: Implement deterministic Battle AI and `simulateMatch()`
 
 **Files:**
+
 - Create: `packages/rules-engine/src/ai/battle-ai.ts`
 - Create: `packages/rules-engine/src/battle/match-engine.ts`
 - Modify: `packages/rules-engine/src/index.ts`
 - Test: `packages/rules-engine/src/battle/match-engine.test.ts`
 
 **Interfaces:**
+
 - Consumes: all Task 1–6 rules interfaces.
 - Produces:
 
 ```ts
 export type BattleStrategy = {
-  aggression: number;   // 0..1
-  value: number;        // 0..1
+  aggression: number; // 0..1
+  value: number; // 0..1
   preservation: number; // 0..1
 };
 
@@ -893,12 +924,14 @@ git add packages/rules-engine
 ### Task 8: Add durable action logs, result hashing and determinism regression tests
 
 **Files:**
+
 - Create: `packages/rules-engine/src/replay/hash-result.ts`
 - Modify: `packages/rules-engine/src/replay/action-log.ts`
 - Test: `tests/determinism/match-determinism.test.ts`
 - Test: `tests/determinism/browser-safe-rng.test.ts`
 
 **Interfaces:**
+
 - Consumes: `MatchResult`, action log, deterministic RNG.
 - Produces: `hashMatchResult(result): string`, serializable compact `ActionLogEntry` structures suitable for later replay UI.
 
@@ -907,7 +940,9 @@ git add packages/rules-engine
 ```ts
 it("produces one result hash across 100 identical runs", () => {
   const hashes = new Set(
-    Array.from({ length: 100 }, () => hashMatchResult(simulateMatch(fixtureMatchInput(999n))))
+    Array.from({ length: 100 }, () =>
+      hashMatchResult(simulateMatch(fixtureMatchInput(999n))),
+    ),
   );
   expect(hashes.size).toBe(1);
 });
@@ -947,12 +982,14 @@ git add packages/rules-engine/src/replay tests/determinism
 ### Task 9: Add headless match CLI and Phase 1 verification gate
 
 **Files:**
+
 - Create: `scripts/simulate-match.ts`
 - Modify: `package.json`
 - Create: `.github/workflows/ci.yml`
 - Test: `tests/rules/headless-match.test.ts`
 
 **Interfaces:**
+
 - Consumes: `simulateMatch()`, fixture decks/cards, result hashing.
 - Produces: `pnpm sim:match --seed <integer>` CLI that prints JSON summary with `winner`, `turns`, `warnings`, and deterministic `resultHash`.
 

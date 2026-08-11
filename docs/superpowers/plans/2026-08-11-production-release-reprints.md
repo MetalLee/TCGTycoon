@@ -46,12 +46,14 @@ tests/scenarios/*
 ### Task 1: Implement costed non-cancellable Print Runs and edition identity
 
 **Files:**
+
 - Modify: `packages/domain/src/products.ts`
 - Create: `packages/balance/src/production-config.ts`
 - Create: `packages/sim-core/src/products/production.ts`
 - Test: `packages/sim-core/src/products/production.test.ts`
 
 **Interfaces:**
+
 - Consumes: finalized ProductSku/Expansion, Cash Ledger, scheduler.
 - Produces: `quotePrintRun`, `orderPrintRun`, `advancePrintRuns`, `completePrintRuns`, First Edition/Unlimited edition assignment.
 
@@ -86,7 +88,11 @@ export type ProductionQuote = {
   leadDays: number;
 };
 
-export function quotePrintRun(product: ProductSku, quantity: number, config: ProductionConfig): ProductionQuote;
+export function quotePrintRun(
+  product: ProductSku,
+  quantity: number,
+  config: ProductionConfig,
+): ProductionQuote;
 ```
 
 No hard-coded “free inventory.” `orderPrintRun` appends a negative `PRINTING` CashLedger entry immediately.
@@ -117,11 +123,13 @@ git commit -m "feat: produce costed physical print runs"
 ### Task 2: Implement announced release dates, delays and short-supply launches
 
 **Files:**
+
 - Create: `packages/sim-core/src/products/releases.ts`
 - Test: `packages/sim-core/src/products/releases.test.ts`
 - Test: `tests/scenarios/release-delay.test.ts`
 
 **Interfaces:**
+
 - Consumes: release commands, Publisher Inventory, WorldEvent/Trust context.
 - Produces: `announceRelease`, `rescheduleRelease`, `executeReleasesDueToday`, `ReleaseStatus`, structured delay/shortage events.
 
@@ -168,11 +176,13 @@ git commit -m "feat: schedule and execute physical releases"
 ### Task 3: Implement Product Reprint and Targeted Reprint
 
 **Files:**
+
 - Create: `packages/sim-core/src/products/reprints.ts`
 - Test: `packages/sim-core/src/products/reprints.test.ts`
 - Test: `tests/scenarios/targeted-reprint.test.ts`
 
 **Interfaces:**
+
 - Consumes: old Products/CardDefinitions, new Starter/Expansion product definitions, production flow.
 - Produces: `createProductReprintOrder`, `createTargetedReprintPrinting`, reprint history, same gameplay CardDefinition with new Printing ID.
 
@@ -215,6 +225,7 @@ git commit -m "feat: reprint cards without changing rules"
 ### Task 4: Implement Product Freshness and cross-release Product Fatigue
 
 **Files:**
+
 - Create: `packages/balance/src/product-lifecycle-config.ts`
 - Create: `packages/sim-core/src/products/product-lifecycle.ts`
 - Modify: `packages/sim-core/src/products/primary-market.ts`
@@ -222,6 +233,7 @@ git commit -m "feat: reprint cards without changing rules"
 - Test: `tests/scenarios/product-cadence.test.ts`
 
 **Interfaces:**
+
 - Consumes: release history, recent cohort spend/budgets, product similarity tags if available.
 - Produces: `calculateSetFreshness`, `calculateProductFatigue`, demand modifiers used by Primary Market.
 
@@ -259,6 +271,7 @@ git commit -m "feat: model product freshness and fatigue"
 ### Task 5: Lock physical-economy regression scenarios
 
 **Files:**
+
 - Create: `tests/scenarios/starter-arbitrage.test.ts`
 - Create: `tests/scenarios/overprint.test.ts`
 - Create: `tests/scenarios/shortage.test.ts`
@@ -267,6 +280,7 @@ git commit -m "feat: model product freshness and fatigue"
 - Create: `tests/scenarios/reprint-accessibility.test.ts`
 
 **Interfaces:**
+
 - Consumes: production/release/reprint + Phase 2 economy + Phase 3 policies when available.
 - Produces: stable regression coverage for the primary physical-economy stories required by the product spec.
 

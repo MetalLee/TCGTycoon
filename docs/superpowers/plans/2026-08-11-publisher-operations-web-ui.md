@@ -81,6 +81,7 @@ tests/e2e/*
 ### Task 1: Add operations scheduler and typed publisher project models
 
 **Files:**
+
 - Create: `packages/domain/src/expansions.ts`
 - Create: `packages/domain/src/operations.ts`
 - Create: `packages/domain/src/tournaments.ts`
@@ -92,6 +93,7 @@ tests/e2e/*
 - Test: `packages/sim-core/src/operations/scheduler.test.ts`
 
 **Interfaces:**
+
 - Consumes: WorldState/PublisherCommand from Phase 2.
 - Produces: `ExpansionProject`, `OperationProject`, `OperationStatus`, typed schedule records, expanded `PublisherCommand` union and `advanceScheduledOperations(world, day)`.
 
@@ -117,7 +119,8 @@ pnpm vitest run packages/sim-core/src/operations/scheduler.test.ts
 Use:
 
 ```ts
-export type OperationStatus = "PLANNED" | "ACTIVE" | "COMPLETED" | "CANCELLED" | "FAILED" | "DELAYED";
+export type OperationStatus =
+  "PLANNED" | "ACTIVE" | "COMPLETED" | "CANCELLED" | "FAILED" | "DELAYED";
 ```
 
 `OperationProject` includes stable ID, type, createdDay, optional startDay/completionDay, status and a typed `payload` discriminated by project type.
@@ -127,20 +130,20 @@ export type OperationStatus = "PLANNED" | "ACTIVE" | "COMPLETED" | "CANCELLED" |
 Add exact command variants for this phase:
 
 ```ts
-CREATE_EXPANSION
-UPDATE_EXPANSION_BRIEF
-UPDATE_CARD_DRAFT
-START_PLAYTEST
-FINALIZE_EXPANSION
-ORDER_PRINT_RUN
-ANNOUNCE_RELEASE
-SCHEDULE_RELEASE
-SCHEDULE_BAN
-SCHEDULE_RESTRICTION
-CREATE_TOURNAMENT
-START_CAMPAIGN
-PUBLISH_ANNOUNCEMENT
-ADJUST_MSRP
+CREATE_EXPANSION;
+UPDATE_EXPANSION_BRIEF;
+UPDATE_CARD_DRAFT;
+START_PLAYTEST;
+FINALIZE_EXPANSION;
+ORDER_PRINT_RUN;
+ANNOUNCE_RELEASE;
+SCHEDULE_RELEASE;
+SCHEDULE_BAN;
+SCHEDULE_RESTRICTION;
+CREATE_TOURNAMENT;
+START_CAMPAIGN;
+PUBLISH_ANNOUNCEMENT;
+ADJUST_MSRP;
 ```
 
 Each command carries only IDs/values; no React objects or callbacks.
@@ -159,11 +162,13 @@ git commit -m "feat: model scheduled publisher operations"
 ### Task 2: Implement expansion pipeline, revisions and irreversible Finalize
 
 **Files:**
+
 - Create: `packages/sim-core/src/operations/expansion-pipeline.ts`
 - Test: `packages/sim-core/src/operations/expansion-pipeline.test.ts`
 - Create: `packages/testkit/src/setup/launch-set-fixture.ts`
 
 **Interfaces:**
+
 - Consumes: Expansion/CardDefinition domain, Card DSL validator, scheduler.
 - Produces: `createExpansion`, `applyCardDraftUpdate`, `advanceExpansionDesign`, `finalizeExpansion`.
 
@@ -189,7 +194,8 @@ pnpm vitest run packages/sim-core/src/operations/expansion-pipeline.test.ts
 - [ ] **Step 3: Implement exact stage model**
 
 ```ts
-export type ExpansionStage = "CONCEPT" | "DESIGN" | "PLAYTEST" | "FINALIZED" | "PRINTING" | "RELEASED";
+export type ExpansionStage =
+  "CONCEPT" | "DESIGN" | "PLAYTEST" | "FINALIZED" | "PRINTING" | "RELEASED";
 ```
 
 Card draft state stores `gameplayRevision`, `rulesLocked` and design-slot metadata. Finalized CardDefinitions become canonical immutable rule objects for later Printings.
@@ -212,12 +218,14 @@ git commit -m "feat: implement expansion development pipeline"
 ### Task 3: Implement Quick/Standard/Deep Playtest and report invalidation
 
 **Files:**
+
 - Create: `packages/balance/src/playtest-config.ts`
 - Create: `packages/sim-core/src/operations/playtest.ts`
 - Test: `packages/sim-core/src/operations/playtest.test.ts`
 - Test: `tests/scenarios/playtest-hidden-combo.test.ts`
 
 **Interfaces:**
+
 - Consumes: Rules Engine, Deck Evolution search utilities, unreleased expansion snapshot.
 - Produces: `startPlaytest`, `advancePlaytest`, `completePlaytest`, `PlaytestReport`, `PlaytestAnomaly`, revision snapshot validation.
 
@@ -267,11 +275,13 @@ git commit -m "feat: run finite internal playtests"
 ### Task 4: Implement Ban, Restrict and five-set Standard Rotation
 
 **Files:**
+
 - Create: `packages/sim-core/src/operations/policies.ts`
 - Test: `packages/sim-core/src/operations/policies.test.ts`
 - Test: `tests/scenarios/restrict-combo.test.ts`
 
 **Interfaces:**
+
 - Consumes: BanlistVersion, Deck validator, scheduled operations, expansion release order.
 - Produces: `schedulePolicyChange`, `activatePolicyChanges`, `getActiveBanlist`, `applyStandardRotation`, policy-aware deck legality.
 
@@ -316,12 +326,14 @@ git commit -m "feat: version standard ban and rotation policy"
 ### Task 5: Implement real tournaments
 
 **Files:**
+
 - Create: `packages/balance/src/tournament-config.ts`
 - Create: `packages/sim-core/src/operations/tournaments.ts`
 - Test: `packages/sim-core/src/operations/tournaments.test.ts`
 - Test: `tests/scenarios/tournament-shock.test.ts`
 
 **Interfaces:**
+
 - Consumes: persistent players, owned legal decks, Rules Engine, active BanlistVersion.
 - Produces: tournament registration, bracket/match results, Top 8, winner, public deck-list knowledge events and structured attention events.
 
@@ -360,6 +372,7 @@ git commit -m "feat: simulate official tournaments"
 ### Task 6: Implement campaigns, official announcements and structured commitments
 
 **Files:**
+
 - Create: `packages/balance/src/marketing-config.ts`
 - Create: `packages/sim-core/src/operations/marketing.ts`
 - Create: `packages/sim-core/src/operations/announcements.ts`
@@ -367,6 +380,7 @@ git commit -m "feat: simulate official tournaments"
 - Test: `tests/scenarios/marketing-stockout.test.ts`
 
 **Interfaces:**
+
 - Consumes: cohorts, product availability, operation scheduler, WorldEvent model.
 - Produces: five campaign types, daily exposure deltas, `OfficialAnnouncement`, finite structured `Commitment` types and fulfillment/breach events.
 
@@ -383,7 +397,12 @@ New Player Campaign + all Starter products out of stock should increase Interest
 Supported topics:
 
 ```ts
-"EXPANSION" | "BALANCE" | "REPRINT" | "TOURNAMENT" | "DEVELOPMENT" | "APOLOGY_RESPONSE"
+"EXPANSION" |
+  "BALANCE" |
+  "REPRINT" |
+  "TOURNAMENT" |
+  "DEVELOPMENT" |
+  "APOLOGY_RESPONSE";
 ```
 
 Free-form text is presentation data. Structured bound action/commitment drives future Trust evaluation.
@@ -406,6 +425,7 @@ git commit -m "feat: model marketing and official communication"
 ### Task 7: Integrate full publisher operations into authoritative daily phases
 
 **Files:**
+
 - Modify: `packages/sim-core/src/day/simulate-day.ts`
 - Modify: `packages/sim-core/src/day/world-invariants.ts`
 - Create: `packages/sim-core/src/history/milestones.ts`
@@ -413,6 +433,7 @@ git commit -m "feat: model marketing and official communication"
 - Test: `tests/determinism/publisher-world-determinism.test.ts`
 
 **Interfaces:**
+
 - Consumes: Tasks 1–6 plus Phase 2 subsystems.
 - Produces: complete deterministic daily operations order matching the authoritative spec.
 
@@ -473,6 +494,7 @@ git commit -m "feat: integrate publisher operations into day loop"
 ### Task 8: Scaffold React/Vite game shell, routing and UI-only state
 
 **Files:**
+
 - Create: `apps/game/package.json`
 - Create: `apps/game/vite.config.ts`
 - Create: `apps/game/tsconfig.json`
@@ -487,6 +509,7 @@ git commit -m "feat: integrate publisher operations into day loop"
 - Test: `apps/game/src/app/router.test.tsx`
 
 **Interfaces:**
+
 - Consumes: no WorldState mutation yet.
 - Produces: Web app routes matching the spec and `UiStore` containing presentation-only state.
 
@@ -555,6 +578,7 @@ git commit -m "feat: scaffold publisher web application"
 ### Task 9: Add GameSessionController, Simulation Worker and atomic End Day
 
 **Files:**
+
 - Create: `apps/game/src/app/game-session/GameSessionController.ts`
 - Create: `apps/game/src/app/game-session/GameSessionContext.tsx`
 - Create: `apps/game/src/workers/protocol.ts`
@@ -563,6 +587,7 @@ git commit -m "feat: scaffold publisher web application"
 - Test: `apps/game/src/app/game-session/GameSessionController.test.ts`
 
 **Interfaces:**
+
 - Consumes: `simulateDay`, WorldState, PublisherCommand, SaveRepository contract.
 - Produces: `GameSessionController.load`, `queueCommand`, `discardPendingCommand`, `endDay`, `subscribe`; worker protocol `SIMULATE_DAY_REQUEST|PROGRESS|RESULT|ERROR`.
 
@@ -597,6 +622,7 @@ git commit -m "feat: run atomic end day in simulation worker"
 ### Task 10: Implement Dexie Web saves, multi-slot UI and New Game Setup
 
 **Files:**
+
 - Create: `packages/persistence/src/indexeddb/dexie-db.ts`
 - Create: `packages/persistence/src/indexeddb/dexie-save-repository.ts`
 - Modify: `packages/persistence/src/index.ts`
@@ -609,6 +635,7 @@ git commit -m "feat: run atomic end day in simulation worker"
 - Test: `apps/game/src/features/new-game/setup-service.test.ts`
 
 **Interfaces:**
+
 - Consumes: SaveRepository contract, deterministic Launch fixture/manual structured card editor paths.
 - Produces: Web `SaveRepository`, multiple save slots, Setup Phase service ending at Day 1 launch.
 
@@ -648,6 +675,7 @@ git commit -m "feat: create web saves and launch setup flow"
 ### Task 11: Build Dashboard, global shell, End Day review and Daily Report
 
 **Files:**
+
 - Create: `apps/game/src/components/layout/AppShell.tsx`
 - Create: `apps/game/src/components/layout/GlobalHeader.tsx`
 - Create: `apps/game/src/components/semantics/FactValue.tsx`
@@ -663,6 +691,7 @@ git commit -m "feat: create web saves and launch setup flow"
 - Test: `apps/game/src/features/end-day/EndDayDialog.test.tsx`
 
 **Interfaces:**
+
 - Consumes: WorldState/report/session controller.
 - Produces: pure selectors `selectDashboardView(world)`, UI semantics and End Day warnings/Proceed Anyway flow.
 
@@ -696,6 +725,7 @@ git commit -m "feat: add publisher dashboard and daily report"
 ### Task 12: Build Cards, Card Studio, Expansions and Playtest Lab
 
 **Files:**
+
 - Create: `apps/game/src/selectors/cards.ts`
 - Create: `apps/game/src/selectors/expansions.ts`
 - Create: `apps/game/src/features/cards/CardDatabase.tsx`
@@ -711,6 +741,7 @@ git commit -m "feat: add publisher dashboard and daily report"
 - Test: `apps/game/src/features/expansions/SetReview.test.tsx`
 
 **Interfaces:**
+
 - Consumes: card/expansion/playtest selectors and GameSession queued commands.
 - Produces: full structured manual design path for offline MVP.
 
@@ -744,6 +775,7 @@ git commit -m "feat: add card and expansion workbench"
 ### Task 13: Build Meta, replay, Market, Community, Tournaments, Operations and search
 
 **Files:**
+
 - Create: `apps/game/src/selectors/meta.ts`
 - Create: `apps/game/src/selectors/market.ts`
 - Create: `apps/game/src/selectors/community.ts`
@@ -764,6 +796,7 @@ git commit -m "feat: add card and expansion workbench"
 - Test: `apps/game/src/features/operations/PolicyDialog.test.tsx`
 
 **Interfaces:**
+
 - Consumes: canonical selectors and PublisherCommands.
 - Produces: remaining publisher workflows and entity cross-navigation.
 
@@ -805,6 +838,7 @@ git commit -m "feat: complete publisher workbench views"
 ### Task 14: Add Playwright E2E and Phase 3 offline-playable gate
 
 **Files:**
+
 - Create: `apps/game/playwright.config.ts`
 - Create: `tests/e2e/new-game-launch.spec.ts`
 - Create: `tests/e2e/meta-policy.spec.ts`
@@ -816,6 +850,7 @@ git commit -m "feat: complete publisher workbench views"
 - Modify: `.github/workflows/ci.yml`
 
 **Interfaces:**
+
 - Consumes: complete Phase 3 Web app.
 - Produces: six required user-flow regressions and `pnpm test:e2e`.
 

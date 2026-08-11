@@ -110,17 +110,28 @@ describe("effect resolution", () => {
     });
     const ctx = context([sourceUnit], [shielded], source);
     ctx.state.players.A.heroHealth = 10;
-    ctx.state.players.A.deck = [cardId("card-draw-two"), cardId("card-draw-one")];
+    ctx.state.players.A.deck = [
+      cardId("card-draw-two"),
+      cardId("card-draw-one"),
+    ];
     ctx.state.players.B.hand = [
       { instanceId: "discard-one", cardId: cardId("card-discard-one") },
       { instanceId: "discard-two", cardId: cardId("card-discard-two") },
     ];
 
     ctx.selectedTargetId = shielded.instanceId;
-    resolveEffect(ctx, { type: "DEAL_DAMAGE", amount: 3, target: "ENEMY_UNIT" });
+    resolveEffect(ctx, {
+      type: "DEAL_DAMAGE",
+      amount: 3,
+      target: "ENEMY_UNIT",
+    });
     expect(shielded).toMatchObject({ health: 4, keywords: [] });
 
-    resolveEffect(ctx, { type: "DEAL_DAMAGE", amount: 3, target: "ENEMY_UNIT" });
+    resolveEffect(ctx, {
+      type: "DEAL_DAMAGE",
+      amount: 3,
+      target: "ENEMY_UNIT",
+    });
     expect(shielded.health).toBe(1);
 
     ctx.selectedTargetId = heroTargetId("A");
@@ -163,9 +174,21 @@ describe("effect resolution", () => {
     const ctx = context([sourceUnit], [enemy], source);
 
     ctx.selectedTargetId = sourceUnit.instanceId;
-    resolveEffect(ctx, { type: "BUFF_ATTACK", amount: 2, target: "FRIENDLY_UNIT" });
-    resolveEffect(ctx, { type: "BUFF_HEALTH", amount: 2, target: "FRIENDLY_UNIT" });
-    resolveEffect(ctx, { type: "BUFF_STATS", amount: 1, target: "FRIENDLY_UNIT" });
+    resolveEffect(ctx, {
+      type: "BUFF_ATTACK",
+      amount: 2,
+      target: "FRIENDLY_UNIT",
+    });
+    resolveEffect(ctx, {
+      type: "BUFF_HEALTH",
+      amount: 2,
+      target: "FRIENDLY_UNIT",
+    });
+    resolveEffect(ctx, {
+      type: "BUFF_STATS",
+      amount: 1,
+      target: "FRIENDLY_UNIT",
+    });
     resolveEffect(ctx, {
       type: "GAIN_KEYWORD",
       keyword: "TAUNT",
@@ -179,8 +202,16 @@ describe("effect resolution", () => {
     });
 
     ctx.selectedTargetId = enemy.instanceId;
-    resolveEffect(ctx, { type: "DEBUFF_ATTACK", amount: 9, target: "ENEMY_UNIT" });
-    resolveEffect(ctx, { type: "DEBUFF_HEALTH", amount: 2, target: "ENEMY_UNIT" });
+    resolveEffect(ctx, {
+      type: "DEBUFF_ATTACK",
+      amount: 9,
+      target: "ENEMY_UNIT",
+    });
+    resolveEffect(ctx, {
+      type: "DEBUFF_HEALTH",
+      amount: 2,
+      target: "ENEMY_UNIT",
+    });
     resolveEffect(ctx, {
       type: "GAIN_KEYWORD",
       keyword: "TAUNT",
@@ -191,7 +222,12 @@ describe("effect resolution", () => {
       keyword: "TAUNT",
       target: "ENEMY_UNIT",
     });
-    expect(enemy).toMatchObject({ attack: 0, health: 3, maxHealth: 3, keywords: [] });
+    expect(enemy).toMatchObject({
+      attack: 0,
+      health: 3,
+      maxHealth: 3,
+      keywords: [],
+    });
   });
 
   it("creates, copies and returns cards while respecting the hand limit", () => {
@@ -217,7 +253,9 @@ describe("effect resolution", () => {
     ctx.selectedTargetId = sourceUnit.instanceId;
     resolveEffect(ctx, { type: "RETURN_TO_HAND", target: "FRIENDLY_UNIT" });
     expect(ctx.state.players.A.board).toEqual([]);
-    expect(ctx.state.players.A.hand.at(-1)?.instanceId).toBe(sourceUnit.instanceId);
+    expect(ctx.state.players.A.hand.at(-1)?.instanceId).toBe(
+      sourceUnit.instanceId,
+    );
   });
 
   it("gains temporary and permanent mana within the permanent cap", () => {

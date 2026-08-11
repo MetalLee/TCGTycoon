@@ -142,20 +142,20 @@ The live TCG always uses one fixed rules skeleton in MVP. Theme and visible keyw
 
 ### 4.1 Deck and hero rules
 
-| Rule | MVP value |
-|---|---:|
-| Hero health | 20 |
-| Deck size | 20 cards |
-| Copies of a card | Maximum 2 |
-| Factions | Exactly 1 faction + Neutral cards |
-| Card types | Unit, Spell |
-| Starting hand, first player | 3 |
-| Starting hand, second player | 4 |
-| Second-player bonus | 1 Coin special card |
-| Maximum hand | 10 |
-| Battlefield unit slots | 5 |
-| Maximum permanent resource | 8 |
-| Draw per turn | 1 |
+| Rule                         |                         MVP value |
+| ---------------------------- | --------------------------------: |
+| Hero health                  |                                20 |
+| Deck size                    |                          20 cards |
+| Copies of a card             |                         Maximum 2 |
+| Factions                     | Exactly 1 faction + Neutral cards |
+| Card types                   |                       Unit, Spell |
+| Starting hand, first player  |                                 3 |
+| Starting hand, second player |                                 4 |
+| Second-player bonus          |               1 Coin special card |
+| Maximum hand                 |                                10 |
+| Battlefield unit slots       |                                 5 |
+| Maximum permanent resource   |                                 8 |
+| Draw per turn                |                                 1 |
 
 The Coin is not part of the constructed 20-card deck. It costs 0 and grants +1 temporary resource for the current turn.
 
@@ -701,11 +701,11 @@ Every post should link to real underlying entities where applicable.
 
 After Launch Set, supported expansion sizes are:
 
-| Size | Cards | Player key-card target | Base Design progress |
-|---|---:|---:|---:|
-| Small | 24 | 5–6 | 4 live days |
-| Standard | 32 | 6–8 | 6 live days |
-| Large | 36 | 8–10 | 8 live days |
+| Size     | Cards | Player key-card target | Base Design progress |
+| -------- | ----: | ---------------------: | -------------------: |
+| Small    |    24 |                    5–6 |          4 live days |
+| Standard |    32 |                    6–8 |          6 live days |
+| Large    |    36 |                   8–10 |          8 live days |
 
 Standard 32-card expansions are the default/common product size.
 
@@ -731,11 +731,11 @@ AI generates an editable design skeleton before proposing final cards so the set
 
 Default balance targets:
 
-| Tier | Live duration | Approx matches | Purpose |
-|---|---:|---:|---|
-| Quick | 1 day | 2,000 | Obvious issues |
-| Standard | 3 days | 15,000 | Normal release confidence |
-| Deep | 7 days | 75,000 | Wider Meta/combo search |
+| Tier     | Live duration | Approx matches | Purpose                   |
+| -------- | ------------: | -------------: | ------------------------- |
+| Quick    |         1 day |          2,000 | Obvious issues            |
+| Standard |        3 days |         15,000 | Normal release confidence |
+| Deep     |        7 days |         75,000 | Wider Meta/combo search   |
 
 Actual values remain configurable for performance and balance.
 
@@ -801,11 +801,11 @@ Rotated cards remain physical assets and continue collector/legacy-casual demand
 
 Supported event presets:
 
-| Event | Players | Prep time |
-|---|---:|---:|
-| Local Open | 32 | 2 days |
-| Regional | 128 | 5 days |
-| Major | 512 | 10 days |
+| Event      | Players | Prep time |
+| ---------- | ------: | --------: |
+| Local Open |      32 |    2 days |
+| Regional   |     128 |    5 days |
+| Major      |     512 |   10 days |
 
 Tournament entrants require legal owned cards. Matches are actually simulated. Results create public deck knowledge, social exposure and subsequent demand/adoption changes.
 
