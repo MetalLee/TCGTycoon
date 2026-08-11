@@ -953,7 +953,7 @@ git add packages/rules-engine/src/replay tests/determinism
 - Consumes: `simulateMatch()`, fixture decks/cards, result hashing.
 - Produces: `pnpm sim:match --seed <integer>` CLI that prints JSON summary with `winner`, `turns`, `warnings`, and deterministic `resultHash`.
 
-- [ ] **Step 1: Write failing CLI argument/parser test**
+- [x] **Step 1: Write failing CLI argument/parser test**
 
 Factor the CLI's pure argument parsing into exported helper:
 
@@ -968,13 +968,13 @@ expect(parseSeedArg(["--seed", "12345"])).toBe(12345n);
 expect(() => parseSeedArg(["--seed", "abc"])).toThrow();
 ```
 
-- [ ] **Step 2: Run the test and confirm failure**
+- [x] **Step 2: Run the test and confirm failure**
 
 ```bash
 pnpm vitest run tests/rules/headless-match.test.ts
 ```
 
-- [ ] **Step 3: Implement the CLI**
+- [x] **Step 3: Implement the CLI**
 
 The CLI must not use wall-clock data in the result. Example output shape:
 
@@ -988,11 +988,11 @@ The CLI must not use wall-clock data in the result. Example output shape:
 }
 ```
 
-- [ ] **Step 4: Add CI for Phase 1 checks**
+- [x] **Step 4: Add CI for Phase 1 checks**
 
 `.github/workflows/ci.yml` should run checkout, pnpm setup, install with frozen lockfile, lint, typecheck and test on pushes/PRs.
 
-- [ ] **Step 5: Run the complete Phase 1 exit gate twice**
+- [x] **Step 5: Run the complete Phase 1 exit gate twice**
 
 ```bash
 pnpm lint
@@ -1005,7 +1005,7 @@ pnpm sim:match --seed 12345
 
 Expected: both CLI runs print the same `resultHash`.
 
-- [ ] **Step 6: Verify forbidden architecture imports**
+- [x] **Step 6: Verify forbidden architecture imports**
 
 At Phase 1 there must be no React, HTTP or AI provider dependency in `packages/rules-engine`.
 
@@ -1017,7 +1017,7 @@ Run:
 
 Expected: no matches.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts package.json .github tests/rules
