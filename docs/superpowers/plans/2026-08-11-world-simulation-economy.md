@@ -886,7 +886,7 @@ git commit -m "feat: orchestrate deterministic daily simulation"
 - Consumes: `simulateDay()`, Phase 2 commands, test fixtures.
 - Produces: `BasicPublisherBot.decide(world): PublisherCommand[]`, named deterministic scenarios, CLI `pnpm sim --days N --seed S`.
 
-- [ ] **Step 1: Write failing CLI parser and scenario smoke tests**
+- [x] **Step 1: Write failing CLI parser and scenario smoke tests**
 
 The CLI must accept:
 
@@ -898,7 +898,7 @@ The CLI must accept:
 
 Test 30-day balanced scenario returns finite metrics and valid state.
 
-- [ ] **Step 2: Implement BasicPublisherBot**
+- [x] **Step 2: Implement BasicPublisherBot**
 
 Its rules are intentionally simple and deterministic:
 
@@ -906,11 +906,11 @@ Its rules are intentionally simple and deterministic:
 - Do not arbitrarily change MSRP every day.
 - Do not implement Phase 3 Ban/Expansion decisions yet.
 
-- [ ] **Step 3: Implement scenario fixtures with explicit purposes**
+- [x] **Step 3: Implement scenario fixtures with explicit purposes**
 
 Each scenario must be constructed from legal world state, not by bypassing physical ownership invariants.
 
-- [ ] **Step 4: Add scripts**
+- [x] **Step 4: Add scripts**
 
 Root package scripts:
 
@@ -923,7 +923,7 @@ Root package scripts:
 
 CLI summary at minimum prints final day, Active Players, Hype, Meta Health, Brand Trust, Cash, market/deck counts, risk state and state hash.
 
-- [ ] **Step 5: Run Phase 2 exit gate**
+- [x] **Step 5: Run Phase 2 exit gate**
 
 ```bash
 pnpm lint
@@ -936,7 +936,7 @@ pnpm sim --days 1000 --seed 12345 --scenario balanced-world
 
 Then repeat the 100-day command and confirm identical final `stateHash`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/testkit scripts tests/scenarios package.json

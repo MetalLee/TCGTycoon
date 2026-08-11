@@ -8,6 +8,8 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:rules": "vitest run packages/rules-engine packages/domain",
+    "test:scenarios": "vitest run tests/scenarios",
+    "sim": "tsx scripts/simulate-days.ts",
     "sim:match": "tsx scripts/simulate-match.ts"
   },
   "devDependencies": {
