@@ -708,7 +708,7 @@ git commit -m "feat: derive live meta from real matches"
 - Consumes: market prices/supply, product availability, Meta samples, population/cohort state, publisher history/cash.
 - Produces: Accessibility, cohort target satisfaction, lifecycle deltas, Hype/CollectorHeat/MetaHealth/BrandTrust updates, `EcosystemRiskState`.
 
-- [ ] **Step 1: Write failing smoothing and independence tests**
+- [x] **Step 1: Write failing smoothing and independence tests**
 
 Required:
 
@@ -718,11 +718,11 @@ it("Brand Trust moves slower than Hype toward its target", () => {});
 it("healthy win rates with unaffordable decks lowers Accessibility without fabricating poor match balance", () => {});
 ```
 
-- [ ] **Step 2: Implement Accessibility**
+- [x] **Step 2: Implement Accessibility**
 
 Use Starter availability/price, cheapest competitive deck, median Meta deck cost and core-card scarcity. Return normalized 0–100.
 
-- [ ] **Step 3: Implement Meta Health components**
+- [x] **Step 3: Implement Meta Health components**
 
 Default conceptual weights:
 
@@ -738,7 +738,7 @@ Default conceptual weights:
 
 Apply a configurable staleness penalty separately. Ignore/discount insufficiently sampled decks for win-rate outlier health.
 
-- [ ] **Step 4: Implement target/smoothing metrics**
+- [x] **Step 4: Implement target/smoothing metrics**
 
 Use:
 
@@ -748,15 +748,15 @@ next = current + (target - current) * responseSpeed;
 
 Hype response speed > Collector Heat > Brand Trust.
 
-- [ ] **Step 5: Implement cohort lifecycle transitions**
+- [x] **Step 5: Implement cohort lifecycle transitions**
 
 Track Potential -> Interested -> New -> Active -> At Risk -> Churned and Churned -> Returning. Use deterministic Bernoulli draws from derived RNG sub-seeds. New-player onboarding/retention uses a 7-day age window.
 
-- [ ] **Step 6: Implement ecosystem risk states**
+- [x] **Step 6: Implement ecosystem risk states**
 
 Return one of `STABLE | STRAINED | DECLINING | DEATH_SPIRAL | TERMINAL` based on persisted trends/thresholds. Do not apply a blanket state multiplier to revenue or players.
 
-- [ ] **Step 7: Run metric/scenario tests and commit**
+- [x] **Step 7: Run metric/scenario tests and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/metrics
