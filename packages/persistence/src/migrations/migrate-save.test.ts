@@ -158,6 +158,9 @@ describe("migrateSave", () => {
       sourceExpansionId: "set-launch",
     });
     expect(migrated.state.printRuns["print-run-launch"]).toMatchObject({
+      sourceExpansionId: "set-launch",
+      productKind: "BOOSTER",
+      cardIds: ["card-launch"],
       status: "PRINTING",
       orderedQuantity: 100,
       quantity: 0,

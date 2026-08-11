@@ -52,7 +52,7 @@ function createProduct(): ProductSku {
 function createProductionWorld(): WorldState {
   const product = createProduct();
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -137,6 +137,26 @@ describe("physical production", () => {
     expect(run.quantity).toBe(0);
     expect(advancePrintRuns(world, run.completionDay - 1)).toEqual([]);
     expect(world.printRuns[firstRunId]!.quantity).toBe(0);
+  });
+
+  it("locks the product contents committed when the run was ordered", () => {
+    const world = createProductionWorld();
+    const run = orderFirstRun(world);
+    expect(run).toMatchObject({
+      sourceExpansionId: launchExpansionId,
+      productKind: "BOOSTER",
+      cardIds: [productionCardId],
+    });
+    world.products[boosterProductId]!.cardIds = [];
+
+    expect(() => advancePrintRuns(world, run.completionDay)).toThrow(
+      /contents cannot change/i,
+    );
+    expect(world.printRuns[firstRunId]).toMatchObject({
+      status: "PRINTING",
+      quantity: 0,
+      printingIds: [],
+    });
   });
 
   it("refuses to cancel a PRINTING run", () => {

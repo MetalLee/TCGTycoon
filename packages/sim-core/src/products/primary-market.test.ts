@@ -24,7 +24,7 @@ const boosterPrintRunId = printRunId("print-run-primary-booster");
 function createPrimaryMarketWorld(): WorldState {
   const population = createInitialPopulation("primary-market-test");
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -69,6 +69,9 @@ function createPrimaryMarketWorld(): WorldState {
       [boosterPrintRunId]: {
         id: boosterPrintRunId,
         productId: boosterProductId,
+        sourceExpansionId: expansionId("set-primary"),
+        productKind: "BOOSTER",
+        cardIds: [cardId("card-primary")],
         orderedQuantity: 5,
         quantity: 0,
         orderedDay: 0,

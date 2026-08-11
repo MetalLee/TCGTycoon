@@ -4,7 +4,7 @@ import { createBalancedWorld } from "../../packages/testkit/src/index";
 import { describe, expect, it } from "vitest";
 
 function createSupplyWorld(quantity: number) {
-  const scenario = createBalancedWorld(`shortage-${quantity}`);
+  const scenario = createBalancedWorld("shortage-comparison");
   for (const run of Object.values(scenario.world.printRuns)) {
     run.quantity = quantity;
     run.orderedQuantity = Math.max(run.orderedQuantity, quantity);

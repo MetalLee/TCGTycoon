@@ -5,18 +5,25 @@ export function calculateCheapestCardCost(
   world: WorldState,
   cardId: CardId,
 ): number | undefined {
-  const printingIds = Object.values(world.printings)
-    .filter((printing) => printing.cardId === cardId)
-    .map((printing) => printing.id);
-  const prices = [
-    ...printingIds.flatMap((id) => {
-      const snapshot = world.market.snapshots[id];
-      return snapshot === undefined ? [] : [snapshot.lastPrice];
-    }),
-    ...world.market.listings
-      .filter((listing) => printingIds.includes(listing.printingId))
-      .map((listing) => listing.price),
-  ].filter((price) => Number.isFinite(price) && price >= 0);
+  const printingIds = new Set(
+    Object.values(world.printings)
+      .filter((printing) => printing.cardId === cardId)
+      .map((printing) => printing.id),
+  );
+  const prices = world.market.listings
+    .filter((listing) => {
+      const owner = world.players[listing.ownerId];
+      return (
+        printingIds.has(listing.printingId) &&
+        owner !== undefined &&
+        Number.isInteger(listing.quantity) &&
+        listing.quantity > 0 &&
+        (owner.collection[listing.printingId] ?? 0) > 0 &&
+        Number.isFinite(listing.price) &&
+        listing.price >= 0
+      );
+    })
+    .map((listing) => listing.price);
   return prices.length === 0 ? undefined : Math.min(...prices);
 }
 

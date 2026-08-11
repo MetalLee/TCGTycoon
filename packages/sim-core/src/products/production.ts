@@ -154,6 +154,21 @@ export function orderPrintRun(
       );
     }
   }
+  for (const existing of Object.values(world.printRuns)) {
+    if (
+      existing.productId === product.id &&
+      (existing.sourceExpansionId !== product.expansionId ||
+        existing.productKind !== product.kind ||
+        existing.cardIds.length !== product.cardIds.length ||
+        existing.cardIds.some(
+          (cardId, index) => cardId !== product.cardIds[index],
+        ))
+    ) {
+      throw new Error(
+        `Product ${product.id} contents cannot change after production is ordered`,
+      );
+    }
+  }
 
   const quote = quotePrintRun(product, order.quantity, config);
   if (world.cash.balance < quote.totalCost) {
@@ -163,6 +178,9 @@ export function orderPrintRun(
   const run: PrintRun = {
     id: order.id,
     productId: product.id,
+    sourceExpansionId: product.expansionId,
+    productKind: product.kind,
+    cardIds: [...product.cardIds],
     orderedQuantity: quote.quantity,
     quantity: 0,
     orderedDay: world.day,
@@ -211,7 +229,7 @@ function variantSuffix(id: PrintingId): string {
 }
 
 function createPrintingId(
-  product: ProductSku,
+  product: Pick<ProductSku, "id">,
   cardId: string,
   edition: PrintingEdition,
   suffix: string,
@@ -223,7 +241,7 @@ function createPrintingId(
 
 function existingEditionPrintings(
   world: WorldState,
-  product: ProductSku,
+  product: Pick<ProductSku, "id" | "cardIds">,
   edition: PrintingEdition,
 ): Printing[] {
   return Object.values(world.printings)
@@ -238,7 +256,7 @@ function existingEditionPrintings(
 
 function ensureEditionPrintings(
   world: WorldState,
-  product: ProductSku,
+  product: Pick<ProductSku, "id" | "expansionId" | "cardIds">,
   edition: PrintingEdition,
 ): PrintingId[] {
   const targetedReprints = existingEditionPrintings(world, product, "REPRINT");
@@ -341,6 +359,21 @@ export function completePrintRuns(
     if (product === undefined) {
       throw new Error(`Print Run ${run.id} references unknown product`);
     }
+    if (
+      product.expansionId !== run.sourceExpansionId ||
+      product.kind !== run.productKind ||
+      product.cardIds.length !== run.cardIds.length ||
+      run.cardIds.some((cardId, index) => cardId !== product.cardIds[index])
+    ) {
+      throw new Error(
+        `Product ${product.id} contents cannot change after production is ordered`,
+      );
+    }
+    const committedProduct = {
+      id: run.productId,
+      expansionId: run.sourceExpansionId,
+      cardIds: run.cardIds,
+    };
     const hasCompletedRun = Object.values(world.printRuns).some(
       (candidate) =>
         candidate.productId === run.productId &&
@@ -349,7 +382,11 @@ export function completePrintRuns(
     const edition: PrintingEdition = hasCompletedRun
       ? "UNLIMITED"
       : "FIRST_EDITION";
-    const printingIds = ensureEditionPrintings(world, product, edition);
+    const printingIds = ensureEditionPrintings(
+      world,
+      committedProduct,
+      edition,
+    );
     if (printingIds.length === 0) {
       throw new Error(`Print Run ${run.id} produced no Printing identities`);
     }

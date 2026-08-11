@@ -41,6 +41,9 @@ export type ProductSku = {
 export type PrintRun = {
   id: PrintRunId;
   productId: ProductId;
+  sourceExpansionId: ExpansionId;
+  productKind: ProductSku["kind"];
+  cardIds: CardId[];
   orderedQuantity: number;
   quantity: number;
   orderedDay: number;

@@ -54,8 +54,10 @@ export function announceRelease(
 ): WorldEvent {
   requireReleaseDay(world, releaseDay);
   const product = requireProduct(world, productId);
-  if (product.releaseStatus === "LIVE") {
-    throw new Error(`Live product ${productId} cannot be announced again`);
+  if (product.releaseStatus !== "UNANNOUNCED") {
+    throw new Error(
+      `Product ${productId} is already announced; use reschedule instead`,
+    );
   }
 
   product.releaseStatus = "ANNOUNCED";
@@ -90,8 +92,26 @@ export function rescheduleRelease(
     return [];
   }
 
-  product.releaseStatus = "DELAYED";
+  if (newReleaseDay === previousReleaseDay) {
+    return [];
+  }
+
   product.announcedReleaseDay = newReleaseDay;
+  if (newReleaseDay < previousReleaseDay) {
+    product.releaseStatus = "ANNOUNCED";
+    return [
+      appendReleaseEvent(world, "RELEASE_RESCHEDULED", {
+        productId,
+        reason: "PUBLIC_DATE_MOVED_EARLIER",
+        previousReleaseDay,
+        newReleaseDay,
+        publicCommitment: true,
+        trustSignal: "NONE",
+      }),
+    ];
+  }
+
+  product.releaseStatus = "DELAYED";
   return [
     appendReleaseEvent(world, "RELEASE_DELAY", {
       productId,

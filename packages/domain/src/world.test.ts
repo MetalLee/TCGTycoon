@@ -10,7 +10,7 @@ import {
 import type { WorldState } from "./world";
 
 const createEmptyWorldFixture = (): WorldState => ({
-  schemaVersion: 4,
+  schemaVersion: 5,
   simulationVersion: "2",
   ruleVersion: "1",
   balanceVersion: "1",

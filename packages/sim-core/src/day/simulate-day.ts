@@ -27,7 +27,10 @@ import {
   applyMarketTrades,
   clearPrintingAuction,
 } from "../market/call-auction";
-import { generateMarketIntents } from "../market/market-intents";
+import {
+  generateMarketIntents,
+  refreshEndogenousListings,
+} from "../market/market-intents";
 import {
   updateMetaState,
   type MetaAggregationResult,
@@ -454,6 +457,7 @@ function phase06AggregateMetaAndKnowledge(context: DayContext): void {
 }
 
 function phase07ClearSecondaryMarket(context: DayContext): void {
+  refreshEndogenousListings(context.state);
   const intents = generateMarketIntents(context.state);
   const printingIds = [
     ...new Set([
@@ -509,6 +513,58 @@ function median(values: readonly number[], fallback: number): number {
     : sorted[middle]!;
 }
 
+function sealedStarterDeckCost(
+  context: DayContext,
+  deckId: string,
+): number | undefined {
+  const deck = context.state.decks[deckId];
+  if (deck === undefined) {
+    return undefined;
+  }
+
+  const required = new Map(
+    deck.cards.map((entry) => [entry.cardId, entry.count] as const),
+  );
+  const prices = Object.entries(context.config.starterContents).flatMap(
+    ([productId, printingIds]) => {
+      const product = context.state.products[productId];
+      if (
+        product?.kind !== "STARTER" ||
+        product.releaseStatus !== "LIVE" ||
+        getSellableProductInventory(context.state, product.id) <= 0
+      ) {
+        return [];
+      }
+      const contents = new Map<string, number>();
+      for (const printingId of printingIds) {
+        const cardId = context.state.printings[printingId]?.cardId;
+        if (cardId !== undefined) {
+          contents.set(cardId, (contents.get(cardId) ?? 0) + 1);
+        }
+      }
+      return [...required].every(
+        ([cardId, count]) => (contents.get(cardId) ?? 0) >= count,
+      )
+        ? [product.msrp]
+        : [];
+    },
+  );
+  return prices.length === 0 ? undefined : Math.min(...prices);
+}
+
+function availableSealedStarterPrices(context: DayContext): number[] {
+  return Object.keys(context.config.starterContents).flatMap((productId) => {
+    const product = context.state.products[productId];
+    const contents = context.config.starterContents[productId]!;
+    return product?.kind === "STARTER" &&
+      product.releaseStatus === "LIVE" &&
+      contents.length === RULES_CONFIG.deckSize &&
+      getSellableProductInventory(context.state, product.id) > 0
+      ? [product.msrp]
+      : [];
+  });
+}
+
 function deriveAccessibility(context: DayContext): number {
   const starterProducts = Object.values(context.state.products)
     .filter((product) => product.kind === "STARTER")
@@ -529,9 +585,15 @@ function deriveAccessibility(context: DayContext): number {
     metaDeckIds.length === 0
       ? Object.keys(context.state.decks).sort(compareIds)
       : metaDeckIds;
-  const deckCosts = deckIds.map((id) =>
-    calculateDeckMarketCost(context.state, id),
-  );
+  const deckCosts = [
+    ...deckIds.map((id) =>
+      Math.min(
+        calculateDeckMarketCost(context.state, id),
+        sealedStarterDeckCost(context, id) ?? Number.POSITIVE_INFINITY,
+      ),
+    ),
+    ...availableSealedStarterPrices(context),
+  ];
   const deckEntries = deckIds.flatMap(
     (id) => context.state.decks[id]?.cards ?? [],
   );
@@ -682,11 +744,29 @@ function marketPriceMomentum(context: DayContext): number {
   return average(movements, METRICS_CONFIG.signals.neutralPriceMomentum);
 }
 
+function releaseTrustSignals(context: DayContext): {
+  negative: number;
+  positive: number;
+} {
+  return context.notableEvents.reduce(
+    (counts, event) => {
+      if (event.context?.trustSignal === "NEGATIVE") {
+        counts.negative += 1;
+      } else if (event.context?.trustSignal === "POSITIVE") {
+        counts.positive += 1;
+      }
+      return counts;
+    },
+    { negative: 0, positive: 0 },
+  );
+}
+
 function phase10UpdateCoreWorldMetrics(context: DayContext): void {
   const metrics = context.state.metrics;
   const satisfaction = averagePlayerSatisfaction(context.state);
   const playerCount = Math.max(1, metrics.activePlayers);
   const snapshots = Object.values(context.state.market.snapshots);
+  const releaseSignals = releaseTrustSignals(context);
   const nextHealth = updateWorldMetrics(metrics, {
     positiveAttention: clampUnit(
       (context.sales.unitsSold +
@@ -695,7 +775,9 @@ function phase10UpdateCoreWorldMetrics(context: DayContext): void {
     ),
     negativeAttention: clampUnit(
       (1 - satisfaction) *
-        METRICS_CONFIG.signals.dissatisfactionAttentionWeight,
+        METRICS_CONFIG.signals.dissatisfactionAttentionWeight +
+        releaseSignals.negative *
+          METRICS_CONFIG.signals.releaseNegativeAttentionPerEvent,
     ),
     sentimentTarget: satisfaction * 100,
     collector: {
@@ -713,7 +795,12 @@ function phase10UpdateCoreWorldMetrics(context: DayContext): void {
       collectorConfidence: satisfaction,
     },
     metaHealthTarget: context.metaHealth,
-    brandTrustTarget: satisfaction * 100,
+    brandTrustTarget:
+      satisfaction * 100 -
+      releaseSignals.negative *
+        METRICS_CONFIG.signals.releaseTrustPenaltyPerEvent +
+      releaseSignals.positive *
+        METRICS_CONFIG.signals.releaseTrustBonusPerEvent,
   });
   Object.assign(metrics, nextHealth);
   metrics.accessibility = context.accessibility;

@@ -55,7 +55,7 @@ export function createTestWorld(seed: string): WorldState {
   }));
 
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     simulationVersion: SIMULATION_VERSION,
     ruleVersion: RULE_VERSION,
     balanceVersion: BALANCE_VERSION,

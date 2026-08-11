@@ -65,7 +65,7 @@ function createReprintWorld(): WorldState {
   const cards = createCards();
   const printingIds = cards.map(firstPrintingId);
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -123,6 +123,9 @@ function createReprintWorld(): WorldState {
       [originalRunId]: {
         id: originalRunId,
         productId: originalProductId,
+        sourceExpansionId: originalExpansionId,
+        productKind: "BOOSTER",
+        cardIds: cards.map((card) => card.id),
         orderedQuantity: 100,
         quantity: 100,
         orderedDay: 0,

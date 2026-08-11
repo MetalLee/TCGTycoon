@@ -96,9 +96,13 @@ function addInitialInventory(world: WorldState): void {
     ["machine-starter", launchMachineStarterProductId, 12],
   ] as const) {
     const id = printRunId(`print-run-scenario-${suffix}`);
+    const product = world.products[productId]!;
     world.printRuns[id] = {
       id,
       productId,
+      sourceExpansionId: product.expansionId,
+      productKind: product.kind,
+      cardIds: [...product.cardIds],
       orderedQuantity: quantity,
       quantity,
       orderedDay: 0,

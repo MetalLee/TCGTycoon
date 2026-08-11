@@ -190,6 +190,114 @@ function isPremiumPrinting(printingId: PrintingId): boolean {
   );
 }
 
+function endogenousAskPrice(world: WorldState, printingId: PrintingId): number {
+  const printing = world.printings[printingId]!;
+  const snapshot = world.market.snapshots[printingId];
+  const referencePrice =
+    snapshot?.lastPrice ??
+    ECONOMY_CONFIG.secondaryMarket.fallbackAskByRarity[
+      world.cards[printing.cardId]!.rarity
+    ];
+  return Math.max(
+    ECONOMY_CONFIG.secondaryMarket.minimumEndogenousAsk,
+    toCurrency(
+      referencePrice * ECONOMY_CONFIG.secondaryMarket.endogenousAskDiscount,
+    ),
+  );
+}
+
+export function refreshEndogenousListings(world: WorldState): void {
+  const committedByOwnerCard = new Map<string, number>();
+  world.market.listings = validListings(world).flatMap((listing) => {
+    const cardId = world.printings[listing.printingId]!.cardId;
+    const key = `${listing.ownerId}\u0000${cardId}`;
+    const remainingTradable = Math.max(
+      0,
+      tradableCardCount(world, listing.ownerId, cardId) -
+        (committedByOwnerCard.get(key) ?? 0),
+    );
+    const quantity = Math.min(
+      listing.quantity,
+      world.players[listing.ownerId]!.collection[listing.printingId]!,
+      remainingTradable,
+    );
+    if (quantity <= 0) {
+      return [];
+    }
+    committedByOwnerCard.set(
+      key,
+      (committedByOwnerCard.get(key) ?? 0) + quantity,
+    );
+    return [{ ...listing, quantity }];
+  });
+
+  for (const player of Object.values(world.players).sort((left, right) =>
+    compareIds(left.id, right.id),
+  )) {
+    if (player.activity === "CHURNED") {
+      continue;
+    }
+
+    const required = requiredCardCounts(world, player.id);
+    const committedByCard = new Map<CardId, number>();
+    for (const listing of world.market.listings) {
+      if (listing.ownerId !== player.id) {
+        continue;
+      }
+      const cardId = world.printings[listing.printingId]!.cardId;
+      committedByCard.set(
+        cardId,
+        (committedByCard.get(cardId) ?? 0) + listing.quantity,
+      );
+    }
+
+    const holdings = (
+      Object.entries(player.collection) as [PrintingId, number][]
+    ).sort(([left], [right]) => compareIds(left, right));
+    for (const [printingId, owned] of holdings) {
+      const printing = world.printings[printingId];
+      if (
+        printing === undefined ||
+        !Number.isInteger(owned) ||
+        owned <= 0 ||
+        world.market.listings.some(
+          (listing) =>
+            listing.ownerId === player.id && listing.printingId === printingId,
+        )
+      ) {
+        continue;
+      }
+
+      const cardId = printing.cardId;
+      const tradable = Math.max(
+        0,
+        ownedCardCount(world, player.id, cardId) -
+          (required.get(cardId) ?? 0) -
+          (committedByCard.get(cardId) ?? 0),
+      );
+      const quantity = Math.min(
+        owned,
+        tradable,
+        ECONOMY_CONFIG.secondaryMarket.maxEndogenousListingQuantity,
+      );
+      if (quantity <= 0) {
+        continue;
+      }
+
+      world.market.listings.push({
+        ownerId: player.id,
+        printingId,
+        quantity,
+        price: endogenousAskPrice(world, printingId),
+      });
+      committedByCard.set(
+        cardId,
+        (committedByCard.get(cardId) ?? 0) + quantity,
+      );
+    }
+  }
+}
+
 function generateCollectorBuys(
   world: WorldState,
   existing: readonly BuyIntent[],

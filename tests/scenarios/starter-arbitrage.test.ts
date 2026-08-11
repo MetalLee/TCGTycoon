@@ -33,10 +33,14 @@ function createStarterWorld(referencePrice: number) {
     ...new Set(fixture.starterPrintingIds),
   ].sort() as PrintingId[];
   const runId = printRunId("print-run-starter-arbitrage");
+  const product = world.products[launchFireStarterProductId]!;
   world.printRuns = {
     [runId]: {
       id: runId,
       productId: launchFireStarterProductId,
+      sourceExpansionId: product.expansionId,
+      productKind: product.kind,
+      cardIds: [...product.cardIds],
       orderedQuantity: 400,
       quantity: 400,
       orderedDay: 0,

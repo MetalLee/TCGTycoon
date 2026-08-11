@@ -95,7 +95,7 @@ const productV4Schema = productV3Schema
       });
     }
   });
-const printRunV3Schema = z
+const printRunV3BaseSchema = z
   .object({
     id: idSchema,
     productId: idSchema,
@@ -109,30 +109,48 @@ const printRunV3Schema = z
     edition: printingEditionSchema.optional(),
     printingIds: z.array(idSchema),
   })
-  .strict()
-  .superRefine((run, context) => {
-    if (run.status === "PRINTING") {
-      if (run.quantity !== 0) {
-        context.addIssue({
-          code: "custom",
-          path: ["quantity"],
-          message: "PRINTING runs cannot contain sellable inventory.",
-        });
-      }
-      if (run.edition !== undefined || run.printingIds.length !== 0) {
-        context.addIssue({
-          code: "custom",
-          path: ["status"],
-          message: "PRINTING runs cannot have completed edition identity.",
-        });
-      }
-    } else if (run.edition === undefined) {
+  .strict();
+
+function validatePrintRunState(
+  run: z.infer<typeof printRunV3BaseSchema>,
+  context: z.RefinementCtx,
+): void {
+  if (run.status === "PRINTING") {
+    if (run.quantity !== 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["quantity"],
+        message: "PRINTING runs cannot contain sellable inventory.",
+      });
+    }
+    if (run.edition !== undefined || run.printingIds.length !== 0) {
       context.addIssue({
         code: "custom",
         path: ["status"],
-        message: "COMPLETED runs require edition identity.",
+        message: "PRINTING runs cannot have completed edition identity.",
       });
     }
+  } else if (run.edition === undefined) {
+    context.addIssue({
+      code: "custom",
+      path: ["status"],
+      message: "COMPLETED runs require edition identity.",
+    });
+  }
+}
+
+const printRunV3Schema = printRunV3BaseSchema.superRefine(
+  validatePrintRunState,
+);
+const printRunV5Schema = printRunV3BaseSchema
+  .extend({
+    sourceExpansionId: idSchema,
+    productKind: z.enum(["BOOSTER", "STARTER"]),
+    cardIds: z.array(idSchema),
+  })
+  .superRefine((run, context) => {
+    validatePrintRunState(run, context);
+    validateUniqueIds(context, run.cardIds, ["cardIds"]);
   });
 const knowledgeSchema = z
   .object({
@@ -337,13 +355,21 @@ type WorldReferenceShape = {
   expansions: Record<string, { id: string }>;
   products: Record<
     string,
-    { id: string; expansionId: string; cardIds?: string[] }
+    {
+      id: string;
+      expansionId: string;
+      kind?: "BOOSTER" | "STARTER";
+      cardIds?: string[];
+    }
   >;
   printRuns: Record<
     string,
     {
       id: string;
       productId: string;
+      sourceExpansionId?: string;
+      productKind?: "BOOSTER" | "STARTER";
+      cardIds?: string[];
       printingIds?: string[];
       edition?: string | undefined;
     }
@@ -503,12 +529,63 @@ function validateWorldReferences(
     }
   }
   for (const [id, run] of Object.entries(world.printRuns)) {
+    const product = world.products[run.productId];
     addReferenceIssue(
       context,
-      world.products[run.productId] !== undefined,
+      product !== undefined,
       ["printRuns", id, "productId"],
       run.productId,
     );
+    if (run.sourceExpansionId !== undefined) {
+      addReferenceIssue(
+        context,
+        world.expansions[run.sourceExpansionId] !== undefined,
+        ["printRuns", id, "sourceExpansionId"],
+        run.sourceExpansionId,
+      );
+      if (
+        product !== undefined &&
+        product.expansionId !== run.sourceExpansionId
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["printRuns", id, "sourceExpansionId"],
+          message: "Print Run snapshot must match its Product expansion.",
+        });
+      }
+    }
+    if (
+      product !== undefined &&
+      run.productKind !== undefined &&
+      product.kind !== run.productKind
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["printRuns", id, "productKind"],
+        message: "Print Run snapshot must match its Product kind.",
+      });
+    }
+    for (const cardId of run.cardIds ?? []) {
+      addReferenceIssue(
+        context,
+        world.cards[cardId] !== undefined,
+        ["printRuns", id, "cardIds"],
+        cardId,
+      );
+    }
+    if (run.cardIds !== undefined) {
+      validateUniqueIds(context, run.cardIds, ["printRuns", id, "cardIds"]);
+      if (
+        product !== undefined &&
+        JSON.stringify(product.cardIds) !== JSON.stringify(run.cardIds)
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["printRuns", id, "cardIds"],
+          message: "Print Run snapshot must match its Product card contents.",
+        });
+      }
+    }
     for (const printingId of run.printingIds ?? []) {
       const printing = world.printings[printingId];
       addReferenceIssue(
@@ -830,6 +907,56 @@ export const worldStateV4Schema = z
     printings: recordOf(printingV3Schema),
     products: recordOf(productV4Schema),
     printRuns: recordOf(printRunV3Schema),
+    history: historyV4Schema,
+    market: z
+      .object({
+        listings: z.array(marketListingSchema),
+        snapshots: recordOf(printingMarketSnapshotSchema),
+      })
+      .strict(),
+    meta: z
+      .object({
+        deckStats: recordOf(metaDeckStatsV2Schema),
+        matchups: recordOf(matchupStatsSchema),
+      })
+      .strict(),
+    metrics: z
+      .object({
+        activePlayers: nonNegativeIntegerSchema,
+        previousActivePlayers: nonNegativeIntegerSchema,
+        hype: metricNumberSchema,
+        collectorHeat: metricNumberSchema,
+        metaHealth: metricNumberSchema,
+        brandTrust: metricNumberSchema,
+        sentiment: metricNumberSchema,
+        accessibility: metricNumberSchema,
+        lifecycle: lifecycleStateSchema,
+        lifecycleDeltas: lifecycleDeltasSchema,
+        acquisitionToChurnRatio: nonNegativeNumberSchema,
+        retentionRate: unitNumberSchema,
+        activePlayerTrend: finiteNumberSchema,
+        consecutiveDeclineDays: nonNegativeIntegerSchema,
+        consecutiveLowActivityDays: nonNegativeIntegerSchema,
+        ecosystemRisk: z.enum([
+          "STABLE",
+          "STRAINED",
+          "DECLINING",
+          "DEATH_SPIRAL",
+          "TERMINAL",
+        ]),
+      })
+      .strict(),
+  })
+  .strict()
+  .superRefine(validateWorldReferences);
+
+export const worldStateV5Schema = z
+  .object({
+    schemaVersion: z.literal(5),
+    ...commonWorldShapeV2,
+    printings: recordOf(printingV3Schema),
+    products: recordOf(productV4Schema),
+    printRuns: recordOf(printRunV5Schema),
     history: historyV4Schema,
     market: z
       .object({

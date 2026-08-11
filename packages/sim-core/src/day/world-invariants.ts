@@ -408,11 +408,38 @@ export function validateWorldInvariants(
   }
   for (const runId of Object.keys(world.printRuns).sort(compareIds)) {
     const run = world.printRuns[runId]!;
+    const product = world.products[run.productId];
     requireReference(
-      world.products[run.productId] !== undefined,
+      product !== undefined,
       `printRuns.${runId}.productId`,
       run.productId,
     );
+    requireReference(
+      world.expansions[run.sourceExpansionId] !== undefined,
+      `printRuns.${runId}.sourceExpansionId`,
+      run.sourceExpansionId,
+    );
+    requireUnique(run.cardIds, `printRuns.${runId}.cardIds`);
+    for (const cardId of run.cardIds) {
+      requireReference(
+        world.cards[cardId] !== undefined,
+        `printRuns.${runId}.cardIds`,
+        cardId,
+      );
+    }
+    if (
+      product !== undefined &&
+      (product.expansionId !== run.sourceExpansionId ||
+        product.kind !== run.productKind ||
+        product.cardIds.length !== run.cardIds.length ||
+        run.cardIds.some((cardId, index) => cardId !== product.cardIds[index]))
+    ) {
+      fail(
+        "MISSING_REFERENCE",
+        `printRuns.${runId}`,
+        "Print Run snapshot must match its locked Product contents.",
+      );
+    }
     requireUnique(run.printingIds, `printRuns.${runId}.printingIds`);
     for (const printingId of run.printingIds) {
       const printing = world.printings[printingId];

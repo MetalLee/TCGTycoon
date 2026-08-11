@@ -28,7 +28,7 @@ const releaseConfig: ReleaseConfig = {
 
 function createReleaseWorld(inventory = 0): WorldState {
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -84,6 +84,9 @@ function createReleaseWorld(inventory = 0): WorldState {
             [releaseRunId]: {
               id: releaseRunId,
               productId: releaseProductId,
+              sourceExpansionId: releaseExpansionId,
+              productKind: "BOOSTER",
+              cardIds: [releaseCardId],
               orderedQuantity: inventory,
               quantity: inventory,
               orderedDay: 1,
@@ -180,6 +183,42 @@ describe("physical product releases", () => {
       }),
     );
     expect(world.metrics.brandTrust).toBe(trustBefore);
+  });
+
+  it("does not let ANNOUNCE_RELEASE overwrite an existing public date", () => {
+    const world = createReleaseWorld();
+    announceRelease(world, releaseProductId, 7);
+
+    expect(() => announceRelease(world, releaseProductId, 9)).toThrow(
+      /already announced/i,
+    );
+    expect(world.products[releaseProductId]!.announcedReleaseDay).toBe(7);
+  });
+
+  it("treats an unchanged public date as a no-op", () => {
+    const world = createReleaseWorld();
+    announceRelease(world, releaseProductId, 7);
+
+    const events = rescheduleRelease(world, releaseProductId, 7);
+
+    expect(events).toEqual([]);
+    expect(world.products[releaseProductId]).toMatchObject({
+      releaseStatus: "ANNOUNCED",
+      announcedReleaseDay: 7,
+    });
+  });
+
+  it("moves an announced date earlier without recording a delay", () => {
+    const world = createReleaseWorld();
+    announceRelease(world, releaseProductId, 7);
+
+    const events = rescheduleRelease(world, releaseProductId, 6);
+
+    expect(events.map((event) => event.type)).not.toContain("RELEASE_DELAY");
+    expect(world.products[releaseProductId]).toMatchObject({
+      releaseStatus: "ANNOUNCED",
+      announcedReleaseDay: 6,
+    });
   });
 
   it("rescheduling an unannounced internal target does not emit public trust penalty context", () => {

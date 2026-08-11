@@ -59,7 +59,7 @@ function createDayWorld(): WorldState {
   }));
 
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -93,6 +93,9 @@ function createDayWorld(): WorldState {
       [duePrintRunId]: {
         id: duePrintRunId,
         productId: boosterProductId,
+        sourceExpansionId: launchExpansionId,
+        productKind: "BOOSTER",
+        cardIds: cards.map((card) => card.id),
         orderedQuantity: 1,
         quantity: 0,
         orderedDay: 0,
@@ -252,6 +255,64 @@ describe("simulateDay", () => {
     );
   });
 
+  it("turns a public release delay into negative attention and lower trust", () => {
+    const controlWorld = createDayWorld();
+    controlWorld.printRuns = {};
+    controlWorld.products[boosterProductId]!.releaseStatus = "UNANNOUNCED";
+    controlWorld.products[boosterProductId]!.internalReleaseDay =
+      controlWorld.day;
+    delete controlWorld.products[boosterProductId]!.releasedDay;
+    const delayedWorld = structuredClone(controlWorld);
+
+    const control = simulateDay(controlWorld, [], DEFAULT_BALANCE_CONFIG);
+    const delayed = simulateDay(
+      delayedWorld,
+      [
+        {
+          type: "ANNOUNCE_RELEASE",
+          productId: boosterProductId,
+          releaseDay: delayedWorld.day,
+        },
+      ],
+      DEFAULT_BALANCE_CONFIG,
+    );
+
+    expect(delayed.report.brandTrust).toBeLessThan(control.report.brandTrust);
+    expect(delayed.report.hype).toBeGreaterThan(control.report.hype);
+    expect(delayed.notableEvents).toContainEqual(
+      expect.objectContaining({ type: "RELEASE_DELAY" }),
+    );
+  });
+
+  it("turns a short-supply launch into negative attention and lower trust", () => {
+    const shortWorld = createDayWorld();
+    shortWorld.products[boosterProductId]!.releaseStatus = "UNANNOUNCED";
+    delete shortWorld.products[boosterProductId]!.releasedDay;
+    shortWorld.players[buyerId]!.tcgWallet = 0;
+    const stockedWorld = structuredClone(shortWorld);
+    stockedWorld.printRuns[duePrintRunId]!.orderedQuantity =
+      DEFAULT_BALANCE_CONFIG.release.shortSupplyThreshold;
+    const announce = [
+      {
+        type: "ANNOUNCE_RELEASE" as const,
+        productId: boosterProductId,
+        releaseDay: shortWorld.day,
+      },
+    ];
+
+    const short = simulateDay(shortWorld, announce, DEFAULT_BALANCE_CONFIG);
+    const stocked = simulateDay(stockedWorld, announce, DEFAULT_BALANCE_CONFIG);
+
+    expect(short.notableEvents).toContainEqual(
+      expect.objectContaining({ type: "SHORT_SUPPLY_LAUNCH" }),
+    );
+    expect(stocked.notableEvents).not.toContainEqual(
+      expect.objectContaining({ type: "SHORT_SUPPLY_LAUNCH" }),
+    );
+    expect(short.report.brandTrust).toBeLessThan(stocked.report.brandTrust);
+    expect(short.report.hype).toBeGreaterThan(stocked.report.hype);
+  });
+
   it("rejects unknown runtime PublisherCommands", () => {
     expect(() =>
       simulateDay(
@@ -294,6 +355,13 @@ describe("validateWorldInvariants", () => {
       mutate: (world: WorldState) => {
         world.printings["printing-card-day-common-normal"]!.cardId =
           cardId("card-missing");
+      },
+    },
+    {
+      name: "mutated product contents after a Print Run is ordered",
+      code: "MISSING_REFERENCE",
+      mutate: (world: WorldState) => {
+        world.products[boosterProductId]!.cardIds = [cardId("card-day-common")];
       },
     },
     {

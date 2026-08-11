@@ -2,13 +2,13 @@ import { ECONOMY_CONFIG } from "../../packages/balance/src/index";
 import { printRunId } from "../../packages/domain/src/index";
 import { DeterministicRng } from "../../packages/rules-engine/src/index";
 import {
-  applyMarketTrades,
+  DEFAULT_BALANCE_CONFIG,
   calculateProductExpectedValue,
-  clearPrintingAuction,
   countWorldSupply,
   generatePrimaryDemand,
   openBooster,
   resolvePrimarySales,
+  simulateDay,
 } from "../../packages/sim-core/src/index";
 import {
   createProductFixtureWorld,
@@ -44,18 +44,57 @@ function createPackEvWorld(priceScale: number) {
     [runId]: {
       id: runId,
       productId: product.id,
-      orderedQuantity: 30,
-      quantity: 30,
+      sourceExpansionId: product.expansionId,
+      productKind: product.kind,
+      cardIds: [...product.cardIds],
+      orderedQuantity: 50,
+      quantity: 50,
       orderedDay: 0,
       completionDay: 1,
       unitCost: 1,
-      totalCost: 30,
+      totalCost: 50,
       status: "COMPLETED",
       edition: "FIRST_EDITION",
       printingIds,
     },
   };
+  for (const player of Object.values(world.players)) {
+    player.activity = "ACTIVE";
+    player.tcgWallet = 2_000;
+    player.motivation.competitive = 1;
+    player.motivation.collector = 1;
+    player.motivation.whale = 1;
+    player.motivation.brewer = 1;
+    player.motivation.budgetSensitivity = 0;
+    player.deckIds = [];
+  }
+  const seedBuyers = Object.values(world.players).slice(0, 20);
+  const seedSales = resolvePrimarySales(
+    world,
+    seedBuyers.map((player) => ({
+      buyerId: player.id,
+      productId: product.id,
+      quantity: 1,
+    })),
+    new DeterministicRng(20n),
+  );
+  seedSales.openingRequests.forEach((request, index) => {
+    openBooster(
+      world,
+      request.productId,
+      request.buyerId,
+      new DeterministicRng(BigInt(1_000 + index)),
+      request.printingIds,
+    );
+  });
+
   for (const printing of normalProductPrintings(world)) {
+    const owner = seedBuyers.find(
+      (player) => (player.collection[printing.id] ?? 0) > 0,
+    );
+    if (owner === undefined) {
+      continue;
+    }
     const rarity = world.cards[printing.cardId]!.rarity;
     const basePrice =
       rarity === "COMMON"
@@ -74,16 +113,12 @@ function createPackEvWorld(priceScale: number) {
       liquidity: 0.1,
       priceHistory: [{ day: 0, price, volume: 1 }],
     };
-  }
-  for (const player of Object.values(world.players)) {
-    player.activity = "ACTIVE";
-    player.tcgWallet = 2_000;
-    player.motivation.competitive = 1;
-    player.motivation.collector = 1;
-    player.motivation.whale = 1;
-    player.motivation.brewer = 1;
-    player.motivation.budgetSensitivity = 0;
-    player.deckIds = [];
+    world.market.listings.push({
+      ownerId: owner.id,
+      printingId: printing.id,
+      quantity: 1,
+      price,
+    });
   }
   return fixture;
 }
@@ -122,62 +157,36 @@ describe("Pack EV equilibrium", () => {
     expect(initialGap).toBeGreaterThan(0);
     expect(highDemand.length).toBeGreaterThan(controlDemand.length);
 
-    const sales = resolvePrimarySales(
-      high.world,
-      highDemand.slice(0, 20),
-      new DeterministicRng(22n),
-    );
-    let openingSequence = 0n;
-    for (const request of sales.openingRequests) {
-      for (let unit = 0; unit < request.quantity; unit += 1) {
-        openBooster(
-          high.world,
-          request.productId,
-          request.buyerId,
-          new DeterministicRng(100n + openingSequence),
-          request.printingIds,
-        );
-        openingSequence += 1n;
-      }
+    let state = high.world;
+    let unitsSold = 0;
+    let productsOpened = 0;
+    for (let day = 0; day < 5; day += 1) {
+      const result = simulateDay(state, [], DEFAULT_BALANCE_CONFIG);
+      state = result.nextState;
+      unitsSold += result.report.unitsSold;
+      productsOpened += result.report.productsOpened;
     }
-    expect(totalProductSupply(high.world)).toBeGreaterThan(supplyBefore);
 
-    const players = Object.values(high.world.players);
-    let lowerClears = 0;
-    for (const printing of normalProductPrintings(high.world)) {
-      const seller = players.find(
-        (player) => (player.collection[printing.id] ?? 0) > 0,
-      );
-      const buyer = players.find((player) => player.id !== seller?.id);
-      const oldPrice = high.world.market.snapshots[printing.id]?.lastPrice;
-      if (
-        seller === undefined ||
-        buyer === undefined ||
-        oldPrice === undefined
-      ) {
-        continue;
-      }
-      const clearingPrice = oldPrice * 0.25;
-      high.world.market.listings.push({
-        ownerId: seller.id,
-        printingId: printing.id,
-        quantity: 1,
-        price: clearingPrice,
-      });
-      const auction = clearPrintingAuction({
-        printingId: printing.id,
-        buys: [{ ownerId: buyer.id, quantity: 1, maxPrice: clearingPrice }],
-        sells: [{ ownerId: seller.id, quantity: 1, minPrice: clearingPrice }],
-      });
-      if (applyMarketTrades(high.world, [auction]).length > 0) {
-        lowerClears += 1;
-      }
-    }
+    expect(unitsSold).toBeGreaterThan(0);
+    expect(productsOpened).toBe(unitsSold);
+    expect(totalProductSupply(state)).toBeGreaterThan(supplyBefore);
+    const endogenousListings = state.market.listings.filter(
+      (listing) =>
+        state.printings[listing.printingId]?.sourceProductId ===
+        launchBoosterProductId,
+    );
+    expect(endogenousListings.length).toBeGreaterThan(0);
+    expect(
+      endogenousListings.every(
+        (listing) =>
+          (state.players[listing.ownerId]?.collection[listing.printingId] ??
+            0) >= listing.quantity,
+      ),
+    ).toBe(true);
 
     const laterGap =
-      calculateProductExpectedValue(high.world, launchBoosterProductId) -
-      high.world.products[launchBoosterProductId]!.msrp;
-    expect(lowerClears).toBeGreaterThan(0);
+      calculateProductExpectedValue(state, launchBoosterProductId) -
+      state.products[launchBoosterProductId]!.msrp;
     expect(laterGap).toBeLessThan(initialGap);
   });
 });

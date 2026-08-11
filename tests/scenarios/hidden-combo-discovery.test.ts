@@ -145,7 +145,7 @@ function createHiddenComboWorld(): {
     observer,
     opponent,
     world: {
-      schemaVersion: 4,
+      schemaVersion: 5,
       simulationVersion: "1",
       ruleVersion: "1",
       balanceVersion: "1",
