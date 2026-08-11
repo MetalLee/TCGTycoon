@@ -1,2 +1,36 @@
-export function canonicalStringify(value: unknown): string { return stringify(value, new Set()); }
-function stringify(value: unknown, seen: Set<object>): string { if(value===null)return"null"; if(typeof value==="string")return JSON.stringify(value); if(typeof value==="boolean")return String(value); if(typeof value==="number"){if(!Number.isFinite(value))throw new TypeError("Canonical JSON does not support NaN or Infinity");return String(value);} if(typeof value!=="object")throw new TypeError(`Canonical JSON does not support ${typeof value}`); if(seen.has(value))throw new TypeError("Canonical JSON does not support circular references");seen.add(value); const r=Array.isArray(value)?`[${Array.from({length:value.length},(_,index)=>stringify(value[index],seen)).join(",")}]`:Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null?`{${Object.keys(value).sort().map(k=>`${JSON.stringify(k)}:${stringify((value as Record<string,unknown>)[k],seen)}`).join(",")}}`:(()=>{throw new TypeError("Canonical JSON only supports plain objects and arrays");})();seen.delete(value);return r; }
+export function canonicalStringify(value: unknown): string {
+  return stringify(value, new Set());
+}
+function stringify(value: unknown, seen: Set<object>): string {
+  if (value === null) return "null";
+  if (typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "boolean") return String(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value))
+      throw new TypeError("Canonical JSON does not support NaN or Infinity");
+    return String(value);
+  }
+  if (typeof value !== "object")
+    throw new TypeError(`Canonical JSON does not support ${typeof value}`);
+  if (seen.has(value))
+    throw new TypeError("Canonical JSON does not support circular references");
+  seen.add(value);
+  const r = Array.isArray(value)
+    ? `[${Array.from({ length: value.length }, (_, index) => stringify(value[index], seen)).join(",")}]`
+    : Object.getPrototypeOf(value) === Object.prototype ||
+        Object.getPrototypeOf(value) === null
+      ? `{${Object.keys(value)
+          .sort()
+          .map(
+            (k) =>
+              `${JSON.stringify(k)}:${stringify((value as Record<string, unknown>)[k], seen)}`,
+          )
+          .join(",")}}`
+      : (() => {
+          throw new TypeError(
+            "Canonical JSON only supports plain objects and arrays",
+          );
+        })();
+  seen.delete(value);
+  return r;
+}

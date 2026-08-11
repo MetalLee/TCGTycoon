@@ -45,10 +45,29 @@ describe("match determinism", () => {
   });
 
   it("round-trips the compact action log through JSON", () => {
-    const { actionLog } = simulateMatch(fixtureMatchInput(999n));
+    const result = simulateMatch(fixtureMatchInput(999n));
+    const { actionLog } = result;
 
     expect(actionLog).toBeDefined();
     expect(JSON.parse(JSON.stringify(actionLog))).toEqual(actionLog);
+    expect(
+      actionLog?.filter((entry) => entry.type === "PLAY_CARD"),
+    ).toHaveLength(
+      result.statistics.A.cardsPlayed + result.statistics.B.cardsPlayed,
+    );
+    expect(actionLog?.filter((entry) => entry.type === "ATTACK")).toHaveLength(
+      result.statistics.A.attacks + result.statistics.B.attacks,
+    );
+    expect(result).toMatchObject({
+      replay: {
+        seed: "999",
+        ruleVersion: "1",
+        battleAiVersion: "1",
+        deckA: fireFixtureDeck,
+        deckB: machineFixtureDeck,
+        actionLog,
+      },
+    });
   });
 
   it("sorts canonical object keys and matches Node SHA-256", () => {

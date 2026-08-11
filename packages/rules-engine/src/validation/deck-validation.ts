@@ -13,11 +13,29 @@ export function validateDeck(
   const copyCounts = new Map<string, number>();
   let deckSize = 0;
 
+  if (deck.factionId === NEUTRAL_FACTION_ID) {
+    issues.push({
+      code: "INVALID_DECK_FACTION",
+      message: "A constructed deck must choose one non-Neutral faction.",
+      entityId: deck.id,
+    });
+  }
+
   for (const entry of deck.cards) {
-    deckSize += entry.count;
+    const runtimeCount = entry.count as number;
+    if (runtimeCount !== 1 && runtimeCount !== 2) {
+      issues.push({
+        code: "INVALID_COUNT",
+        message: `Deck entry ${entry.cardId} has invalid count ${runtimeCount}; expected 1 or 2.`,
+        entityId: entry.cardId,
+      });
+      continue;
+    }
+
+    deckSize += runtimeCount;
     copyCounts.set(
       entry.cardId,
-      (copyCounts.get(entry.cardId) ?? 0) + entry.count,
+      (copyCounts.get(entry.cardId) ?? 0) + runtimeCount,
     );
 
     const card = cardsById.get(entry.cardId);

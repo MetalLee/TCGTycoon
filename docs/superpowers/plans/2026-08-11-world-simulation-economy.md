@@ -98,6 +98,7 @@ tests/determinism/world-determinism.test.ts
 ### Task 1: Define normalized WorldState and PublisherCommand envelope
 
 **Files:**
+
 - Create: `packages/domain/src/world.ts`
 - Create: `packages/domain/src/players.ts`
 - Create: `packages/domain/src/products.ts`
@@ -111,6 +112,7 @@ tests/determinism/world-determinism.test.ts
 - Test: `packages/domain/src/world.test.ts`
 
 **Interfaces:**
+
 - Consumes: Phase 1 IDs/cards/decks/rules.
 - Produces: normalized `WorldState`, new entity ID types, `PublisherCommand`, `WorldEvent`, `WorldMetrics`, product/player/market/meta core types.
 
@@ -119,14 +121,14 @@ tests/determinism/world-determinism.test.ts
 Add branded types and constructors for:
 
 ```ts
-ExpansionId
-ProductId
-PrintRunId
-TransactionId
-TournamentId
-OperationId
-AgentId
-SaveId
+ExpansionId;
+ProductId;
+PrintRunId;
+TransactionId;
+TournamentId;
+OperationId;
+AgentId;
+SaveId;
 ```
 
 No random ID generator is added.
@@ -137,8 +139,12 @@ No random ID generator is added.
 it("stores canonical entities by ID and references related entities by ID", () => {
   const world = createEmptyWorldFixture();
   expect(world.cards["card-fire-cub"].id).toBe("card-fire-cub");
-  expect(world.products["product-launch-booster"].expansionId).toBe("set-launch");
-  expect(world.products["product-launch-booster"]).not.toHaveProperty("expansion");
+  expect(world.products["product-launch-booster"].expansionId).toBe(
+    "set-launch",
+  );
+  expect(world.products["product-launch-booster"]).not.toHaveProperty(
+    "expansion",
+  );
 });
 ```
 
@@ -185,7 +191,12 @@ export type WorldState = {
 ```ts
 export type PublisherCommand =
   | { type: "ADJUST_MSRP"; productId: ProductId; newMsrp: number }
-  | { type: "ORDER_PRINT_RUN"; productId: ProductId; quantity: number; completionDay: number };
+  | {
+      type: "ORDER_PRINT_RUN";
+      productId: ProductId;
+      quantity: number;
+      completionDay: number;
+    };
 ```
 
 Phase 3 will extend this union in the authoritative domain module rather than creating parallel command types.
@@ -209,6 +220,7 @@ git add packages/domain
 ### Task 2: Add versioned SaveEnvelope, canonical serialization and in-memory repository
 
 **Files:**
+
 - Create: `packages/domain/src/saves.ts`
 - Create: `packages/persistence/package.json`
 - Create: `packages/persistence/tsconfig.json`
@@ -222,6 +234,7 @@ git add packages/domain
 - Test: `packages/persistence/src/memory/memory-save-repository.test.ts`
 
 **Interfaces:**
+
 - Consumes: `WorldState`, `SaveId`.
 - Produces:
 
@@ -298,6 +311,7 @@ git add packages/domain/src/saves.ts packages/persistence
 ### Task 3: Create population cohorts, persistent players and named-agent structural data
 
 **Files:**
+
 - Create: `packages/balance/src/population-config.ts`
 - Create: `packages/sim-core/package.json`
 - Create: `packages/sim-core/tsconfig.json`
@@ -308,6 +322,7 @@ git add packages/domain/src/saves.ts packages/persistence
 - Test: `packages/sim-core/src/population/create-population.test.ts`
 
 **Interfaces:**
+
 - Consumes: deterministic seed utilities and WorldState domain types.
 - Produces: `createInitialPopulation(seed, count = 400)`, deterministic persistent player profiles, six motivation vectors, `KnowledgeState`, and 24 deterministic structural Named Agents for standard test fixtures.
 
@@ -316,9 +331,13 @@ git add packages/domain/src/saves.ts packages/persistence
 Required assertions:
 
 ```ts
-expect(Object.keys(createInitialPopulation("seed-a").players)).toHaveLength(400);
+expect(Object.keys(createInitialPopulation("seed-a").players)).toHaveLength(
+  400,
+);
 expect(Object.keys(createInitialPopulation("seed-a").agents)).toHaveLength(24);
-expect(createInitialPopulation("seed-a")).toEqual(createInitialPopulation("seed-a"));
+expect(createInitialPopulation("seed-a")).toEqual(
+  createInitialPopulation("seed-a"),
+);
 ```
 
 Also verify motivation values are in `[0,1]` and no generated player owns cards yet.
@@ -378,12 +397,14 @@ git add packages/balance packages/sim-core packages/testkit
 ### Task 4: Implement physical Printings, five-card Boosters, Starters and Collection updates
 
 **Files:**
+
 - Create: `packages/balance/src/economy-config.ts`
 - Create: `packages/sim-core/src/products/open-product.ts`
 - Test: `packages/sim-core/src/products/open-product.test.ts`
 - Create: `packages/testkit/src/scenarios/product-fixtures.ts`
 
 **Interfaces:**
+
 - Consumes: `ProductSku`, `Printing`, player/cohort holdings, `DeterministicRng`.
 - Produces: `openBooster(world, productId, owner, rng): ProductOpenResult`, `openStarter(...)`, exact five-card output, and ownership deltas.
 
@@ -399,7 +420,13 @@ it("opens exactly five physical cards", () => {
 
 it("uses 3 Common, 1 Uncommon and 1 Rare+ base slots", () => {
   const result = openLaunchBoosterFixture(321n);
-  expect(result.baseRarities).toEqual(["COMMON", "COMMON", "COMMON", "UNCOMMON", expect.stringMatching(/RARE|LEGENDARY/)]);
+  expect(result.baseRarities).toEqual([
+    "COMMON",
+    "COMMON",
+    "COMMON",
+    "UNCOMMON",
+    expect.stringMatching(/RARE|LEGENDARY/),
+  ]);
 });
 ```
 
@@ -438,7 +465,10 @@ A Starter creates exactly the listed 20 physical Printings in the buyer collecti
 Export:
 
 ```ts
-export function countWorldSupply(world: WorldState, printingId: PrintingId): number;
+export function countWorldSupply(
+  world: WorldState,
+  printingId: PrintingId,
+): number;
 ```
 
 It must count publisher product/card inventory as modeled plus cohort/persistent ownership and market seller ownership without double counting.
@@ -462,12 +492,14 @@ git add packages/balance/src/economy-config.ts packages/sim-core/src/products pa
 ### Task 5: Add primary-market demand, Print Run completion, inventory and Cash Ledger
 
 **Files:**
+
 - Create: `packages/sim-core/src/products/primary-market.ts`
 - Create: `packages/sim-core/src/economy/cash-ledger.ts`
 - Test: `packages/sim-core/src/products/primary-market.test.ts`
 - Test: `packages/sim-core/src/economy/cash-ledger.test.ts`
 
 **Interfaces:**
+
 - Consumes: product inventory, player budgets/preferences, World metrics inputs.
 - Produces: `completePrintRunsDueToday(world)`, `generatePrimaryDemand(world, rng)`, `resolvePrimarySales(world, demand, rng)`, `appendCashEntry(state, entry)`, daily publisher revenue and product-opening requests.
 
@@ -492,7 +524,12 @@ pnpm vitest run packages/sim-core/src/products/primary-market.test.ts packages/s
 ```ts
 export type CashLedgerEntry = {
   day: number;
-  category: "BOOSTER_REVENUE" | "STARTER_REVENUE" | "PRINTING" | "OPERATING_COST" | "INVENTORY_COST";
+  category:
+    | "BOOSTER_REVENUE"
+    | "STARTER_REVENUE"
+    | "PRINTING"
+    | "OPERATING_COST"
+    | "INVENTORY_COST";
   sourceId?: string;
   amount: number; // positive income, negative expense
 };
@@ -518,12 +555,14 @@ git commit -m "feat: resolve primary product sales and cash"
 ### Task 6: Implement secondary-market intents and daily call auction
 
 **Files:**
+
 - Create: `packages/sim-core/src/market/market-intents.ts`
 - Create: `packages/sim-core/src/market/call-auction.ts`
 - Test: `packages/sim-core/src/market/call-auction.test.ts`
 - Test: `tests/scenarios/physical-supply-conservation.test.ts`
 
 **Interfaces:**
+
 - Consumes: actual Collection holdings, deck needs, collector preferences, market snapshots.
 - Produces: `BuyIntent`, `SellIntent`, `clearPrintingAuction(input): AuctionResult`, `applyMarketTrades(world, results)`.
 
@@ -589,6 +628,7 @@ git add packages/sim-core/src/market tests/scenarios/physical-supply-conservatio
 ### Task 7: Implement Deck Genome, ownership-aware construction, knowledge and adoption
 
 **Files:**
+
 - Create: `packages/sim-core/src/deck-evolution/deck-genome.ts`
 - Create: `packages/sim-core/src/deck-evolution/deck-builder.ts`
 - Create: `packages/sim-core/src/deck-evolution/adoption.ts`
@@ -597,6 +637,7 @@ git add packages/sim-core/src/market tests/scenarios/physical-supply-conservatio
 - Test: `packages/sim-core/src/deck-evolution/adoption.test.ts`
 
 **Interfaces:**
+
 - Consumes: CardDefinitions, player Collections, known cards/decks, Phase 1 deck validator and match engine.
 - Produces: `DeckGenome`, `generateCandidateDecks(player, world, rng)`, `mutateDeck(parent, player, world, rng)`, `calculateAdoptionScore(player, deck, context)`.
 
@@ -654,12 +695,14 @@ git commit -m "feat: evolve ownership-aware player decks"
 ### Task 8: Sample real matches and aggregate observable Meta
 
 **Files:**
+
 - Create: `packages/sim-core/src/meta/sample-matches.ts`
 - Create: `packages/sim-core/src/meta/meta-aggregation.ts`
 - Test: `packages/sim-core/src/meta/meta-aggregation.test.ts`
 - Test: `tests/scenarios/hidden-combo-discovery.test.ts`
 
 **Interfaces:**
+
 - Consumes: legal owned player Decks, player activity, `simulateMatch()`.
 - Produces: `sampleDailyMatches(world, rng)`, `MetaDeckStats`, `MatchupStats`, `updateMetaState(world, matchResults)` and discovery/knowledge events.
 
@@ -694,6 +737,7 @@ git commit -m "feat: derive live meta from real matches"
 ### Task 9: Implement accessibility, satisfaction, lifecycle and core world metrics
 
 **Files:**
+
 - Create: `packages/balance/src/metrics-config.ts`
 - Create: `packages/sim-core/src/metrics/accessibility.ts`
 - Create: `packages/sim-core/src/metrics/satisfaction.ts`
@@ -705,6 +749,7 @@ git commit -m "feat: derive live meta from real matches"
 - Test: `tests/scenarios/expensive-healthy-meta.test.ts`
 
 **Interfaces:**
+
 - Consumes: market prices/supply, product availability, Meta samples, population/cohort state, publisher history/cash.
 - Produces: Accessibility, cohort target satisfaction, lifecycle deltas, Hype/CollectorHeat/MetaHealth/BrandTrust updates, `EcosystemRiskState`.
 
@@ -771,6 +816,7 @@ git commit -m "feat: model player lifecycle and world health"
 ### Task 10: Implement authoritative `simulateDay()` ordering and world invariants
 
 **Files:**
+
 - Create: `packages/sim-core/src/day/day-context.ts`
 - Create: `packages/sim-core/src/day/world-invariants.ts`
 - Create: `packages/sim-core/src/day/simulate-day.ts`
@@ -780,6 +826,7 @@ git commit -m "feat: model player lifecycle and world health"
 - Test: `tests/determinism/world-determinism.test.ts`
 
 **Interfaces:**
+
 - Consumes: every Phase 2 subsystem and `PublisherCommand[]`.
 - Produces:
 
@@ -869,6 +916,7 @@ git commit -m "feat: orchestrate deterministic daily simulation"
 ### Task 11: Add golden scenarios, headless Publisher Bot and long-run CLI
 
 **Files:**
+
 - Create: `packages/testkit/src/publisher/basic-publisher-bot.ts`
 - Create: `packages/testkit/src/scenarios/balanced-world.ts`
 - Create: `packages/testkit/src/scenarios/broken-combo-world.ts`
@@ -883,6 +931,7 @@ git commit -m "feat: orchestrate deterministic daily simulation"
 - Modify: `package.json`
 
 **Interfaces:**
+
 - Consumes: `simulateDay()`, Phase 2 commands, test fixtures.
 - Produces: `BasicPublisherBot.decide(world): PublisherCommand[]`, named deterministic scenarios, CLI `pnpm sim --days N --seed S`.
 

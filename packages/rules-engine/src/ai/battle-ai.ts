@@ -21,6 +21,8 @@ import type {
 } from "../battle/types";
 import { DeterministicRng, deriveSeed } from "../rng/deterministic-rng";
 
+export const BATTLE_AI_VERSION = "1" as const;
+
 export type BattleStrategy = {
   aggression: number;
   value: number;
@@ -35,6 +37,9 @@ type ChooseBattleActionInput = {
 };
 
 const selectorsWithoutChosenTarget = new Set<TargetSelector>([
+  "SELF",
+  "FRIENDLY_HERO",
+  "ENEMY_HERO",
   "RANDOM_FRIENDLY_UNIT",
   "RANDOM_ENEMY_UNIT",
   "ALL_FRIENDLY_UNITS",
@@ -113,10 +118,7 @@ function legalPlayTargets(
     return [undefined];
   }
 
-  const [firstTargets, ...remainingTargetSets] = targetSets;
-  return firstTargets!.filter((targetId) =>
-    remainingTargetSets.every((targets) => targets.includes(targetId)),
-  );
+  return targetSets[0]!;
 }
 
 function canAttack(unit: UnitInstance, state: MatchState): boolean {

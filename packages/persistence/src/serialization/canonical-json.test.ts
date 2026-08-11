@@ -15,16 +15,24 @@ describe("canonicalStringify", () => {
   });
 
   it.each([
-    { value: (() => { const array = [1, 0, 2]; Reflect.deleteProperty(array, "1"); return array; })() },
+    {
+      value: (() => {
+        const array = [1, 0, 2];
+        Reflect.deleteProperty(array, "1");
+        return array;
+      })(),
+    },
     { value: new Array(1) },
   ])("rejects sparse arrays", ({ value }) => {
     expect(() => canonicalStringify(value)).toThrow();
   });
 
-  it.each([undefined, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
-    "rejects non-canonical value %s",
-    (value) => {
-      expect(() => canonicalStringify({ value })).toThrow();
-    },
-  );
+  it.each([
+    undefined,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+  ])("rejects non-canonical value %s", (value) => {
+    expect(() => canonicalStringify({ value })).toThrow();
+  });
 });

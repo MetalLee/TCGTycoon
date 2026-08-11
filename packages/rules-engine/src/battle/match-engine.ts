@@ -1,5 +1,12 @@
-import type { CardDefinition, CardId, DeckDefinition } from "@tcgtycoon/domain";
+import { RULES_CONFIG } from "@tcgtycoon/balance";
 import {
+  RULE_VERSION,
+  type CardDefinition,
+  type CardId,
+  type DeckDefinition,
+} from "@tcgtycoon/domain";
+import {
+  BATTLE_AI_VERSION,
   chooseBattleAction,
   chooseMulliganCards,
   type BattleStrategy,
@@ -58,6 +65,16 @@ export type MatchResult = {
   warnings: MatchWarning[];
   statistics: MatchStatistics;
   actionLog?: ActionLogEntry[];
+  replay?: MatchReplay;
+};
+
+export type MatchReplay = {
+  seed: string;
+  ruleVersion: typeof RULE_VERSION;
+  battleAiVersion: typeof BATTLE_AI_VERSION;
+  deckA: DeckDefinition;
+  deckB: DeckDefinition;
+  actionLog: ActionLogEntry[];
 };
 
 const MATCH_TURN_GUARD = 200;
@@ -69,6 +86,24 @@ function emptyPlayerStatistics(): MatchPlayerStatistics {
     spellsPlayed: 0,
     attacks: 0,
   };
+}
+
+function appendMainPhaseActionWarning(warnings: MatchWarning[]): void {
+  if (
+    warnings.some(
+      (warning) =>
+        warning.code === "POTENTIAL_INFINITE_COMBO" &&
+        warning.limit === "ACTIONS",
+    )
+  ) {
+    return;
+  }
+
+  warnings.push({
+    code: "POTENTIAL_INFINITE_COMBO",
+    message: `Main phase stopped after reaching the ${RULES_CONFIG.maxActionsPerChain}-action safety limit.`,
+    limit: "ACTIONS",
+  });
 }
 
 function validateStrategy(strategy: BattleStrategy, side: MatchSide): void {
@@ -112,6 +147,22 @@ function playCoin(
   player.mana += 1;
 }
 
+function appendPlayedCardLog(
+  state: MatchState,
+  action: Extract<BattleAction, { type: "PLAY_CARD" }>,
+  card: CardInstance,
+): void {
+  state.actionLog.push({
+    sequence: state.nextLogSequence++,
+    turn: state.turnNumber,
+    side: action.side,
+    type: "PLAY_CARD",
+    cardId: card.cardId,
+    instanceId: card.instanceId,
+    ...(action.targetId === undefined ? {} : { targetId: action.targetId }),
+  });
+}
+
 function unitFromCard(
   state: MatchState,
   card: CardInstance,
@@ -147,6 +198,7 @@ function playCard(
     throw new RangeError(`Card ${action.cardInstanceId} is not in hand.`);
   }
   if (card.cardId === COIN_CARD_ID) {
+    appendPlayedCardLog(state, action, card);
     playCoin(state, action.side, card);
     return null;
   }
@@ -159,6 +211,7 @@ function playCard(
     throw new RangeError(`Card ${card.cardId} is not affordable.`);
   }
 
+  appendPlayedCardLog(state, action, card);
   player.hand.splice(player.hand.indexOf(card), 1);
   player.mana -= definition.cost;
 
@@ -261,6 +314,13 @@ function executeAction(
   return false;
 }
 
+function snapshotDeck(deck: DeckDefinition): DeckDefinition {
+  return {
+    ...deck,
+    cards: deck.cards.map((entry) => ({ ...entry })),
+  };
+}
+
 export function simulateMatch(input: MatchInput): MatchResult {
   validateStrategy(input.strategyA, "A");
   validateStrategy(input.strategyB, "B");
@@ -291,11 +351,9 @@ export function simulateMatch(input: MatchInput): MatchResult {
       );
     }
 
-    resolveTurnEvent(state, input.cards, warnings, "TURN_START");
-    if (state.winner !== null) {
-      break;
-    }
-    startTurn(state);
+    startTurn(state, () => {
+      resolveTurnEvent(state, input.cards, warnings, "TURN_START");
+    });
     if (state.winner !== null) {
       break;
     }
@@ -303,7 +361,20 @@ export function simulateMatch(input: MatchInput): MatchResult {
     const strategy =
       state.activeSide === "A" ? input.strategyA : input.strategyB;
     let turnEnded = false;
+    let turnActionCount = 0;
     while (!turnEnded && state.winner === null) {
+      if (turnActionCount >= RULES_CONFIG.maxActionsPerChain) {
+        appendMainPhaseActionWarning(warnings);
+        executeAction(
+          state,
+          { type: "END_TURN", side: state.activeSide },
+          input.cards,
+          warnings,
+          statistics,
+        );
+        break;
+      }
+
       const action = chooseBattleAction({
         state,
         cards: input.cards,
@@ -311,6 +382,7 @@ export function simulateMatch(input: MatchInput): MatchResult {
         decisionSequence: actionCount,
       });
       actionCount += 1;
+      turnActionCount += 1;
       turnEnded = executeAction(
         state,
         action,
@@ -325,12 +397,25 @@ export function simulateMatch(input: MatchInput): MatchResult {
     throw new Error("Match ended without a winner.");
   }
 
+  const actionLog = input.recordActionLog ? state.actionLog : undefined;
   return {
     winner: state.winner,
     turns: state.turnNumber,
     actionCount,
     warnings,
     statistics,
-    ...(input.recordActionLog ? { actionLog: state.actionLog } : {}),
+    ...(actionLog === undefined
+      ? {}
+      : {
+          actionLog,
+          replay: {
+            seed: input.seed.toString(),
+            ruleVersion: RULE_VERSION,
+            battleAiVersion: BATTLE_AI_VERSION,
+            deckA: snapshotDeck(input.deckA),
+            deckB: snapshotDeck(input.deckB),
+            actionLog,
+          },
+        }),
   };
 }

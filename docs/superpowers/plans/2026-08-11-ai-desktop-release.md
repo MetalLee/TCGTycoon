@@ -89,6 +89,7 @@ tests/ai/
 ### Task 1: Define shared AI contracts and Fact Packets
 
 **Files:**
+
 - Create: `packages/ai-contracts/package.json`
 - Create: `packages/ai-contracts/tsconfig.json`
 - Create: `packages/ai-contracts/src/world.ts`
@@ -101,6 +102,7 @@ tests/ai/
 - Test: `packages/ai-contracts/src/contracts.test.ts`
 
 **Interfaces:**
+
 - Consumes: Card DSL schemas and relevant Domain IDs.
 - Produces: Zod request/response contracts for all five AI capabilities and finite FactPacket structures.
 
@@ -132,11 +134,15 @@ Example:
 export const communityFactPacketSchema = z.object({
   day: z.number().int().positive(),
   agent: namedAgentPromptProfileSchema,
-  knownFacts: z.array(z.object({
-    kind: z.string(),
-    entityId: z.string().optional(),
-    statement: z.string(),
-  })).max(32),
+  knownFacts: z
+    .array(
+      z.object({
+        kind: z.string(),
+        entityId: z.string().optional(),
+        statement: z.string(),
+      }),
+    )
+    .max(32),
   recentMemories: z.array(z.string()).max(20),
   requestedTopic: z.string(),
   requestedStance: z.string(),
@@ -159,6 +165,7 @@ git commit -m "feat: define schema validated AI contracts"
 ### Task 2: Scaffold Hono AI Gateway and deterministic Mock provider
 
 **Files:**
+
 - Create: `apps/api/package.json`
 - Create: `apps/api/tsconfig.json`
 - Create: `apps/api/src/config.ts`
@@ -177,6 +184,7 @@ git commit -m "feat: define schema validated AI contracts"
 - Modify: root `package.json`
 
 **Interfaces:**
+
 - Consumes: AI contracts.
 - Produces: `GenerativeProvider` abstraction, `MockGenerativeProvider`, HTTP endpoints `/v1/world/assist`, `/v1/cards/propose`, `/v1/sets/complete`, `/v1/community/render`, `/v1/art/generate`.
 
@@ -189,7 +197,9 @@ export interface GenerativeProvider {
   assistWorld(input: WorldAssistRequest): Promise<WorldAssistResponse>;
   proposeCard(input: CardProposalRequest): Promise<CardProposalResponse>;
   completeSet(input: SetCompletionRequest): Promise<SetCompletionResponse>;
-  renderCommunityPost(input: CommunityRenderRequest): Promise<CommunityRenderResponse>;
+  renderCommunityPost(
+    input: CommunityRenderRequest,
+  ): Promise<CommunityRenderResponse>;
   generateArtwork(input: ArtGenerateRequest): Promise<ArtGenerateResponse>;
 }
 ```
@@ -240,6 +250,7 @@ git commit -m "feat: add mockable AI gateway"
 ### Task 3: Implement OpenAI structured-text provider adapter
 
 **Files:**
+
 - Create: `apps/api/src/providers/openai-provider.ts`
 - Create: `apps/api/src/prompts/world.ts`
 - Create: `apps/api/src/prompts/card.ts`
@@ -250,6 +261,7 @@ git commit -m "feat: add mockable AI gateway"
 - Test: `apps/api/src/providers/openai-provider.test.ts`
 
 **Interfaces:**
+
 - Consumes: `GenerativeProvider`, AI contracts.
 - Produces: `OpenAIGenerativeProvider` using server-side official OpenAI SDK; text operations use the Responses API and strict JSON-schema structured output, then Zod/domain validation.
 
@@ -329,6 +341,7 @@ git commit -m "feat: add structured OpenAI generation provider"
 ### Task 4: Implement artwork provider and AssetRepository boundary
 
 **Files:**
+
 - Create: `packages/domain/src/assets.ts`
 - Create: `packages/persistence/src/contracts/asset-repository.ts`
 - Modify: `packages/persistence/src/index.ts`
@@ -338,6 +351,7 @@ git commit -m "feat: add structured OpenAI generation provider"
 - Test: `packages/persistence/src/contracts/asset-repository.test.ts`
 
 **Interfaces:**
+
 - Consumes: Art AI contract and provider config.
 - Produces: `AssetId`, `AssetMetadata`, `AssetRepository`, artwork response bytes/base64 transfer contract without embedding binary data in WorldState.
 
@@ -347,8 +361,15 @@ Interface:
 
 ```ts
 export interface AssetRepository {
-  put(asset: { id: AssetId; mediaType: string; bytes: Uint8Array; metadata: AssetMetadata }): Promise<void>;
-  get(id: AssetId): Promise<{ bytes: Uint8Array; metadata: AssetMetadata } | null>;
+  put(asset: {
+    id: AssetId;
+    mediaType: string;
+    bytes: Uint8Array;
+    metadata: AssetMetadata;
+  }): Promise<void>;
+  get(
+    id: AssetId,
+  ): Promise<{ bytes: Uint8Array; metadata: AssetMetadata } | null>;
   delete(id: AssetId): Promise<void>;
 }
 ```
@@ -375,6 +396,7 @@ git commit -m "feat: isolate generated artwork assets"
 ### Task 5: Integrate AI creation assistance into Web without making it authoritative
 
 **Files:**
+
 - Create: `apps/game/src/services/ai/ai-client.ts`
 - Create: `apps/game/src/services/ai/ai-enrichment-queue.ts`
 - Modify: `apps/game/src/features/new-game/NewGameWizard.tsx`
@@ -384,6 +406,7 @@ git commit -m "feat: isolate generated artwork assets"
 - Test: `apps/game/src/features/cards/CardStudio.ai.test.tsx`
 
 **Interfaces:**
+
 - Consumes: Gateway endpoints/contracts and existing PublisherCommand flow.
 - Produces: optional world/faction suggestions, card proposals and set-completion proposals that require player acceptance before queuing canonical edits.
 
@@ -423,6 +446,7 @@ git commit -m "feat: add optional AI design assistance"
 ### Task 6: Render Named Agent community prose after deterministic state commit
 
 **Files:**
+
 - Create: `packages/sim-core/src/society/community-intents.ts`
 - Modify: `packages/sim-core/src/day/simulate-day.ts`
 - Modify: `apps/game/src/services/ai/ai-enrichment-queue.ts`
@@ -431,6 +455,7 @@ git commit -m "feat: add optional AI design assistance"
 - Test: `apps/game/src/services/ai/ai-enrichment-queue.test.ts`
 
 **Interfaces:**
+
 - Consumes: deterministic `CommunityPostIntent`, FactPacket builder, AI renderer.
 - Produces: stable post intent IDs, template fallback text and optional enriched prose stored as presentation/history enrichment without changing deterministic state hash inputs.
 
@@ -471,6 +496,7 @@ git commit -m "feat: enrich community narrative after simulation"
 ### Task 7: Scaffold Tauri desktop shell using the same game frontend
 
 **Files:**
+
 - Create: `apps/desktop/package.json`
 - Create: `apps/desktop/src-tauri/Cargo.toml`
 - Create: `apps/desktop/src-tauri/tauri.conf.json`
@@ -480,6 +506,7 @@ git commit -m "feat: enrich community narrative after simulation"
 - Test: `tests/parity/desktop-config.test.ts`
 
 **Interfaces:**
+
 - Consumes: `apps/game` dev server/build output.
 - Produces: Tauri desktop wrapper with no duplicate React application.
 
@@ -523,6 +550,7 @@ git commit -m "feat: wrap shared game in Tauri desktop shell"
 ### Task 8: Implement SQLite SaveRepository and desktop AssetRepository
 
 **Files:**
+
 - Create: `packages/persistence/src/sqlite/sqlite-save-repository.ts`
 - Create: `packages/persistence/src/sqlite/sqlite-asset-repository.ts`
 - Modify: `packages/persistence/src/index.ts`
@@ -532,6 +560,7 @@ git commit -m "feat: wrap shared game in Tauri desktop shell"
 - Test: `tests/parity/web-desktop-save-roundtrip.test.ts`
 
 **Interfaces:**
+
 - Consumes: shared SaveRepository/AssetRepository contracts.
 - Produces: SQLite-backed desktop implementations and runtime platform adapter selection.
 
@@ -565,11 +594,13 @@ git commit -m "feat: persist desktop saves and artwork in SQLite"
 ### Task 9: Add cross-platform deterministic parity tests
 
 **Files:**
+
 - Create: `tests/parity/simulation-parity.test.ts`
 - Create: `tests/parity/fixture-save.json`
 - Modify: `packages/testkit/src/worlds/create-test-world.ts`
 
 **Interfaces:**
+
 - Consumes: canonical fixture save and simulation core.
 - Produces: stable parity regression hash used by Web/Desktop builds.
 
@@ -604,6 +635,7 @@ git commit -m "test: lock web desktop simulation parity"
 ### Task 10: Add migration, long-run and economic regression suites
 
 **Files:**
+
 - Create: `tests/long-run/1000-days.test.ts`
 - Create: `tests/long-run/3000-days.test.ts`
 - Create: `tests/long-run/multi-seed.test.ts`
@@ -613,6 +645,7 @@ git commit -m "test: lock web desktop simulation parity"
 - Modify: root `package.json`
 
 **Interfaces:**
+
 - Consumes: Phase 2/3 headless simulator, migrations and Publisher Bot.
 - Produces: `pnpm test:long-run` and multi-seed balance smoke runner.
 
@@ -653,6 +686,7 @@ git commit -m "test: harden long running world saves"
 ### Task 11: Add performance benchmarks and regression reporting
 
 **Files:**
+
 - Create: `scripts/benchmark-matches.ts`
 - Create: `scripts/benchmark-day.ts`
 - Create: `scripts/benchmark-save.ts`
@@ -660,6 +694,7 @@ git commit -m "test: harden long running world saves"
 - Modify: root `package.json`
 
 **Interfaces:**
+
 - Consumes: rules engine, balanced-world fixture, persistence serialization.
 - Produces: `pnpm benchmark` JSON/console report for 10k matches, `simulateDay`, canonical save size and load/parse time.
 
@@ -692,11 +727,13 @@ git commit -m "chore: benchmark simulation and persistence"
 ### Task 12: Final release-candidate verification and CI gate
 
 **Files:**
+
 - Modify: `.github/workflows/ci.yml`
 - Create: `docs/codex/RELEASE_CHECKLIST.md`
 - Modify: `README.md`
 
 **Interfaces:**
+
 - Consumes: all MVP phases.
 - Produces: reproducible release checks and concise developer/user bootstrap documentation.
 

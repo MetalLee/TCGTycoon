@@ -7,6 +7,12 @@ import {
   type DeckDefinition,
 } from "@tcgtycoon/domain";
 import { describe, expect, it } from "vitest";
+import { enumerateLegalActions } from "../ai/battle-ai";
+import {
+  enqueueTriggers,
+  resolveTriggerQueue,
+  type ResolutionContext,
+} from "./triggers";
 import {
   COIN_CARD_ID,
   createMatchState,
@@ -149,5 +155,144 @@ describe("match setup and turns", () => {
     endTurn(state);
 
     expect(state.activeSide).toBe("B");
+  });
+
+  it("keeps a start-of-turn summon unable to attack immediately", () => {
+    const token: CardDefinition = {
+      id: cardId("card-start-token"),
+      name: "Start Token",
+      type: "UNIT",
+      factionId: fireFactionId,
+      rarity: "COMMON",
+      cost: 1,
+      attack: 1,
+      health: 1,
+      keywords: [],
+      triggers: [],
+    };
+    const summoner: CardDefinition = {
+      id: cardId("card-start-summoner"),
+      name: "Start Summoner",
+      type: "UNIT",
+      factionId: fireFactionId,
+      rarity: "COMMON",
+      cost: 2,
+      attack: 1,
+      health: 2,
+      keywords: [],
+      triggers: [
+        {
+          trigger: "TURN_START",
+          conditions: [],
+          effects: [{ type: "SUMMON", tokenCardId: token.id, amount: 1 }],
+        },
+      ],
+    };
+    const state = createFixtureState(78901n);
+    state.turnNumber = 1;
+    state.players.A.board = [
+      {
+        instanceId: "start-summoner-instance",
+        cardId: summoner.id,
+        attack: summoner.attack,
+        health: summoner.health,
+        maxHealth: summoner.health,
+        keywords: [],
+        summonedTurn: 0,
+        attacksThisTurn: 0,
+        lastAttackTurn: 0,
+      },
+    ];
+    const definitions = new Map(
+      [...cardDefinitions, summoner, token].map((card) => [card.id, card]),
+    );
+    const ctx: ResolutionContext = {
+      state,
+      cardDefinitions: definitions,
+      queue: [],
+      actionCount: 0,
+      triggerDepth: 0,
+      summonsThisChain: 0,
+      warnings: [],
+      source: {
+        side: "A",
+        instanceId: "hero:A",
+        cardId: COIN_CARD_ID,
+      },
+    };
+
+    startTurn(state, () => {
+      enqueueTriggers(ctx, { type: "TURN_START", side: "A" });
+      resolveTriggerQueue(ctx);
+    });
+
+    const summoned = state.players.A.board.find(
+      (unit) => unit.cardId === token.id,
+    );
+    expect(summoned).toBeDefined();
+    expect(summoned?.summonedTurn).toBe(state.turnNumber);
+    expect(
+      enumerateLegalActions(state, definitions).some(
+        (action) =>
+          action.type === "ATTACK" &&
+          action.attackerId === summoned?.instanceId,
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects invalid Card DSL before creating match state", () => {
+    const invalidCard = {
+      ...cardDefinitions[0]!,
+      cost: -1,
+    } as CardDefinition;
+    const invalidCards = new Map(
+      cardDefinitions.map((card) => [
+        card.id,
+        card.id === invalidCard.id ? invalidCard : card,
+      ]),
+    );
+
+    expect(() =>
+      createMatchState({
+        seed: 89012n,
+        deckA: fixtureDeck,
+        deckB: fixtureDeck,
+        cards: invalidCards,
+      }),
+    ).toThrow(/invalid card definition/i);
+  });
+
+  it("rejects missing Card DSL references before creating match state", () => {
+    const invalidCard: CardDefinition = {
+      ...cardDefinitions[0]!,
+      triggers: [
+        {
+          trigger: "ON_PLAY",
+          conditions: [],
+          effects: [
+            {
+              type: "SUMMON",
+              tokenCardId: cardId("card-missing-token"),
+              amount: 1,
+            },
+          ],
+        },
+      ],
+    };
+    const invalidCards = new Map(
+      cardDefinitions.map((card) => [
+        card.id,
+        card.id === invalidCard.id ? invalidCard : card,
+      ]),
+    );
+
+    expect(() =>
+      createMatchState({
+        seed: 90123n,
+        deckA: fixtureDeck,
+        deckB: fixtureDeck,
+        cards: invalidCards,
+      }),
+    ).toThrow(/missing card definition/i);
   });
 });

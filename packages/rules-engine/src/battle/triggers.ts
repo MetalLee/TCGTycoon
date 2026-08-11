@@ -20,6 +20,7 @@ export type PendingTrigger = {
   source: EffectSource;
   trigger: CardTrigger;
   depth: number;
+  selectedTargetId?: string;
 };
 
 export type MatchEvent =
@@ -91,10 +92,20 @@ function triggerCandidates(
   event: MatchEvent,
 ): { source: EffectSource; triggerType: TriggerType }[] {
   switch (event.type) {
-    case "ON_PLAY":
-      return event.playedFromHand
-        ? [{ source: event.source, triggerType: "ON_PLAY" }]
-        : [];
+    case "ON_PLAY": {
+      if (!event.playedFromHand) {
+        return [];
+      }
+      const definition = definitionFor(ctx, event.source);
+      const playedUnit = findUnit(ctx.state, event.source.instanceId)?.unit;
+      if (
+        definition?.type === "UNIT" &&
+        !playedUnit?.keywords.includes("BATTLECRY")
+      ) {
+        return [];
+      }
+      return [{ source: event.source, triggerType: "ON_PLAY" }];
+    }
     case "ON_DEATH":
     case "AFTER_ATTACK":
     case "AFTER_DAMAGE":
@@ -136,6 +147,9 @@ export function enqueueTriggers(
           source: candidate.source,
           trigger,
           depth: ctx.triggerDepth + 1,
+          ...(event.type === "ON_PLAY" && ctx.selectedTargetId !== undefined
+            ? { selectedTargetId: ctx.selectedTargetId }
+            : {}),
         });
       }
     }
@@ -152,7 +166,11 @@ export function resolveTriggerQueue(ctx: ResolutionContext): void {
 
     ctx.triggerDepth = pending.depth;
     ctx.source = pending.source;
-    delete ctx.selectedTargetId;
+    if (pending.selectedTargetId === undefined) {
+      delete ctx.selectedTargetId;
+    } else {
+      ctx.selectedTargetId = pending.selectedTargetId;
+    }
 
     for (const effect of pending.trigger.effects) {
       resolveEffect(ctx, effect);

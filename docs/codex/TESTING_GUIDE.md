@@ -44,7 +44,9 @@ Purpose: prove no hidden nondeterministic dependency.
 Required patterns:
 
 ```ts
-const hashes = new Set(Array.from({ length: 100 }, () => runAndHashSameInput()));
+const hashes = new Set(
+  Array.from({ length: 100 }, () => runAndHashSameInput()),
+);
 expect(hashes.size).toBe(1);
 ```
 
@@ -63,7 +65,9 @@ Good assertion:
 
 ```ts
 expect(reprintWorld.accessibility).toBeGreaterThan(controlWorld.accessibility);
-expect(reprintWorld.cheapestDeckCost).toBeLessThan(controlWorld.cheapestDeckCost);
+expect(reprintWorld.cheapestDeckCost).toBeLessThan(
+  controlWorld.cheapestDeckCost,
+);
 ```
 
 Bad assertion:

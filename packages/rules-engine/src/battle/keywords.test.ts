@@ -8,16 +8,13 @@ import {
   type Keyword,
 } from "@tcgtycoon/domain";
 import { describe, expect, it } from "vitest";
+import { enumerateLegalActions } from "../ai/battle-ai";
 import {
   enqueueTriggers,
   resolveTriggerQueue,
   type ResolutionContext,
 } from "./triggers";
-import {
-  getLegalTargets,
-  heroTargetId,
-  type EffectSource,
-} from "./targeting";
+import { getLegalTargets, heroTargetId, type EffectSource } from "./targeting";
 import { checkStateBasedDeaths, performAttack } from "./state-check";
 import type { MatchSide, MatchState, UnitInstance } from "./types";
 
@@ -108,9 +105,7 @@ function context(
 ): ResolutionContext {
   return {
     state: matchState,
-    cardDefinitions: new Map(
-      cardDefinitions.map((card) => [card.id, card]),
-    ),
+    cardDefinitions: new Map(cardDefinitions.map((card) => [card.id, card])),
     queue: [],
     actionCount: 0,
     triggerDepth: 0,
@@ -127,15 +122,21 @@ describe("core keywords", () => {
     const attacker = unit("attacker", { attack: 2 });
     const taunt = unit("taunt", { keywords: ["TAUNT"] });
     const other = unit("other");
-    const ctx = context(state([attacker], [taunt, other]), [], source("A", attacker));
+    const ctx = context(
+      state([attacker], [taunt, other]),
+      [],
+      source("A", attacker),
+    );
 
-    expect(() => performAttack(ctx, attacker.instanceId, other.instanceId)).toThrow(
-      /legal attack target/i,
-    );
-    expect(() => performAttack(ctx, attacker.instanceId, heroTargetId("B"))).toThrow(
-      /legal attack target/i,
-    );
-    expect(() => performAttack(ctx, attacker.instanceId, taunt.instanceId)).not.toThrow();
+    expect(() =>
+      performAttack(ctx, attacker.instanceId, other.instanceId),
+    ).toThrow(/legal attack target/i);
+    expect(() =>
+      performAttack(ctx, attacker.instanceId, heroTargetId("B")),
+    ).toThrow(/legal attack target/i);
+    expect(() =>
+      performAttack(ctx, attacker.instanceId, taunt.instanceId),
+    ).not.toThrow();
   });
 
   it("CHARGE can attack hero immediately", () => {
@@ -146,7 +147,11 @@ describe("core keywords", () => {
     });
     const matchState = state([attacker]);
 
-    performAttack(context(matchState, [], source("A", attacker)), attacker.instanceId, heroTargetId("B"));
+    performAttack(
+      context(matchState, [], source("A", attacker)),
+      attacker.instanceId,
+      heroTargetId("B"),
+    );
 
     expect(matchState.players.B.heroHealth).toBe(RULES_CONFIG.heroHealth - 2);
   });
@@ -158,12 +163,18 @@ describe("core keywords", () => {
       summonedTurn: 1,
     });
     const defender = unit("defender");
-    const ctx = context(state([attacker], [defender]), [], source("A", attacker));
-
-    expect(() => performAttack(ctx, attacker.instanceId, heroTargetId("B"))).toThrow(
-      /cannot attack the enemy hero/i,
+    const ctx = context(
+      state([attacker], [defender]),
+      [],
+      source("A", attacker),
     );
-    expect(() => performAttack(ctx, attacker.instanceId, defender.instanceId)).not.toThrow();
+
+    expect(() =>
+      performAttack(ctx, attacker.instanceId, heroTargetId("B")),
+    ).toThrow(/cannot attack the enemy hero/i);
+    expect(() =>
+      performAttack(ctx, attacker.instanceId, defender.instanceId),
+    ).not.toThrow();
   });
 
   it("BATTLECRY triggers only when normally played from hand", () => {
@@ -195,7 +206,11 @@ describe("core keywords", () => {
     expect(summonedState.players.B.heroHealth).toBe(RULES_CONFIG.heroHealth);
 
     const playedState = state([herald]);
-    const playedCtx = context(playedState, [heraldDefinition], source("A", herald));
+    const playedCtx = context(
+      playedState,
+      [heraldDefinition],
+      source("A", herald),
+    );
     enqueueTriggers(playedCtx, {
       type: "ON_PLAY",
       source: source("A", herald),
@@ -203,6 +218,24 @@ describe("core keywords", () => {
     });
     resolveTriggerQueue(playedCtx);
     expect(playedState.players.B.heroHealth).toBe(RULES_CONFIG.heroHealth - 2);
+
+    const withoutBattlecry = unit("herald-without-battlecry");
+    withoutBattlecry.cardId = heraldDefinition.id;
+    const withoutBattlecryState = state([withoutBattlecry]);
+    const withoutBattlecryCtx = context(
+      withoutBattlecryState,
+      [heraldDefinition],
+      source("A", withoutBattlecry),
+    );
+    enqueueTriggers(withoutBattlecryCtx, {
+      type: "ON_PLAY",
+      source: source("A", withoutBattlecry),
+      playedFromHand: true,
+    });
+    resolveTriggerQueue(withoutBattlecryCtx);
+    expect(withoutBattlecryState.players.B.heroHealth).toBe(
+      RULES_CONFIG.heroHealth,
+    );
   });
 
   it("DEATHRATTLE triggers after the unit leaves board", () => {
@@ -227,14 +260,37 @@ describe("core keywords", () => {
     expect(ctx.queue).toHaveLength(1);
     resolveTriggerQueue(ctx);
     expect(matchState.players.B.heroHealth).toBe(RULES_CONFIG.heroHealth - 2);
+
+    const withoutDeathrattle = unit("doomed-without-deathrattle", {
+      health: 0,
+    });
+    withoutDeathrattle.cardId = doomedDefinition.id;
+    const withoutDeathrattleState = state([withoutDeathrattle]);
+    const withoutDeathrattleCtx = context(
+      withoutDeathrattleState,
+      [doomedDefinition],
+      source("A", withoutDeathrattle),
+    );
+    checkStateBasedDeaths(withoutDeathrattleCtx);
+    resolveTriggerQueue(withoutDeathrattleCtx);
+    expect(withoutDeathrattleState.players.B.heroHealth).toBe(
+      RULES_CONFIG.heroHealth,
+    );
   });
 
   it("DIVINE_SHIELD prevents the first damage instance", () => {
     const attacker = unit("attacker", { attack: 3 });
-    const shielded = unit("shielded", { health: 2, keywords: ["DIVINE_SHIELD"] });
+    const shielded = unit("shielded", {
+      health: 2,
+      keywords: ["DIVINE_SHIELD"],
+    });
     const matchState = state([attacker], [shielded]);
 
-    performAttack(context(matchState, [], source("A", attacker)), attacker.instanceId, shielded.instanceId);
+    performAttack(
+      context(matchState, [], source("A", attacker)),
+      attacker.instanceId,
+      shielded.instanceId,
+    );
 
     expect(matchState.players.B.board[0]).toMatchObject({
       health: 2,
@@ -251,7 +307,11 @@ describe("core keywords", () => {
     const matchState = state([attacker], [defender]);
     matchState.players.A.heroHealth = 10;
 
-    performAttack(context(matchState, [], source("A", attacker)), attacker.instanceId, defender.instanceId);
+    performAttack(
+      context(matchState, [], source("A", attacker)),
+      attacker.instanceId,
+      defender.instanceId,
+    );
 
     expect(matchState.players.A.heroHealth).toBe(12);
   });
@@ -266,9 +326,9 @@ describe("core keywords", () => {
     performAttack(ctx, attacker.instanceId, heroTargetId("B"));
     performAttack(ctx, attacker.instanceId, heroTargetId("B"));
 
-    expect(() => performAttack(ctx, attacker.instanceId, heroTargetId("B"))).toThrow(
-      /attack limit/i,
-    );
+    expect(() =>
+      performAttack(ctx, attacker.instanceId, heroTargetId("B")),
+    ).toThrow(/attack limit/i);
   });
 
   it("STEALTH blocks enemy targeted effects and attacks until it attacks", () => {
@@ -277,9 +337,9 @@ describe("core keywords", () => {
     const matchState = state([stalker], [enemy]);
     const enemySource = source("B", enemy);
 
-    expect(getLegalTargets(matchState, enemySource, "ENEMY_UNIT")).not.toContain(
-      stalker.instanceId,
-    );
+    expect(
+      getLegalTargets(matchState, enemySource, "ENEMY_UNIT"),
+    ).not.toContain(stalker.instanceId);
     matchState.activeSide = "B";
     expect(() =>
       performAttack(
@@ -319,5 +379,79 @@ describe("core keywords", () => {
     performAttack(ctx, venom.instanceId, shielded.instanceId);
 
     expect(matchState.players.B.board).toEqual([]);
+  });
+});
+
+describe("played-card targeting", () => {
+  it("resolves an ON_PLAY effect against the selected target", () => {
+    const caster = unit("caster", { keywords: ["BATTLECRY"] });
+    const firstEnemy = unit("first-enemy");
+    const selectedEnemy = unit("selected-enemy");
+    const casterDefinition = definition(
+      "card-caster",
+      ["BATTLECRY"],
+      [
+        {
+          trigger: "ON_PLAY",
+          conditions: [],
+          effects: [
+            { type: "DEAL_DAMAGE", amount: 2, target: "ENEMY_UNIT" },
+            { type: "HEAL", amount: 2, target: "FRIENDLY_HERO" },
+          ],
+        },
+      ],
+    );
+    const matchState = state([caster], [firstEnemy, selectedEnemy]);
+    const ctx = context(matchState, [casterDefinition], source("A", caster));
+    matchState.players.A.heroHealth = 10;
+    ctx.selectedTargetId = selectedEnemy.instanceId;
+
+    enqueueTriggers(ctx, {
+      type: "ON_PLAY",
+      source: source("A", caster),
+      playedFromHand: true,
+    });
+    resolveTriggerQueue(ctx);
+
+    expect(firstEnemy.health).toBe(3);
+    expect(selectedEnemy.health).toBe(1);
+    expect(matchState.players.A.heroHealth).toBe(12);
+  });
+
+  it("enumerates a legal play whose fixed effects use different selectors", () => {
+    const spellId = cardId("card-split-spell");
+    const spell: CardDefinition = {
+      id: spellId,
+      name: "Split Spell",
+      type: "SPELL",
+      factionId: fireFactionId,
+      rarity: "COMMON",
+      cost: 1,
+      keywords: [],
+      triggers: [
+        {
+          trigger: "ON_PLAY",
+          conditions: [],
+          effects: [
+            { type: "DEAL_DAMAGE", amount: 1, target: "ENEMY_HERO" },
+            { type: "HEAL", amount: 1, target: "FRIENDLY_HERO" },
+          ],
+        },
+      ],
+    };
+    const matchState = state();
+    matchState.players.A.mana = 1;
+    matchState.players.A.hand.push({
+      instanceId: "split-spell-instance",
+      cardId: spellId,
+    });
+
+    expect(
+      enumerateLegalActions(matchState, new Map([[spellId, spell]])),
+    ).toContainEqual({
+      type: "PLAY_CARD",
+      side: "A",
+      cardInstanceId: "split-spell-instance",
+    });
   });
 });

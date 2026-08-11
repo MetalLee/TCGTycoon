@@ -1,4 +1,10 @@
-import type { CardId, ExpansionId, PrintRunId, PrintingId, ProductId } from "./ids";
+import type {
+  CardId,
+  ExpansionId,
+  PrintRunId,
+  PrintingId,
+  ProductId,
+} from "./ids";
 
 export type Expansion = {
   id: ExpansionId;

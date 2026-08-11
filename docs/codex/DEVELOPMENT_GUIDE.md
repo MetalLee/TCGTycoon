@@ -49,9 +49,9 @@ If a plan appears impossible or inconsistent, stop implementation and propose a 
 
 1. Foundation & Rules Engine.
 2. World Simulation & Economy.
-3A. Production, Release & Reprints.
-3B. Publisher Operations & Web UI.
-4. AI, Desktop & Release hardening.
+   3A. Production, Release & Reprints.
+   3B. Publisher Operations & Web UI.
+3. AI, Desktop & Release hardening.
 
 Do not start Phase 3 UI because it is visually attractive before Phase 2/3A systems are proven headlessly.
 
