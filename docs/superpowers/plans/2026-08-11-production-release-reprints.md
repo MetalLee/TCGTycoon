@@ -133,7 +133,7 @@ git commit -m "feat: produce costed physical print runs"
 - Consumes: release commands, Publisher Inventory, WorldEvent/Trust context.
 - Produces: `announceRelease`, `rescheduleRelease`, `executeReleasesDueToday`, `ReleaseStatus`, structured delay/shortage events.
 
-- [ ] **Step 1: Write failing release tests**
+- [x] **Step 1: Write failing release tests**
 
 Required:
 
@@ -144,13 +144,13 @@ it("rescheduling a publicly announced date emits RELEASE_DELAY", () => {});
 it("rescheduling an unannounced internal target does not emit public trust penalty context", () => {});
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/releases.test.ts
 ```
 
-- [ ] **Step 3: Implement explicit release state**
+- [x] **Step 3: Implement explicit release state**
 
 ```ts
 export type ReleaseStatus = "UNANNOUNCED" | "ANNOUNCED" | "LIVE" | "DELAYED";
@@ -158,11 +158,11 @@ export type ReleaseStatus = "UNANNOUNCED" | "ANNOUNCED" | "LIVE" | "DELAYED";
 
 Announcement stores the committed public day. Trust/Hype changes are still computed by metric systems from structured events, not directly inside release code.
 
-- [ ] **Step 4: Integrate release before daily primary sales**
+- [x] **Step 4: Integrate release before daily primary sales**
 
 A product released today becomes sellable before today's demand phase. A product delayed/not released cannot generate primary sales even if warehouse inventory exists.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/releases.test.ts tests/scenarios/release-delay.test.ts

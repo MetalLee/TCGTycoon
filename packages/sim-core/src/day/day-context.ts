@@ -1,4 +1,9 @@
-import { PRODUCTION_CONFIG, type ProductionConfig } from "@tcgtycoon/balance";
+import {
+  PRODUCTION_CONFIG,
+  RELEASE_CONFIG,
+  type ProductionConfig,
+  type ReleaseConfig,
+} from "@tcgtycoon/balance";
 import type { PrintingId, WorldState } from "@tcgtycoon/domain";
 import { DeterministicRng, deriveSeed } from "@tcgtycoon/rules-engine";
 
@@ -7,6 +12,7 @@ export type BalanceConfig = {
   dailyOperatingCost: number;
   inventoryHoldingCostPerUnit: number;
   production: ProductionConfig;
+  release: ReleaseConfig;
 };
 
 export const DEFAULT_BALANCE_CONFIG: BalanceConfig = {
@@ -14,6 +20,7 @@ export const DEFAULT_BALANCE_CONFIG: BalanceConfig = {
   dailyOperatingCost: 0,
   inventoryHoldingCostPerUnit: 0,
   production: PRODUCTION_CONFIG,
+  release: RELEASE_CONFIG,
 };
 
 export function phaseRng(

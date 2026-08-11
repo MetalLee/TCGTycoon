@@ -53,9 +53,14 @@ import { processLifecycleDay } from "../population/lifecycle";
 import { openBooster, openStarter } from "../products/open-product";
 import { orderPrintRun } from "../products/production";
 import {
+  announceRelease,
+  executeReleasesDueToday,
+  rescheduleRelease,
+} from "../products/releases";
+import {
   completePrintRunsDueToday,
   generatePrimaryDemand,
-  getAvailableProductInventory,
+  getSellableProductInventory,
   resolvePrimarySales,
   type CompletedPrintRun,
   type PrimarySalesResult,
@@ -122,6 +127,18 @@ function addNotableEvent(context: DayContext, type: string): void {
   context.state.history.events.push(event);
 }
 
+function recordReleaseEvents(
+  context: DayContext,
+  events: readonly WorldEvent[],
+): void {
+  context.notableEvents.push(
+    ...events.map((event) => ({
+      ...event,
+      ...(event.context === undefined ? {} : { context: { ...event.context } }),
+    })),
+  );
+}
+
 function validateBalanceConfig(config: BalanceConfig): void {
   for (const [name, value] of [
     ["dailyOperatingCost", config.dailyOperatingCost],
@@ -169,6 +186,23 @@ function applyPublisherCommand(
       addNotableEvent(context, "PRINT_RUN_ORDERED");
       break;
     }
+    case "ANNOUNCE_RELEASE": {
+      recordReleaseEvents(context, [
+        announceRelease(context.state, command.productId, command.releaseDay),
+      ]);
+      break;
+    }
+    case "RESCHEDULE_RELEASE": {
+      recordReleaseEvents(
+        context,
+        rescheduleRelease(
+          context.state,
+          command.productId,
+          command.newReleaseDay,
+        ),
+      );
+      break;
+    }
   }
 }
 
@@ -179,6 +213,10 @@ function phase01CommandsAndPrintCompletion(context: DayContext): void {
   context.completedPrintRuns = completePrintRunsDueToday(context.state);
   context.completedPrintRuns.forEach(() =>
     addNotableEvent(context, "PRINT_RUN_COMPLETED"),
+  );
+  recordReleaseEvents(
+    context,
+    executeReleasesDueToday(context.state, context.config.release),
   );
 }
 
@@ -503,7 +541,7 @@ function deriveAccessibility(context: DayContext): number {
       ? 0
       : starterProducts.filter(
           (product) =>
-            getAvailableProductInventory(context.state, product.id) > 0,
+            getSellableProductInventory(context.state, product.id) > 0,
         ).length / starterProducts.length;
   const starterPrice =
     starterProducts.length === 0

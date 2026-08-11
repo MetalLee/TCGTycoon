@@ -45,6 +45,56 @@ const printingV3Schema = z
 const productV3Schema = productV2Schema.extend({
   cardIds: z.array(idSchema),
 });
+const releaseStatusSchema = z.enum([
+  "UNANNOUNCED",
+  "ANNOUNCED",
+  "LIVE",
+  "DELAYED",
+]);
+const productV4Schema = productV3Schema
+  .extend({
+    releaseStatus: releaseStatusSchema,
+    internalReleaseDay: nonNegativeIntegerSchema,
+    announcedReleaseDay: nonNegativeIntegerSchema.optional(),
+    releasedDay: nonNegativeIntegerSchema.optional(),
+  })
+  .superRefine((product, context) => {
+    if (
+      product.releaseStatus === "UNANNOUNCED" &&
+      product.announcedReleaseDay !== undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["announcedReleaseDay"],
+        message: "UNANNOUNCED products cannot have a public release day.",
+      });
+    }
+    if (
+      (product.releaseStatus === "ANNOUNCED" ||
+        product.releaseStatus === "DELAYED") &&
+      product.announcedReleaseDay === undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["announcedReleaseDay"],
+        message: "Announced or delayed products require a public release day.",
+      });
+    }
+    if (product.releaseStatus === "LIVE" && product.releasedDay === undefined) {
+      context.addIssue({
+        code: "custom",
+        path: ["releasedDay"],
+        message: "LIVE products require their actual release day.",
+      });
+    }
+    if (product.releaseStatus !== "LIVE" && product.releasedDay !== undefined) {
+      context.addIssue({
+        code: "custom",
+        path: ["releasedDay"],
+        message: "Only LIVE products may have an actual release day.",
+      });
+    }
+  });
 const printRunV3Schema = z
   .object({
     id: idSchema,
@@ -227,6 +277,27 @@ const eventSchema = z
   .object({ id: idSchema, day: nonNegativeIntegerSchema, type: idSchema })
   .strict();
 const historySchema = z.object({ events: z.array(eventSchema) }).strict();
+const eventContextV4Schema = z
+  .object({
+    productId: idSchema.optional(),
+    reason: z.string().optional(),
+    publicCommitment: z.boolean().optional(),
+    trustSignal: z.enum(["NEGATIVE", "POSITIVE", "NONE"]).optional(),
+    previousReleaseDay: nonNegativeIntegerSchema.optional(),
+    newReleaseDay: nonNegativeIntegerSchema.optional(),
+    availableInventory: nonNegativeIntegerSchema.optional(),
+    shortSupplyThreshold: nonNegativeIntegerSchema.optional(),
+  })
+  .strict();
+const eventV4Schema = z
+  .object({
+    id: idSchema,
+    day: nonNegativeIntegerSchema,
+    type: idSchema,
+    context: eventContextV4Schema.optional(),
+  })
+  .strict();
+const historyV4Schema = z.object({ events: z.array(eventV4Schema) }).strict();
 const lifecycleStateSchema = z
   .object({
     potential: nonNegativeIntegerSchema,
@@ -709,6 +780,56 @@ export const worldStateV3Schema = z
     printings: recordOf(printingV3Schema),
     products: recordOf(productV3Schema),
     printRuns: recordOf(printRunV3Schema),
+    market: z
+      .object({
+        listings: z.array(marketListingSchema),
+        snapshots: recordOf(printingMarketSnapshotSchema),
+      })
+      .strict(),
+    meta: z
+      .object({
+        deckStats: recordOf(metaDeckStatsV2Schema),
+        matchups: recordOf(matchupStatsSchema),
+      })
+      .strict(),
+    metrics: z
+      .object({
+        activePlayers: nonNegativeIntegerSchema,
+        previousActivePlayers: nonNegativeIntegerSchema,
+        hype: metricNumberSchema,
+        collectorHeat: metricNumberSchema,
+        metaHealth: metricNumberSchema,
+        brandTrust: metricNumberSchema,
+        sentiment: metricNumberSchema,
+        accessibility: metricNumberSchema,
+        lifecycle: lifecycleStateSchema,
+        lifecycleDeltas: lifecycleDeltasSchema,
+        acquisitionToChurnRatio: nonNegativeNumberSchema,
+        retentionRate: unitNumberSchema,
+        activePlayerTrend: finiteNumberSchema,
+        consecutiveDeclineDays: nonNegativeIntegerSchema,
+        consecutiveLowActivityDays: nonNegativeIntegerSchema,
+        ecosystemRisk: z.enum([
+          "STABLE",
+          "STRAINED",
+          "DECLINING",
+          "DEATH_SPIRAL",
+          "TERMINAL",
+        ]),
+      })
+      .strict(),
+  })
+  .strict()
+  .superRefine(validateWorldReferences);
+
+export const worldStateV4Schema = z
+  .object({
+    schemaVersion: z.literal(4),
+    ...commonWorldShapeV2,
+    printings: recordOf(printingV3Schema),
+    products: recordOf(productV4Schema),
+    printRuns: recordOf(printRunV3Schema),
+    history: historyV4Schema,
     market: z
       .object({
         listings: z.array(marketListingSchema),

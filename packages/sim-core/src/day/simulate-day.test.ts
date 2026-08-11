@@ -59,7 +59,7 @@ function createDayWorld(): WorldState {
   }));
 
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -84,6 +84,9 @@ function createDayWorld(): WorldState {
         kind: "BOOSTER",
         msrp: 5,
         cardIds: cards.map((card) => card.id),
+        releaseStatus: "LIVE",
+        internalReleaseDay: 0,
+        releasedDay: 0,
       },
     },
     printRuns: {

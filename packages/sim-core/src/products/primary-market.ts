@@ -43,7 +43,10 @@ function compareBigInts(left: bigint, right: bigint): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-function productRuns(world: WorldState, productId: ProductId): PrintRun[] {
+function completedProductRuns(
+  world: WorldState,
+  productId: ProductId,
+): PrintRun[] {
   return Object.values(world.printRuns)
     .filter((run) => run.productId === productId && run.status === "COMPLETED")
     .sort(
@@ -51,6 +54,15 @@ function productRuns(world: WorldState, productId: ProductId): PrintRun[] {
         left.completionDay - right.completionDay ||
         compareIds(left.id, right.id),
     );
+}
+
+function sellableProductRuns(
+  world: WorldState,
+  productId: ProductId,
+): PrintRun[] {
+  return world.products[productId]?.releaseStatus === "LIVE"
+    ? completedProductRuns(world, productId)
+    : [];
 }
 
 function validatePrintRunQuantity(run: PrintRun): void {
@@ -77,7 +89,17 @@ export function getAvailableProductInventory(
   world: WorldState,
   productId: ProductId,
 ): number {
-  return productRuns(world, productId).reduce((total, run) => {
+  return completedProductRuns(world, productId).reduce((total, run) => {
+    validatePrintRunQuantity(run);
+    return total + run.quantity;
+  }, 0);
+}
+
+export function getSellableProductInventory(
+  world: WorldState,
+  productId: ProductId,
+): number {
+  return sellableProductRuns(world, productId).reduce((total, run) => {
     validatePrintRunQuantity(run);
     return total + run.quantity;
   }, 0);
@@ -125,9 +147,9 @@ export function generatePrimaryDemand(
   const players = Object.values(world.players).sort((left, right) =>
     compareIds(left.id, right.id),
   );
-  const products = Object.values(world.products).sort((left, right) =>
-    compareIds(left.id, right.id),
-  );
+  const products = Object.values(world.products)
+    .filter((product) => product.releaseStatus === "LIVE")
+    .sort((left, right) => compareIds(left.id, right.id));
   const demand: PrimaryDemand[] = [];
 
   for (const player of players) {
@@ -213,7 +235,7 @@ function removeInventory(
 ): InventoryAllocation[] {
   let remaining = requestedQuantity;
   const allocations: InventoryAllocation[] = [];
-  for (const run of productRuns(world, productId)) {
+  for (const run of sellableProductRuns(world, productId)) {
     validatePrintRunQuantity(run);
     const quantity = Math.min(run.quantity, remaining);
     run.quantity -= quantity;

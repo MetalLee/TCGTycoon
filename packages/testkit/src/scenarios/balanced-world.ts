@@ -2,6 +2,7 @@ import {
   ECONOMY_CONFIG,
   POPULATION_CONFIG,
   PRODUCTION_CONFIG,
+  RELEASE_CONFIG,
 } from "@tcgtycoon/balance";
 import {
   playerId,
@@ -154,7 +155,15 @@ export function createBalancedWorld(seed = "balanced-world"): WorldScenario {
     kind: "STARTER",
     msrp: 15,
     cardIds: machineFixtureDeck.cards.map((entry) => entry.cardId),
+    releaseStatus: "LIVE",
+    internalReleaseDay: world.day,
+    releasedDay: world.day,
   };
+  for (const product of Object.values(world.products)) {
+    product.releaseStatus = "LIVE";
+    product.internalReleaseDay = world.day;
+    product.releasedDay = world.day;
+  }
   for (const cardId of [
     ...new Set(machineFixtureDeck.cards.map((entry) => entry.cardId)),
   ].sort(compareIds)) {
@@ -231,6 +240,7 @@ export function createBalancedWorld(seed = "balanced-world"): WorldScenario {
       dailyOperatingCost: 1,
       inventoryHoldingCostPerUnit: 0,
       production: PRODUCTION_CONFIG,
+      release: RELEASE_CONFIG,
     },
     botConfig: {
       stockThreshold: 8,

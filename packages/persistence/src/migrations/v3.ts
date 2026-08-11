@@ -1,4 +1,3 @@
-import type { SaveEnvelope } from "@tcgtycoon/domain";
 import { z } from "zod";
 import type { SaveEnvelopeV2 } from "./v2";
 import { worldStateV3Schema } from "./world-state-schemas";
@@ -34,6 +33,8 @@ export const saveEnvelopeV3Schema = z
     }
   });
 
+export type SaveEnvelopeV3 = z.infer<typeof saveEnvelopeV3Schema>;
+
 function compareIds(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
@@ -42,7 +43,7 @@ function legacyProductId(expansionId: string): string {
   return `product-legacy-${expansionId}`;
 }
 
-export function migrateV2ToV3(save: SaveEnvelopeV2): SaveEnvelope {
+export function migrateV2ToV3(save: SaveEnvelopeV2): SaveEnvelopeV3 {
   const products: Record<
     string,
     SaveEnvelopeV2["state"]["products"][string] & { cardIds: string[] }
@@ -226,6 +227,6 @@ export function migrateV2ToV3(save: SaveEnvelopeV2): SaveEnvelope {
   });
 }
 
-export function parseSaveEnvelopeV3(input: unknown): SaveEnvelope {
-  return saveEnvelopeV3Schema.parse(input) as SaveEnvelope;
+export function parseSaveEnvelopeV3(input: unknown): SaveEnvelopeV3 {
+  return saveEnvelopeV3Schema.parse(input);
 }

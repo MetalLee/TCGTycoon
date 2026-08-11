@@ -126,6 +126,8 @@ export function createProductFixtureWorld(
     kind: "STARTER",
     msrp: 15,
     cardIds: fireFixtureDeck.cards.map((entry) => entry.cardId),
+    releaseStatus: "UNANNOUNCED",
+    internalReleaseDay: 0,
   };
   const printings = [
     ...launchPrintings(cards, expansionId, launchBoosterProductId),

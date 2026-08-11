@@ -22,6 +22,9 @@ export type Printing = {
 
 export type PrintingEdition = "FIRST_EDITION" | "UNLIMITED" | "REPRINT";
 
+export type ProductReleaseStatus =
+  "UNANNOUNCED" | "ANNOUNCED" | "LIVE" | "DELAYED";
+
 export type ProductSku = {
   id: ProductId;
   expansionId: ExpansionId;
@@ -29,6 +32,10 @@ export type ProductSku = {
   kind: "BOOSTER" | "STARTER";
   msrp: number;
   cardIds: CardId[];
+  releaseStatus: ProductReleaseStatus;
+  internalReleaseDay: number;
+  announcedReleaseDay?: number;
+  releasedDay?: number;
 };
 
 export type PrintRun = {

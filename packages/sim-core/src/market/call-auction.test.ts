@@ -26,7 +26,7 @@ function createMarketWorld(): WorldState {
   seller.collection[marketPrintingId] = 3;
 
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -79,6 +79,9 @@ function createMarketWorld(): WorldState {
         kind: "BOOSTER",
         msrp: 5,
         cardIds: [cardId("card-market")],
+        releaseStatus: "LIVE",
+        internalReleaseDay: 0,
+        releasedDay: 0,
       },
     },
     printRuns: {},

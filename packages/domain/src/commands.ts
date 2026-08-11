@@ -7,6 +7,16 @@ export type PublisherCommand =
       type: "ORDER_PRINT_RUN";
       productId: ProductId;
       quantity: number;
+    }
+  | {
+      type: "ANNOUNCE_RELEASE";
+      productId: ProductId;
+      releaseDay: number;
+    }
+  | {
+      type: "RESCHEDULE_RELEASE";
+      productId: ProductId;
+      newReleaseDay: number;
     };
 
 const productIdSchema = z.string().min(1).transform(productId);
@@ -24,6 +34,20 @@ export const publisherCommandSchema = z.discriminatedUnion("type", [
       type: z.literal("ORDER_PRINT_RUN"),
       productId: productIdSchema,
       quantity: z.number().int().positive(),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("ANNOUNCE_RELEASE"),
+      productId: productIdSchema,
+      releaseDay: z.number().int().nonnegative(),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("RESCHEDULE_RELEASE"),
+      productId: productIdSchema,
+      newReleaseDay: z.number().int().nonnegative(),
     })
     .strict(),
 ]);

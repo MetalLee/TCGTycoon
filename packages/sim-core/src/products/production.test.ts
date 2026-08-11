@@ -44,13 +44,15 @@ function createProduct(): ProductSku {
     kind: "BOOSTER",
     msrp: 5,
     cardIds: [productionCardId],
+    releaseStatus: "UNANNOUNCED",
+    internalReleaseDay: 10,
   };
 }
 
 function createProductionWorld(): WorldState {
   const product = createProduct();
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",

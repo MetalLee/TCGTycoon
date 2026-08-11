@@ -167,7 +167,56 @@ export function validateWorldInvariants(
   });
 
   for (const productId of Object.keys(world.products).sort(compareIds)) {
-    requirePrice(world.products[productId]!.msrp, `products.${productId}.msrp`);
+    const product = world.products[productId]!;
+    requirePrice(product.msrp, `products.${productId}.msrp`);
+    requireQuantity(
+      product.internalReleaseDay,
+      `products.${productId}.internalReleaseDay`,
+    );
+    if (product.announcedReleaseDay !== undefined) {
+      requireQuantity(
+        product.announcedReleaseDay,
+        `products.${productId}.announcedReleaseDay`,
+      );
+    }
+    if (product.releasedDay !== undefined) {
+      requireQuantity(product.releasedDay, `products.${productId}.releasedDay`);
+    }
+    if (
+      product.releaseStatus === "UNANNOUNCED" &&
+      product.announcedReleaseDay !== undefined
+    ) {
+      fail(
+        "OUT_OF_RANGE",
+        `products.${productId}.announcedReleaseDay`,
+        "UNANNOUNCED products cannot have a public release day.",
+      );
+    }
+    if (
+      (product.releaseStatus === "ANNOUNCED" ||
+        product.releaseStatus === "DELAYED") &&
+      product.announcedReleaseDay === undefined
+    ) {
+      fail(
+        "MISSING_REFERENCE",
+        `products.${productId}.announcedReleaseDay`,
+        "Announced or delayed products require a public release day.",
+      );
+    }
+    if (product.releaseStatus === "LIVE" && product.releasedDay === undefined) {
+      fail(
+        "MISSING_REFERENCE",
+        `products.${productId}.releasedDay`,
+        "LIVE products require their actual release day.",
+      );
+    }
+    if (product.releaseStatus !== "LIVE" && product.releasedDay !== undefined) {
+      fail(
+        "OUT_OF_RANGE",
+        `products.${productId}.releasedDay`,
+        "Only LIVE products may have an actual release day.",
+      );
+    }
   }
   world.market.listings.forEach((listing, index) => {
     requirePrice(listing.price, `market.listings[${index}].price`);

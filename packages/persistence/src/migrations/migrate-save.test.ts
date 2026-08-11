@@ -143,10 +143,15 @@ describe("migrateSave", () => {
 
     const migrated = migrateSave(v2Fixture);
 
-    expect(migrated.schemaVersion).toBe(3);
+    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(migrated.state.products["product-launch"]!.cardIds).toEqual([
       "card-launch",
     ]);
+    expect(migrated.state.products["product-launch"]).toMatchObject({
+      releaseStatus: "LIVE",
+      internalReleaseDay: 0,
+      releasedDay: 0,
+    });
     expect(migrated.state.printings["printing-launch-normal"]).toMatchObject({
       edition: "FIRST_EDITION",
       sourceProductId: "product-launch",
