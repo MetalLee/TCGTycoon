@@ -337,7 +337,7 @@ git commit -m "feat: version standard ban and rotation policy"
 - Consumes: persistent players, owned legal decks, Rules Engine, active BanlistVersion.
 - Produces: tournament registration, bracket/match results, Top 8, winner, public deck-list knowledge events and structured attention events.
 
-- [ ] **Step 1: Write failing preset/registration tests**
+- [x] **Step 1: Write failing preset/registration tests**
 
 Defaults:
 
@@ -349,15 +349,15 @@ MAJOR: { maxPlayers: 512, prepDays: 10 }
 
 Assert players without legal owned decks cannot register.
 
-- [ ] **Step 2: Write tournament-shock scenario**
+- [x] **Step 2: Write tournament-shock scenario**
 
 A cold deck with low public knowledge wins a deterministic Regional/Major. Assert the tournament result creates a public knowledge event and later adoption/demand changes; do not directly set its usage rate.
 
-- [ ] **Step 3: Implement deterministic pairings/bracket**
+- [x] **Step 3: Implement deterministic pairings/bracket**
 
 Use stable seeded pairing order. Persist important match action logs for final and designated notable upsets.
 
-- [ ] **Step 4: Verify/commit**
+- [x] **Step 4: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/tournaments.test.ts

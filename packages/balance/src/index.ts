@@ -7,3 +7,4 @@ export * from "./production-config";
 export * from "./product-lifecycle-config";
 export * from "./release-config";
 export * from "./rules-config";
+export * from "./tournament-config";

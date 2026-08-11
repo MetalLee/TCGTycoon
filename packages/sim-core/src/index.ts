@@ -21,6 +21,7 @@ export * from "./operations/scheduler";
 export * from "./operations/expansion-pipeline";
 export * from "./operations/playtest";
 export * from "./operations/policies";
+export * from "./operations/tournaments";
 export * from "./population/create-population";
 export * from "./population/lifecycle";
 export * from "./products/open-product";
