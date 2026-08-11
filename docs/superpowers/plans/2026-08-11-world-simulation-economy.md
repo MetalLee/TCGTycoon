@@ -311,7 +311,7 @@ git add packages/domain/src/saves.ts packages/persistence
 - Consumes: deterministic seed utilities and WorldState domain types.
 - Produces: `createInitialPopulation(seed, count = 400)`, deterministic persistent player profiles, six motivation vectors, `KnowledgeState`, and 24 deterministic structural Named Agents for standard test fixtures.
 
-- [ ] **Step 1: Write failing deterministic population tests**
+- [x] **Step 1: Write failing deterministic population tests**
 
 Required assertions:
 
@@ -323,13 +323,13 @@ expect(createInitialPopulation("seed-a")).toEqual(createInitialPopulation("seed-
 
 Also verify motivation values are in `[0,1]` and no generated player owns cards yet.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/population/create-population.test.ts
 ```
 
-- [ ] **Step 3: Implement player motivation/profile structures**
+- [x] **Step 3: Implement player motivation/profile structures**
 
 Each Persistent Player includes at least:
 
@@ -355,18 +355,18 @@ satisfaction: number;
 
 NamedAgent adds role, influence, followers, brand attitude, recent structured memories and long-term summary string, but no LLM fields/calls.
 
-- [ ] **Step 4: Implement `createTestWorld(seed)`**
+- [x] **Step 4: Implement `createTestWorld(seed)`**
 
 This fixture assembles Phase 1 cards/decks, Launch Expansion/Product skeleton, 400 players, 24 agents, empty ownership/market and starting company cash. It must be deterministic.
 
-- [ ] **Step 5: Run focused tests and typecheck**
+- [x] **Step 5: Run focused tests and typecheck**
 
 ```bash
 pnpm vitest run packages/sim-core/src/population/create-population.test.ts
 pnpm typecheck
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/balance packages/sim-core packages/testkit

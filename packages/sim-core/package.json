@@ -1,5 +1,5 @@
 {
-  "name": "@tcgtycoon/testkit",
+  "name": "@tcgtycoon/sim-core",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,6 @@
   "dependencies": {
     "@tcgtycoon/balance": "workspace:*",
     "@tcgtycoon/domain": "workspace:*",
-    "@tcgtycoon/sim-core": "workspace:*"
+    "@tcgtycoon/rules-engine": "workspace:*"
   }
 }

@@ -9,6 +9,6 @@
   "references": [
     { "path": "../balance" },
     { "path": "../domain" },
-    { "path": "../sim-core" }
+    { "path": "../rules-engine" }
   ]
 }

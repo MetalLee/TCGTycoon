@@ -59,11 +59,29 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
-  packages/testkit:
+  packages/sim-core:
     dependencies:
+      '@tcgtycoon/balance':
+        specifier: workspace:*
+        version: link:../balance
       '@tcgtycoon/domain':
         specifier: workspace:*
         version: link:../domain
+      '@tcgtycoon/rules-engine':
+        specifier: workspace:*
+        version: link:../rules-engine
+
+  packages/testkit:
+    dependencies:
+      '@tcgtycoon/balance':
+        specifier: workspace:*
+        version: link:../balance
+      '@tcgtycoon/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@tcgtycoon/sim-core':
+        specifier: workspace:*
+        version: link:../sim-core
 
 packages:
 
