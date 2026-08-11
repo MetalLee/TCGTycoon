@@ -798,15 +798,15 @@ export function simulateDay(
 ): DaySimulationResult;
 ```
 
-- [ ] **Step 1: Write failing phase-order test**
+- [x] **Step 1: Write failing phase-order test**
 
 Construct a Print Run completing today and demand for that product. Assert completed inventory can be sold/opened **today**, proving completion occurs before primary sales.
 
-- [ ] **Step 2: Write failing atomic-source test**
+- [x] **Step 2: Write failing atomic-source test**
 
 Call `simulateDay` and verify input state is unchanged/frozen from caller perspective while result has `day + 1`.
 
-- [ ] **Step 3: Implement explicit phases in the approved order**
+- [x] **Step 3: Implement explicit phases in the approved order**
 
 For Phase 2 implement only currently available operations but preserve numbered phase functions. The order must cover:
 
@@ -830,7 +830,7 @@ daily report
 
 Phase 3 will insert tournaments/marketing/expansion operations into their approved positions rather than creating another `simulateDay`.
 
-- [ ] **Step 4: Implement `validateWorldInvariants()`**
+- [x] **Step 4: Implement `validateWorldInvariants()`**
 
 It must throw a structured `WorldInvariantError` on:
 
@@ -842,7 +842,7 @@ It must throw a structured `WorldInvariantError` on:
 - Duplicate IDs where represented as arrays.
 - Incorrect day increment.
 
-- [ ] **Step 5: Add deterministic world hash test**
+- [x] **Step 5: Add deterministic world hash test**
 
 ```ts
 const a = simulateDay(worldFixture(), [], config);
@@ -853,7 +853,7 @@ expect(a.nextState).toEqual(b.nextState);
 
 Run at least 25 repeated identical executions in the test.
 
-- [ ] **Step 6: Run tests and commit**
+- [x] **Step 6: Run tests and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/day

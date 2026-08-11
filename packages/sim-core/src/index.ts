@@ -1,9 +1,13 @@
 export const SIMULATION_VERSION = "1" as const;
 
+export * from "./day/day-context";
+export * from "./day/simulate-day";
+export * from "./day/world-invariants";
 export * from "./deck-evolution/adoption";
 export * from "./deck-evolution/deck-builder";
 export * from "./deck-evolution/deck-genome";
 export { appendCashEntry } from "./economy/cash-ledger";
+export * from "./history/daily-report";
 export * from "./market/call-auction";
 export * from "./market/market-intents";
 export * from "./meta/meta-aggregation";
