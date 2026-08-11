@@ -29,4 +29,15 @@ export type ActionLogEntry =
       type: "MULLIGAN";
       returnedCardIds: CardId[];
       replacementCardIds: CardId[];
+    })
+  | (ActionLogEntryBase & {
+      type: "PLAY_CARD";
+      cardId: CardId;
+      instanceId: string;
+      targetId?: string;
+    })
+  | (ActionLogEntryBase & {
+      type: "ATTACK";
+      attackerId: string;
+      targetId: string;
     });

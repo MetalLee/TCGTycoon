@@ -899,7 +899,7 @@ git add packages/rules-engine
 - Consumes: `MatchResult`, action log, deterministic RNG.
 - Produces: `hashMatchResult(result): string`, serializable compact `ActionLogEntry` structures suitable for later replay UI.
 
-- [ ] **Step 1: Write a failing 100-run determinism test**
+- [x] **Step 1: Write a failing 100-run determinism test**
 
 ```ts
 it("produces one result hash across 100 identical runs", () => {
@@ -912,17 +912,17 @@ it("produces one result hash across 100 identical runs", () => {
 
 Also serialize/deserialize the action log with JSON and assert equality.
 
-- [ ] **Step 2: Verify failure before hash helper exists**
+- [x] **Step 2: Verify failure before hash helper exists**
 
 ```bash
 pnpm vitest run tests/determinism/match-determinism.test.ts
 ```
 
-- [ ] **Step 3: Implement canonical serialization and SHA-256-compatible deterministic hash**
+- [x] **Step 3: Implement canonical serialization and SHA-256-compatible deterministic hash**
 
 In Node tests use `node:crypto`; keep canonical serialization helper independent so Web later can use `crypto.subtle`. Sort object keys explicitly; do not rely on insertion order.
 
-- [ ] **Step 4: Run determinism and rules tests**
+- [x] **Step 4: Run determinism and rules tests**
 
 ```bash
 pnpm vitest run tests/determinism
@@ -932,7 +932,7 @@ pnpm test:rules
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/rules-engine/src/replay tests/determinism
