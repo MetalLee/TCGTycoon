@@ -21,6 +21,7 @@ import {
 import { calculateAdoptionScore } from "../deck-evolution/adoption";
 import { toDeckDefinition } from "../deck-evolution/deck-genome";
 import { appendCashEntry, toCurrency } from "../economy/cash-ledger";
+import { calculateDeckMarketCost } from "../market/deck-cost";
 import { createDailyReport, type DailyReport } from "../history/daily-report";
 import {
   applyMarketTrades,
@@ -312,6 +313,7 @@ function phase03PrimarySalesAndProductOpening(context: DayContext): void {
     context.state,
     phaseRng(context.state, "primary-demand"),
     context.config.productLifecycle,
+    context.config.starterContents,
   );
   context.sales = resolvePrimarySales(
     context.state,
@@ -362,7 +364,7 @@ function adoptionContext(
       ? DECK_EVOLUTION_CONFIG.namedAgentInfluencerExposure
       : 0,
     novelty,
-    deckPrice: deckMarketCost(context, deckId),
+    deckPrice: calculateDeckMarketCost(context.state, deckId),
     missingCardCount: 0,
     complexity: deckComplexity(context, deckId),
   };
@@ -496,32 +498,6 @@ function physicalCardSupply(context: DayContext, cardId: string): number {
   );
 }
 
-function deckMarketCost(context: DayContext, deckId: string): number {
-  const deck = context.state.decks[deckId];
-  if (deck === undefined) {
-    return METRICS_CONFIG.accessibility.comfortableMedianMetaDeckCost * 2;
-  }
-  return deck.cards.reduce((total, entry) => {
-    const printingIds = Object.values(context.state.printings)
-      .filter((printing) => printing.cardId === entry.cardId)
-      .map((printing) => printing.id);
-    const prices = [
-      ...printingIds.flatMap((printingId) => {
-        const snapshot = context.state.market.snapshots[printingId];
-        return snapshot === undefined ? [] : [snapshot.lastPrice];
-      }),
-      ...context.state.market.listings
-        .filter((listing) => printingIds.includes(listing.printingId))
-        .map((listing) => listing.price),
-    ];
-    const price =
-      prices.length === 0
-        ? METRICS_CONFIG.accessibility.comfortableMedianMetaDeckCost * 2
-        : Math.min(...prices);
-    return total + price * entry.count;
-  }, 0);
-}
-
 function median(values: readonly number[], fallback: number): number {
   if (values.length === 0) {
     return fallback;
@@ -553,7 +529,9 @@ function deriveAccessibility(context: DayContext): number {
     metaDeckIds.length === 0
       ? Object.keys(context.state.decks).sort(compareIds)
       : metaDeckIds;
-  const deckCosts = deckIds.map((id) => deckMarketCost(context, id));
+  const deckCosts = deckIds.map((id) =>
+    calculateDeckMarketCost(context.state, id),
+  );
   const deckEntries = deckIds.flatMap(
     (id) => context.state.decks[id]?.cards ?? [],
   );

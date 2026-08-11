@@ -28,6 +28,10 @@ export type MarketIntents = {
   sells: SellIntent[];
 };
 
+export type MarketPolicyContext = {
+  bannedCardIds?: readonly CardId[];
+};
+
 function compareIds(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
@@ -108,7 +112,10 @@ function validListings(world: WorldState) {
     );
 }
 
-function generateCompetitiveBuys(world: WorldState): BuyIntent[] {
+function generateCompetitiveBuys(
+  world: WorldState,
+  bannedCardIds: ReadonlySet<CardId>,
+): BuyIntent[] {
   const listings = validListings(world);
   const buys: BuyIntent[] = [];
 
@@ -123,6 +130,9 @@ function generateCompetitiveBuys(world: WorldState): BuyIntent[] {
     for (const [cardId, requiredQuantity] of [...required.entries()].sort(
       ([left], [right]) => compareIds(left, right),
     )) {
+      if (bannedCardIds.has(cardId)) {
+        continue;
+      }
       let missing = requiredQuantity - ownedCardCount(world, player.id, cardId);
       if (missing <= 0) {
         continue;
@@ -340,8 +350,14 @@ function generateBudgetSells(
   return sells;
 }
 
-export function generateMarketIntents(world: WorldState): MarketIntents {
-  const competitiveBuys = generateCompetitiveBuys(world);
+export function generateMarketIntents(
+  world: WorldState,
+  policy: MarketPolicyContext = {},
+): MarketIntents {
+  const competitiveBuys = generateCompetitiveBuys(
+    world,
+    new Set(policy.bannedCardIds ?? []),
+  );
   const collectorBuys = generateCollectorBuys(world, competitiveBuys);
   const listedSells = generateListedSells(world);
   return {

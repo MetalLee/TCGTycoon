@@ -19,6 +19,7 @@ export type ProductLifecycleConfig = {
     exposureWeight: number;
     freshnessWeight: number;
     fatiguePenaltyWeight: number;
+    marketValueBonusWeight: number;
   };
 };
 
@@ -43,5 +44,6 @@ export const PRODUCT_LIFECYCLE_CONFIG: ProductLifecycleConfig = {
     exposureWeight: 0.15,
     freshnessWeight: 0.3,
     fatiguePenaltyWeight: 1,
+    marketValueBonusWeight: 0.25,
   },
 };

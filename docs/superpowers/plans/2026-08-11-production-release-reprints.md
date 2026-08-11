@@ -284,31 +284,31 @@ git commit -m "feat: model product freshness and fatigue"
 - Consumes: production/release/reprint + Phase 2 economy + Phase 3 policies when available.
 - Produces: stable regression coverage for the primary physical-economy stories required by the product spec.
 
-- [ ] **Step 1: Implement Starter arbitrage scenario**
+- [x] **Step 1: Implement Starter arbitrage scenario**
 
 A Starter priced below the contained competitive singles' prevailing aggregate market value must attract existing player demand, sell through more rapidly and increase supply of those single-card Printings after opening. Do not assert an exact price; assert direction and physical supply change.
 
-- [ ] **Step 2: Implement overprint scenario**
+- [x] **Step 2: Implement overprint scenario**
 
 A low-demand product ordered at 10x reasonable quantity must consume more cash, leave larger unsold inventory and incur higher holding cost than control world.
 
-- [ ] **Step 3: Implement prolonged shortage scenario**
+- [x] **Step 3: Implement prolonged shortage scenario**
 
 Extremely low Starter/Booster supply may initially raise scarcity attention but must reduce accessibility and new-player conversion if stockout persists.
 
-- [ ] **Step 4: Implement Pack EV scenario**
+- [x] **Step 4: Implement Pack EV scenario**
 
 A product whose expected singles value substantially exceeds MSRP should receive stronger market-aware demand; increased opening raises singles supply and reduces the EV gap over subsequent simulated days.
 
-- [ ] **Step 5: Implement Ban + collector-value scenario**
+- [x] **Step 5: Implement Ban + collector-value scenario**
 
 After a competitive core card is banned, competitive demand must fall. A historically significant First Edition/Foil may retain nonzero or stronger relative collector demand; no direct `price = 0` rule is allowed.
 
-- [ ] **Step 6: Implement reprint-accessibility scenario**
+- [x] **Step 6: Implement reprint-accessibility scenario**
 
 Targeted reprint must lower the cheapest legal CardDefinition acquisition cost/deck cost and permit increased deck adoption while preserving separate First Edition market history.
 
-- [ ] **Step 7: Run the suite and commit**
+- [x] **Step 7: Run the suite and commit**
 
 ```bash
 pnpm vitest run tests/scenarios/starter-arbitrage.test.ts tests/scenarios/overprint.test.ts tests/scenarios/shortage.test.ts tests/scenarios/pack-ev.test.ts tests/scenarios/ban-collector-value.test.ts tests/scenarios/reprint-accessibility.test.ts

@@ -19,6 +19,7 @@ import {
   calculateProductFatigue,
   calculateSetFreshness,
 } from "./product-lifecycle";
+import { calculateProductExpectedValue } from "./product-value";
 import { advancePrintRuns } from "./production";
 
 export type CompletedPrintRun = {
@@ -120,6 +121,7 @@ function demandProbability(
   exposure: number,
   freshness: number,
   fatigue: number,
+  expectedValue: number,
   config: ProductLifecycleConfig,
 ): number {
   if (player.activity === "CHURNED" || player.tcgWallet < product.msrp) {
@@ -144,11 +146,25 @@ function demandProbability(
     priceFit * config.demand.affordabilityWeight +
     exposure * config.demand.exposureWeight +
     freshness * config.demand.freshnessWeight;
+  const valueAdvantage =
+    product.msrp === 0
+      ? expectedValue > 0
+        ? 1
+        : 0
+      : Math.min(1, Math.max(0, (expectedValue - product.msrp) / product.msrp));
+  const marketAwareness =
+    (player.motivation.competitive +
+      player.motivation.collector +
+      player.motivation.whale) /
+    3;
+  const marketValueBonus =
+    valueAdvantage * marketAwareness * config.demand.marketValueBonusWeight;
   return Math.min(
     1,
     Math.max(
       0,
-      baseProbability * (1 - fatigue * config.demand.fatiguePenaltyWeight),
+      (baseProbability + marketValueBonus) *
+        (1 - fatigue * config.demand.fatiguePenaltyWeight),
     ),
   );
 }
@@ -191,6 +207,7 @@ export function generatePrimaryDemand(
   world: WorldState,
   rng: DeterministicRng,
   config: ProductLifecycleConfig = PRODUCT_LIFECYCLE_CONFIG,
+  starterContents: Readonly<Record<string, readonly PrintingId[]>> = {},
 ): PrimaryDemand[] {
   const players = Object.values(world.players).sort((left, right) =>
     compareIds(left.id, right.id),
@@ -215,6 +232,16 @@ export function generatePrimaryDemand(
       ),
     ]),
   );
+  const expectedValueByProduct = new Map(
+    products.map((product) => [
+      product.id,
+      calculateProductExpectedValue(
+        world,
+        product.id,
+        product.kind === "STARTER" ? starterContents[product.id] : undefined,
+      ),
+    ]),
+  );
 
   for (const player of players) {
     const fatigue = calculateProductFatigue(
@@ -233,6 +260,7 @@ export function generatePrimaryDemand(
         exposure,
         freshnessByProduct.get(product.id)!,
         fatigue,
+        expectedValueByProduct.get(product.id)!,
         config,
       );
       if (rng.nextFloat() < probability) {
