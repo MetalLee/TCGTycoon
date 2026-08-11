@@ -16,6 +16,13 @@ export const ECONOMY_CONFIG = {
     productFreshnessPlaceholder: 1,
     maxUnitsPerPlayerProductDemand: 1,
   },
+  secondaryMarket: {
+    collectorIntentThreshold: 0.75,
+    collectorBidMultiplier: 1.1,
+    maxCollectorQuantity: 1,
+    budgetSellerThreshold: 0.75,
+    maxBudgetSellerQuantity: 1,
+  },
   printingVariantSuffixes: {
     normal: "-normal",
     foil: "-foil",

@@ -527,7 +527,7 @@ git commit -m "feat: resolve primary product sales and cash"
 - Consumes: actual Collection holdings, deck needs, collector preferences, market snapshots.
 - Produces: `BuyIntent`, `SellIntent`, `clearPrintingAuction(input): AuctionResult`, `applyMarketTrades(world, results)`.
 
-- [ ] **Step 1: Write failing clearing-price tests**
+- [x] **Step 1: Write failing clearing-price tests**
 
 Use a fixed order book and assert:
 
@@ -549,13 +549,13 @@ const sells = [
 ];
 ```
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/market/call-auction.test.ts
 ```
 
-- [ ] **Step 3: Implement stable call-auction clearing**
+- [x] **Step 3: Implement stable call-auction clearing**
 
 Sort buys by descending `maxPrice`, then owner ID; sells by ascending `minPrice`, then owner ID. Match while top bid >= top ask. Use a documented deterministic clearing-price rule, e.g. midpoint rounded to cents:
 
@@ -565,11 +565,11 @@ const price = Math.round(((buy.maxPrice + sell.minPrice) / 2) * 100) / 100;
 
 Transfer actual Printing quantity and currency. Do not create an independent NPC market inventory.
 
-- [ ] **Step 4: Generate intents from competitive and collector needs**
+- [x] **Step 4: Generate intents from competitive and collector needs**
 
 Competitive demand prefers the cheapest legal Printing for a needed CardDefinition. Collector demand may target premium Printings. Budget-sensitive players may sell valuable cards and abandon/rebuild expensive decks later.
 
-- [ ] **Step 5: Run market and conservation tests**
+- [x] **Step 5: Run market and conservation tests**
 
 ```bash
 pnpm vitest run packages/sim-core/src/market
@@ -577,7 +577,7 @@ pnpm vitest run tests/scenarios/physical-supply-conservation.test.ts
 pnpm typecheck
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/sim-core/src/market tests/scenarios/physical-supply-conservation.test.ts
