@@ -520,7 +520,8 @@ function validateWorldReferences(
       if (
         printing !== undefined &&
         run.edition !== undefined &&
-        printing.edition !== run.edition
+        printing.edition !== run.edition &&
+        printing.edition !== "REPRINT"
       ) {
         context.addIssue({
           code: "custom",

@@ -424,7 +424,7 @@ export function validateWorldInvariants(
       if (
         printing !== undefined &&
         (printing.sourceProductId !== run.productId ||
-          printing.edition !== run.edition)
+          (printing.edition !== run.edition && printing.edition !== "REPRINT"))
       ) {
         fail(
           "MISSING_REFERENCE",

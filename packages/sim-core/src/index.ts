@@ -22,4 +22,5 @@ export * from "./products/open-product";
 export * from "./products/primary-market";
 export * from "./products/production";
 export * from "./products/releases";
+export * from "./products/reprints";
 export * from "./society/knowledge";

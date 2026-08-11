@@ -186,7 +186,7 @@ git commit -m "feat: schedule and execute physical releases"
 - Consumes: old Products/CardDefinitions, new Starter/Expansion product definitions, production flow.
 - Produces: `createProductReprintOrder`, `createTargetedReprintPrinting`, reprint history, same gameplay CardDefinition with new Printing ID.
 
-- [ ] **Step 1: Write failing reprint tests**
+- [x] **Step 1: Write failing reprint tests**
 
 Required:
 
@@ -197,21 +197,21 @@ it("competitive deck legality treats old and new Printing as the same CardDefini
 it("collector market keeps First Edition and Reprint as independent price series", () => {});
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/reprints.test.ts
 ```
 
-- [ ] **Step 3: Implement product reprint path using normal Production**
+- [x] **Step 3: Implement product reprint path using normal Production**
 
 Do not special-case market supply. Reprinted cards become available only after the relevant product is produced, sold and opened (or Starter opened).
 
-- [ ] **Step 4: Implement Targeted Reprint inclusion**
+- [x] **Step 4: Implement Targeted Reprint inclusion**
 
 A later Starter/Expansion may include a CardDefinition from an older set. It creates a new Printing tied to the new product/edition. The old CardDefinition `rulesLocked` remains unchanged.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/reprints.test.ts tests/scenarios/targeted-reprint.test.ts

@@ -241,10 +241,21 @@ function ensureEditionPrintings(
   product: ProductSku,
   edition: PrintingEdition,
 ): PrintingId[] {
-  const existing = existingEditionPrintings(world, product, edition);
+  const targetedReprints = existingEditionPrintings(world, product, "REPRINT");
+  const targetedCardIds = new Set(
+    targetedReprints.map((printing) => printing.cardId),
+  );
+  const editionCardIds = product.cardIds.filter(
+    (cardId) => !targetedCardIds.has(cardId),
+  );
+  const existing = existingEditionPrintings(world, product, edition).filter(
+    (printing) => editionCardIds.includes(printing.cardId),
+  );
   const existingCardIds = new Set(existing.map((printing) => printing.cardId));
-  if (product.cardIds.every((cardId) => existingCardIds.has(cardId))) {
-    return existing.map((printing) => printing.id);
+  if (editionCardIds.every((cardId) => existingCardIds.has(cardId))) {
+    return [...existing, ...targetedReprints]
+      .sort((left, right) => compareIds(left.id, right.id))
+      .map((printing) => printing.id);
   }
 
   const templates = Object.values(world.printings)
@@ -255,7 +266,7 @@ function ensureEditionPrintings(
     )
     .sort((left, right) => compareIds(left.id, right.id));
 
-  for (const cardId of [...product.cardIds].sort(compareIds)) {
+  for (const cardId of [...editionCardIds].sort(compareIds)) {
     if (existingCardIds.has(cardId)) {
       continue;
     }
@@ -295,9 +306,14 @@ function ensureEditionPrintings(
     }
   }
 
-  return existingEditionPrintings(world, product, edition).map(
-    (printing) => printing.id,
-  );
+  return [
+    ...existingEditionPrintings(world, product, edition).filter((printing) =>
+      editionCardIds.includes(printing.cardId),
+    ),
+    ...targetedReprints,
+  ]
+    .sort((left, right) => compareIds(left.id, right.id))
+    .map((printing) => printing.id);
 }
 
 export function completePrintRuns(
