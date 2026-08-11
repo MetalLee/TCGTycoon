@@ -229,7 +229,7 @@ git commit -m "feat: implement expansion development pipeline"
 - Consumes: Rules Engine, Deck Evolution search utilities, unreleased expansion snapshot.
 - Produces: `startPlaytest`, `advancePlaytest`, `completePlaytest`, `PlaytestReport`, `PlaytestAnomaly`, revision snapshot validation.
 
-- [ ] **Step 1: Write failing duration/cost/revision tests**
+- [x] **Step 1: Write failing duration/cost/revision tests**
 
 Default config:
 
@@ -241,11 +241,11 @@ deep: { durationDays: 7, matchBudget: 75_000 }
 
 Test that gameplay revision changes mark an old report `STALE`.
 
-- [ ] **Step 2: Write a hidden-combo scenario**
+- [x] **Step 2: Write a hidden-combo scenario**
 
 A Deep Test must search more candidate decks/matches than Quick and should discover the prepared combo in the deterministic fixture where Quick does not, without reading a “hidden combo truth” flag.
 
-- [ ] **Step 3: Implement test search modes**
+- [x] **Step 3: Implement test search modes**
 
 Report only discovered evidence:
 
@@ -260,7 +260,7 @@ Report only discovered evidence:
 
 Never add an undiscovered hidden issue field.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/playtest.test.ts
