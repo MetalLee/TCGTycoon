@@ -299,7 +299,10 @@ MVP limits:
 
 - Maximum 2 triggers per card.
 - Maximum 3 effects per trigger.
-- Condition expressions are one level deep; no arbitrary nested Boolean trees.
+- Core Rules v1 approves no executable condition discriminators. Every trigger's
+  `conditions` array must be empty. Adding condition semantics requires an
+  explicit future specification revision; any future expressions remain limited
+  to one level with no arbitrary nested Boolean trees.
 
 ### 6.4 AI-assisted card workflow
 

@@ -96,6 +96,19 @@ describe("CardDefinition DSL", () => {
         ],
       },
     ],
+    [
+      "a non-empty Core Rules v1 condition",
+      {
+        ...legalSpell,
+        triggers: [
+          {
+            trigger: "ON_PLAY",
+            conditions: [{ type: "HERO_HEALTH_BELOW", amount: 10 }],
+            effects: [],
+          },
+        ],
+      },
+    ],
   ])("rejects %s", (_caseName, input) => {
     expect(() => parseCardDefinition(input)).toThrow();
   });

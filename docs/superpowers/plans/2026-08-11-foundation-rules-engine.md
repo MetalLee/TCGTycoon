@@ -383,7 +383,10 @@ export type TriggerType =
   | "AFTER_SPELL_PLAYED";
 ```
 
-Conditions must be a discriminated union implementing the approved one-level conditions. The Zod schema must enforce:
+Core Rules v1 approves no condition discriminators. Export `Condition = never`
+and require every trigger's `conditions` array to be empty. Do not add condition
+semantics without first amending the authoritative product specification and
+this interface contract. The Zod schema must also enforce:
 
 - `cost` integer 0..8.
 - Unit `attack` and `health` are non-negative integers, health >= 1 at definition time.
