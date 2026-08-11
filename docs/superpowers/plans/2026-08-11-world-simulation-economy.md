@@ -663,23 +663,23 @@ git commit -m "feat: evolve ownership-aware player decks"
 - Consumes: legal owned player Decks, player activity, `simulateMatch()`.
 - Produces: `sampleDailyMatches(world, rng)`, `MetaDeckStats`, `MatchupStats`, `updateMetaState(world, matchResults)` and discovery/knowledge events.
 
-- [ ] **Step 1: Write failing Meta aggregation tests**
+- [x] **Step 1: Write failing Meta aggregation tests**
 
 Use explicit match results and assert usage, wins/losses, observed win rate and matchup matrix are computed from actual samples.
 
-- [ ] **Step 2: Write hidden-discovery scenario**
+- [x] **Step 2: Write hidden-discovery scenario**
 
 Fixture includes a high-synergy deck known by only one brewer. Assert Day 1 public knowledge does not instantly include it for all players. After repeated match exposure, public knowledge/adoption may grow.
 
-- [ ] **Step 3: Implement deterministic match sampling**
+- [x] **Step 3: Implement deterministic match sampling**
 
 Normal daily sampling target comes from BalanceConfig, beginning in the 5k–15k range for full worlds but tests may use reduced deterministic counts. Do not simulate a Cartesian product of all players/decks.
 
-- [ ] **Step 4: Aggregate confidence metadata**
+- [x] **Step 4: Aggregate confidence metadata**
 
 Meta stats include sample count and a qualitative confidence bucket such as `VERY_LOW | LOW | MEDIUM | HIGH` so UI can later avoid false precision.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/meta

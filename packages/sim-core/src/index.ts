@@ -6,6 +6,8 @@ export * from "./deck-evolution/deck-genome";
 export { appendCashEntry } from "./economy/cash-ledger";
 export * from "./market/call-auction";
 export * from "./market/market-intents";
+export * from "./meta/meta-aggregation";
+export * from "./meta/sample-matches";
 export * from "./population/create-population";
 export * from "./products/open-product";
 export * from "./products/primary-market";

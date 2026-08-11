@@ -36,3 +36,14 @@ export const DECK_EVOLUTION_CONFIG = {
     complexityPenaltyWeight: 0.1,
   },
 } as const;
+
+export const META_CONFIG = {
+  fullWorldMinimumPlayers: 300,
+  fullWorldDailyMatchTarget: 5_000,
+  smallWorldMatchesPerEligiblePlayer: 2,
+  confidenceMinimumSamples: {
+    low: 10,
+    medium: 50,
+    high: 200,
+  },
+} as const;
