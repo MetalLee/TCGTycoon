@@ -79,6 +79,9 @@ importers:
       '@tcgtycoon/domain':
         specifier: workspace:*
         version: link:../domain
+      '@tcgtycoon/rules-engine':
+        specifier: workspace:*
+        version: link:../rules-engine
       '@tcgtycoon/sim-core':
         specifier: workspace:*
         version: link:../sim-core

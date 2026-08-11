@@ -387,7 +387,7 @@ git add packages/balance packages/sim-core packages/testkit
 - Consumes: `ProductSku`, `Printing`, player/cohort holdings, `DeterministicRng`.
 - Produces: `openBooster(world, productId, owner, rng): ProductOpenResult`, `openStarter(...)`, exact five-card output, and ownership deltas.
 
-- [ ] **Step 1: Write failing five-card Booster tests**
+- [x] **Step 1: Write failing five-card Booster tests**
 
 Required:
 
@@ -405,13 +405,13 @@ it("uses 3 Common, 1 Uncommon and 1 Rare+ base slots", () => {
 
 Also assert Foil/Alt-Art upgrades replace a selected Printing variant rather than increasing count beyond five.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/open-product.test.ts
 ```
 
-- [ ] **Step 3: Implement product slot generation from BalanceConfig**
+- [x] **Step 3: Implement product slot generation from BalanceConfig**
 
 Default config:
 
@@ -429,11 +429,11 @@ booster: {
 
 Only eligible signature cards may receive Alt-Art variants. Product open chooses from Printings actually included in the product/set.
 
-- [ ] **Step 4: Implement Starter opening**
+- [x] **Step 4: Implement Starter opening**
 
 A Starter creates exactly the listed 20 physical Printings in the buyer collection. Cards are not bound and can later be sold.
 
-- [ ] **Step 5: Add physical supply accounting helper**
+- [x] **Step 5: Add physical supply accounting helper**
 
 Export:
 
@@ -443,14 +443,14 @@ export function countWorldSupply(world: WorldState, printingId: PrintingId): num
 
 It must count publisher product/card inventory as modeled plus cohort/persistent ownership and market seller ownership without double counting.
 
-- [ ] **Step 6: Run tests**
+- [x] **Step 6: Run tests**
 
 ```bash
 pnpm vitest run packages/sim-core/src/products/open-product.test.ts
 pnpm typecheck
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/balance/src/economy-config.ts packages/sim-core/src/products packages/testkit/src/scenarios/product-fixtures.ts
