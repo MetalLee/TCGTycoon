@@ -1,6 +1,12 @@
 import { RULES_CONFIG } from "@tcgtycoon/balance";
-import type { CardDefinition, CardId, DeckDefinition } from "@tcgtycoon/domain";
 import {
+  RULE_VERSION,
+  type CardDefinition,
+  type CardId,
+  type DeckDefinition,
+} from "@tcgtycoon/domain";
+import {
+  BATTLE_AI_VERSION,
   chooseBattleAction,
   chooseMulliganCards,
   type BattleStrategy,
@@ -59,6 +65,16 @@ export type MatchResult = {
   warnings: MatchWarning[];
   statistics: MatchStatistics;
   actionLog?: ActionLogEntry[];
+  replay?: MatchReplay;
+};
+
+export type MatchReplay = {
+  seed: string;
+  ruleVersion: typeof RULE_VERSION;
+  battleAiVersion: typeof BATTLE_AI_VERSION;
+  deckA: DeckDefinition;
+  deckB: DeckDefinition;
+  actionLog: ActionLogEntry[];
 };
 
 const MATCH_TURN_GUARD = 200;
@@ -131,6 +147,22 @@ function playCoin(
   player.mana += 1;
 }
 
+function appendPlayedCardLog(
+  state: MatchState,
+  action: Extract<BattleAction, { type: "PLAY_CARD" }>,
+  card: CardInstance,
+): void {
+  state.actionLog.push({
+    sequence: state.nextLogSequence++,
+    turn: state.turnNumber,
+    side: action.side,
+    type: "PLAY_CARD",
+    cardId: card.cardId,
+    instanceId: card.instanceId,
+    ...(action.targetId === undefined ? {} : { targetId: action.targetId }),
+  });
+}
+
 function unitFromCard(
   state: MatchState,
   card: CardInstance,
@@ -166,6 +198,7 @@ function playCard(
     throw new RangeError(`Card ${action.cardInstanceId} is not in hand.`);
   }
   if (card.cardId === COIN_CARD_ID) {
+    appendPlayedCardLog(state, action, card);
     playCoin(state, action.side, card);
     return null;
   }
@@ -178,6 +211,7 @@ function playCard(
     throw new RangeError(`Card ${card.cardId} is not affordable.`);
   }
 
+  appendPlayedCardLog(state, action, card);
   player.hand.splice(player.hand.indexOf(card), 1);
   player.mana -= definition.cost;
 
@@ -280,6 +314,13 @@ function executeAction(
   return false;
 }
 
+function snapshotDeck(deck: DeckDefinition): DeckDefinition {
+  return {
+    ...deck,
+    cards: deck.cards.map((entry) => ({ ...entry })),
+  };
+}
+
 export function simulateMatch(input: MatchInput): MatchResult {
   validateStrategy(input.strategyA, "A");
   validateStrategy(input.strategyB, "B");
@@ -357,12 +398,25 @@ export function simulateMatch(input: MatchInput): MatchResult {
     throw new Error("Match ended without a winner.");
   }
 
+  const actionLog = input.recordActionLog ? state.actionLog : undefined;
   return {
     winner: state.winner,
     turns: state.turnNumber,
     actionCount,
     warnings,
     statistics,
-    ...(input.recordActionLog ? { actionLog: state.actionLog } : {}),
+    ...(actionLog === undefined
+      ? {}
+      : {
+          actionLog,
+          replay: {
+            seed: input.seed.toString(),
+            ruleVersion: RULE_VERSION,
+            battleAiVersion: BATTLE_AI_VERSION,
+            deckA: snapshotDeck(input.deckA),
+            deckB: snapshotDeck(input.deckB),
+            actionLog,
+          },
+        }),
   };
 }

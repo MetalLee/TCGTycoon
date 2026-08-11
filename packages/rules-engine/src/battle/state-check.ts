@@ -117,6 +117,14 @@ export function performAttack(
     throw new RangeError(`Target ${targetId} is not an enemy.`);
   }
 
+  ctx.state.actionLog.push({
+    sequence: ctx.state.nextLogSequence++,
+    turn: ctx.state.turnNumber,
+    side: attackerSide,
+    type: "ATTACK",
+    attackerId,
+    targetId,
+  });
   attacker.keywords = attacker.keywords.filter(
     (keyword) => keyword !== "STEALTH",
   );

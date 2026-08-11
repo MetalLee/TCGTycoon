@@ -21,6 +21,8 @@ import type {
 } from "../battle/types";
 import { DeterministicRng, deriveSeed } from "../rng/deterministic-rng";
 
+export const BATTLE_AI_VERSION = "1" as const;
+
 export type BattleStrategy = {
   aggression: number;
   value: number;
