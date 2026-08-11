@@ -97,7 +97,7 @@ tests/e2e/*
 - Consumes: WorldState/PublisherCommand from Phase 2.
 - Produces: `ExpansionProject`, `OperationProject`, `OperationStatus`, typed schedule records, expanded `PublisherCommand` union and `advanceScheduledOperations(world, day)`.
 
-- [ ] **Step 1: Write failing scheduler tests**
+- [x] **Step 1: Write failing scheduler tests**
 
 Cover:
 
@@ -108,13 +108,13 @@ it("completes an operation exactly on its configured completion day", () => {});
 it("does not progress projects during Setup unless the setup service explicitly requests setup playtest progress", () => {});
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/scheduler.test.ts
 ```
 
-- [ ] **Step 3: Implement explicit project states**
+- [x] **Step 3: Implement explicit project states**
 
 Use:
 
@@ -125,7 +125,7 @@ export type OperationStatus =
 
 `OperationProject` includes stable ID, type, createdDay, optional startDay/completionDay, status and a typed `payload` discriminated by project type.
 
-- [ ] **Step 4: Extend PublisherCommand**
+- [x] **Step 4: Extend PublisherCommand**
 
 Add exact command variants for this phase:
 
@@ -148,7 +148,7 @@ ADJUST_MSRP;
 
 Each command carries only IDs/values; no React objects or callbacks.
 
-- [ ] **Step 5: Run tests/typecheck and commit**
+- [x] **Step 5: Run tests/typecheck and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/scheduler.test.ts
@@ -172,7 +172,7 @@ git commit -m "feat: model scheduled publisher operations"
 - Consumes: Expansion/CardDefinition domain, Card DSL validator, scheduler.
 - Produces: `createExpansion`, `applyCardDraftUpdate`, `advanceExpansionDesign`, `finalizeExpansion`.
 
-- [ ] **Step 1: Write failing pipeline tests**
+- [x] **Step 1: Write failing pipeline tests**
 
 Required cases:
 
@@ -185,13 +185,13 @@ it("refuses gameplay edits after Finalize", () => {});
 it("allows player to Finalize with warnings but never with invalid Card DSL", () => {});
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/expansion-pipeline.test.ts
 ```
 
-- [ ] **Step 3: Implement exact stage model**
+- [x] **Step 3: Implement exact stage model**
 
 ```ts
 export type ExpansionStage =
@@ -200,11 +200,11 @@ export type ExpansionStage =
 
 Card draft state stores `gameplayRevision`, `rulesLocked` and design-slot metadata. Finalized CardDefinitions become canonical immutable rule objects for later Printings.
 
-- [ ] **Step 4: Implement deterministic Launch Setup fixture service**
+- [x] **Step 4: Implement deterministic Launch Setup fixture service**
 
 Fixture helper produces a legal 48-card Launch Set and four legal Starter Decks for offline/E2E tests. This is test/setup content, not a hidden live AI generator.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/expansion-pipeline.test.ts
