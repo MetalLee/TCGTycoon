@@ -140,6 +140,7 @@ describe("trigger-chain safety", () => {
       instanceId: "doomed",
       cardId: doomedDefinition.id,
       health: 0,
+      keywords: ["DEATHRATTLE"],
     };
     ctx.state.players.A.board.push(doomed);
     ctx.cardDefinitions = new Map([

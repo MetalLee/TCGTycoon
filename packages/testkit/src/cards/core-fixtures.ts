@@ -132,6 +132,7 @@ export const coreCardFixtures: CardDefinition[] = [
     ],
   }),
   unit("card-machine-buffer", "Machine Buffer", machineFactionId, 4, 3, 4, {
+    keywords: ["BATTLECRY"],
     triggers: [
       {
         trigger: "ON_PLAY",
@@ -148,6 +149,7 @@ export const coreCardFixtures: CardDefinition[] = [
     4,
     3,
     {
+      keywords: ["BATTLECRY"],
       triggers: [
         {
           trigger: "ON_PLAY",
@@ -177,6 +179,7 @@ export const coreCardFixtures: CardDefinition[] = [
     { type: "DRAW", amount: 1, target: "FRIENDLY_HERO" },
   ]),
   unit("card-neutral-banner", "Neutral Banner", neutralFactionId, 3, 2, 3, {
+    keywords: ["BATTLECRY"],
     triggers: [
       {
         trigger: "ON_PLAY",

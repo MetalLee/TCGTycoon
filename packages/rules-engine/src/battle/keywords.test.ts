@@ -204,6 +204,24 @@ describe("core keywords", () => {
     });
     resolveTriggerQueue(playedCtx);
     expect(playedState.players.B.heroHealth).toBe(RULES_CONFIG.heroHealth - 2);
+
+    const withoutBattlecry = unit("herald-without-battlecry");
+    withoutBattlecry.cardId = heraldDefinition.id;
+    const withoutBattlecryState = state([withoutBattlecry]);
+    const withoutBattlecryCtx = context(
+      withoutBattlecryState,
+      [heraldDefinition],
+      source("A", withoutBattlecry),
+    );
+    enqueueTriggers(withoutBattlecryCtx, {
+      type: "ON_PLAY",
+      source: source("A", withoutBattlecry),
+      playedFromHand: true,
+    });
+    resolveTriggerQueue(withoutBattlecryCtx);
+    expect(withoutBattlecryState.players.B.heroHealth).toBe(
+      RULES_CONFIG.heroHealth,
+    );
   });
 
   it("DEATHRATTLE triggers after the unit leaves board", () => {
@@ -228,6 +246,22 @@ describe("core keywords", () => {
     expect(ctx.queue).toHaveLength(1);
     resolveTriggerQueue(ctx);
     expect(matchState.players.B.heroHealth).toBe(RULES_CONFIG.heroHealth - 2);
+
+    const withoutDeathrattle = unit("doomed-without-deathrattle", {
+      health: 0,
+    });
+    withoutDeathrattle.cardId = doomedDefinition.id;
+    const withoutDeathrattleState = state([withoutDeathrattle]);
+    const withoutDeathrattleCtx = context(
+      withoutDeathrattleState,
+      [doomedDefinition],
+      source("A", withoutDeathrattle),
+    );
+    checkStateBasedDeaths(withoutDeathrattleCtx);
+    resolveTriggerQueue(withoutDeathrattleCtx);
+    expect(withoutDeathrattleState.players.B.heroHealth).toBe(
+      RULES_CONFIG.heroHealth,
+    );
   });
 
   it("DIVINE_SHIELD prevents the first damage instance", () => {
@@ -325,7 +359,7 @@ describe("core keywords", () => {
 
 describe("played-card targeting", () => {
   it("resolves an ON_PLAY effect against the selected target", () => {
-    const caster = unit("caster");
+    const caster = unit("caster", { keywords: ["BATTLECRY"] });
     const firstEnemy = unit("first-enemy");
     const selectedEnemy = unit("selected-enemy");
     const casterDefinition = definition("card-caster", ["BATTLECRY"], [

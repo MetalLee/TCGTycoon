@@ -43,7 +43,9 @@ export function checkStateBasedDeaths(ctx: ResolutionContext): void {
       cardId: death.unit.cardId,
     });
     const source = unitSource(death.side, death.unit);
-    enqueueTriggers(ctx, { type: "ON_DEATH", source });
+    if (death.unit.keywords.includes("DEATHRATTLE")) {
+      enqueueTriggers(ctx, { type: "ON_DEATH", source });
+    }
     enqueueTriggers(ctx, { type: "UNIT_DIED", source });
   }
   ctx.queue.push(...pendingAftermath);

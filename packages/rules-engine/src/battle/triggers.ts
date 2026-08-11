@@ -92,10 +92,20 @@ function triggerCandidates(
   event: MatchEvent,
 ): { source: EffectSource; triggerType: TriggerType }[] {
   switch (event.type) {
-    case "ON_PLAY":
-      return event.playedFromHand
-        ? [{ source: event.source, triggerType: "ON_PLAY" }]
-        : [];
+    case "ON_PLAY": {
+      if (!event.playedFromHand) {
+        return [];
+      }
+      const definition = definitionFor(ctx, event.source);
+      const playedUnit = findUnit(ctx.state, event.source.instanceId)?.unit;
+      if (
+        definition?.type === "UNIT" &&
+        !playedUnit?.keywords.includes("BATTLECRY")
+      ) {
+        return [];
+      }
+      return [{ source: event.source, triggerType: "ON_PLAY" }];
+    }
     case "ON_DEATH":
     case "AFTER_ATTACK":
     case "AFTER_DAMAGE":
