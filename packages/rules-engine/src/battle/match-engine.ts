@@ -372,7 +372,6 @@ export function simulateMatch(input: MatchInput): MatchResult {
           warnings,
           statistics,
         );
-        turnEnded = true;
         break;
       }
 
