@@ -64,10 +64,18 @@ export function drawCard(state: MatchState, side: MatchSide): DrawCardResult {
   return { type: "DRAWN", card };
 }
 
-export function startTurn(state: MatchState): void {
+export function startTurn(
+  state: MatchState,
+  resolveStartOfTurnTriggers?: () => void,
+): void {
+  state.turnNumber += 1;
+  resolveStartOfTurnTriggers?.();
+  if (state.winner !== null) {
+    return;
+  }
+
   const side = state.activeSide;
   const player = state.players[side];
-  state.turnNumber += 1;
   player.maxMana = Math.min(RULES_CONFIG.maxMana, player.maxMana + 1);
   player.mana = player.maxMana;
   state.actionLog.push({

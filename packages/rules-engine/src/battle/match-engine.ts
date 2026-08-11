@@ -310,11 +310,9 @@ export function simulateMatch(input: MatchInput): MatchResult {
       );
     }
 
-    resolveTurnEvent(state, input.cards, warnings, "TURN_START");
-    if (state.winner !== null) {
-      break;
-    }
-    startTurn(state);
+    startTurn(state, () => {
+      resolveTurnEvent(state, input.cards, warnings, "TURN_START");
+    });
     if (state.winner !== null) {
       break;
     }
