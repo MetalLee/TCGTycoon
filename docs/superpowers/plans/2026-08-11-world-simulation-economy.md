@@ -114,7 +114,7 @@ tests/determinism/world-determinism.test.ts
 - Consumes: Phase 1 IDs/cards/decks/rules.
 - Produces: normalized `WorldState`, new entity ID types, `PublisherCommand`, `WorldEvent`, `WorldMetrics`, product/player/market/meta core types.
 
-- [ ] **Step 1: Add stable IDs required by the world**
+- [x] **Step 1: Add stable IDs required by the world**
 
 Add branded types and constructors for:
 
@@ -131,7 +131,7 @@ SaveId
 
 No random ID generator is added.
 
-- [ ] **Step 2: Write a failing normalization test**
+- [x] **Step 2: Write a failing normalization test**
 
 ```ts
 it("stores canonical entities by ID and references related entities by ID", () => {
@@ -142,13 +142,13 @@ it("stores canonical entities by ID and references related entities by ID", () =
 });
 ```
 
-- [ ] **Step 3: Run and verify failure**
+- [x] **Step 3: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/domain/src/world.test.ts
 ```
 
-- [ ] **Step 4: Implement canonical type families**
+- [x] **Step 4: Implement canonical type families**
 
 Minimum `WorldState` shape:
 
@@ -190,14 +190,14 @@ export type PublisherCommand =
 
 Phase 3 will extend this union in the authoritative domain module rather than creating parallel command types.
 
-- [ ] **Step 5: Run domain tests and typecheck**
+- [x] **Step 5: Run domain tests and typecheck**
 
 ```bash
 pnpm vitest run packages/domain/src/world.test.ts
 pnpm typecheck
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/domain

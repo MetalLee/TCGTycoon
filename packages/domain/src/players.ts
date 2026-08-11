@@ -1,4 +1,4 @@
-import type { AgentId, CardId, DeckId, PlayerId } from "./ids";
+import type { AgentId, CardId, DeckId, PlayerId, PrintingId } from "./ids";
 
 export type KnowledgeState = {
   knownCardIds: CardId[];
@@ -20,7 +20,7 @@ export type PersistentPlayer = {
   tenureDays: number;
   tcgWallet: number;
   activity: "NEW" | "ACTIVE" | "AT_RISK" | "CHURNED";
-  collection: Record<string, number>;
+  collection: Record<PrintingId, number>;
   deckIds: DeckId[];
   knowledge: KnowledgeState;
   satisfaction: number;
@@ -33,6 +33,7 @@ export type PopulationCohort = {
 
 export type NamedAgent = {
   id: AgentId;
+  playerId: PlayerId;
   name: string;
   role: string;
   influence: number;

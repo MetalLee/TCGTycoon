@@ -8,6 +8,19 @@ import type { Expansion, Printing, PrintRun, ProductSku } from "./products";
 
 export type CashState = {
   balance: number;
+  ledger: CashLedgerEntry[];
+};
+
+export type CashLedgerEntry = {
+  day: number;
+  category:
+    | "BOOSTER_REVENUE"
+    | "STARTER_REVENUE"
+    | "PRINTING"
+    | "OPERATING_COST"
+    | "INVENTORY_COST";
+  sourceId?: string;
+  amount: number;
 };
 
 export type WorldState = {
