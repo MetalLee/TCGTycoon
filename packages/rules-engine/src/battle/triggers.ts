@@ -20,6 +20,7 @@ export type PendingTrigger = {
   source: EffectSource;
   trigger: CardTrigger;
   depth: number;
+  selectedTargetId?: string;
 };
 
 export type MatchEvent =
@@ -136,6 +137,9 @@ export function enqueueTriggers(
           source: candidate.source,
           trigger,
           depth: ctx.triggerDepth + 1,
+          ...(event.type === "ON_PLAY" && ctx.selectedTargetId !== undefined
+            ? { selectedTargetId: ctx.selectedTargetId }
+            : {}),
         });
       }
     }
@@ -152,7 +156,11 @@ export function resolveTriggerQueue(ctx: ResolutionContext): void {
 
     ctx.triggerDepth = pending.depth;
     ctx.source = pending.source;
-    delete ctx.selectedTargetId;
+    if (pending.selectedTargetId === undefined) {
+      delete ctx.selectedTargetId;
+    } else {
+      ctx.selectedTargetId = pending.selectedTargetId;
+    }
 
     for (const effect of pending.trigger.effects) {
       resolveEffect(ctx, effect);

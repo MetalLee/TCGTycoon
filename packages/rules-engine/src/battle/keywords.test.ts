@@ -8,6 +8,7 @@ import {
   type Keyword,
 } from "@tcgtycoon/domain";
 import { describe, expect, it } from "vitest";
+import { enumerateLegalActions } from "../ai/battle-ai";
 import {
   enqueueTriggers,
   resolveTriggerQueue,
@@ -319,5 +320,77 @@ describe("core keywords", () => {
     performAttack(ctx, venom.instanceId, shielded.instanceId);
 
     expect(matchState.players.B.board).toEqual([]);
+  });
+});
+
+describe("played-card targeting", () => {
+  it("resolves an ON_PLAY effect against the selected target", () => {
+    const caster = unit("caster");
+    const firstEnemy = unit("first-enemy");
+    const selectedEnemy = unit("selected-enemy");
+    const casterDefinition = definition("card-caster", ["BATTLECRY"], [
+      {
+        trigger: "ON_PLAY",
+        conditions: [],
+        effects: [
+          { type: "DEAL_DAMAGE", amount: 2, target: "ENEMY_UNIT" },
+          { type: "HEAL", amount: 2, target: "FRIENDLY_HERO" },
+        ],
+      },
+    ]);
+    const matchState = state([caster], [firstEnemy, selectedEnemy]);
+    const ctx = context(
+      matchState,
+      [casterDefinition],
+      source("A", caster),
+    );
+    matchState.players.A.heroHealth = 10;
+    ctx.selectedTargetId = selectedEnemy.instanceId;
+
+    enqueueTriggers(ctx, {
+      type: "ON_PLAY",
+      source: source("A", caster),
+      playedFromHand: true,
+    });
+    resolveTriggerQueue(ctx);
+
+    expect(firstEnemy.health).toBe(3);
+    expect(selectedEnemy.health).toBe(1);
+    expect(matchState.players.A.heroHealth).toBe(12);
+  });
+
+  it("enumerates a legal play whose fixed effects use different selectors", () => {
+    const spellId = cardId("card-split-spell");
+    const spell: CardDefinition = {
+      id: spellId,
+      name: "Split Spell",
+      type: "SPELL",
+      factionId: fireFactionId,
+      rarity: "COMMON",
+      cost: 1,
+      keywords: [],
+      triggers: [
+        {
+          trigger: "ON_PLAY",
+          conditions: [],
+          effects: [
+            { type: "DEAL_DAMAGE", amount: 1, target: "ENEMY_HERO" },
+            { type: "HEAL", amount: 1, target: "FRIENDLY_HERO" },
+          ],
+        },
+      ],
+    };
+    const matchState = state();
+    matchState.players.A.mana = 1;
+    matchState.players.A.hand.push({
+      instanceId: "split-spell-instance",
+      cardId: spellId,
+    });
+
+    expect(enumerateLegalActions(matchState, new Map([[spellId, spell]]))).toContainEqual({
+      type: "PLAY_CARD",
+      side: "A",
+      cardInstanceId: "split-spell-instance",
+    });
   });
 });

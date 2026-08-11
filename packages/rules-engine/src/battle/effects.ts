@@ -70,12 +70,9 @@ function effectTargets(
     return target === undefined ? [] : [target];
   }
   if (ctx.selectedTargetId !== undefined) {
-    if (!legalTargets.includes(ctx.selectedTargetId)) {
-      throw new RangeError(
-        `Target ${ctx.selectedTargetId} is not legal for ${selector}.`,
-      );
+    if (legalTargets.includes(ctx.selectedTargetId)) {
+      return [ctx.selectedTargetId];
     }
-    return [ctx.selectedTargetId];
   }
   return legalTargets.length === 0 ? [] : [legalTargets[0]!];
 }
