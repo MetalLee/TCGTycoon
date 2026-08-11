@@ -24,6 +24,13 @@ export const BALANCE_VERSION = "1" as const;
 export const DECK_EVOLUTION_CONFIG = {
   candidateRandomness: 0.25,
   maxMutationReplacements: 1,
+  explorationBaseChance: 0.1,
+  brewerExplorationWeight: 0.4,
+  parentNovelty: 0.2,
+  childNovelty: 1,
+  knownDeckSocialExposure: 1,
+  inheritedDeckSocialExposure: 0.5,
+  namedAgentInfluencerExposure: 1,
   adoption: {
     performanceWeight: 0.3,
     preferenceWeight: 0.2,

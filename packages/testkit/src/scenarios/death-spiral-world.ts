@@ -12,6 +12,21 @@ export function createDeathSpiralWorld(
     player.satisfaction = 0.05;
   }
   scenario.world.metrics.activePlayers = 0;
+  scenario.world.metrics.previousActivePlayers = 0;
+  scenario.world.metrics.lifecycle = {
+    potential: 0,
+    interested: 0,
+    newByAge: [0, 0, 0, 0, 0, 0, 0],
+    active: 0,
+    atRisk: 0,
+    churned: 2,
+    returning: 0,
+  };
+  scenario.world.metrics.hype = 10;
+  scenario.world.metrics.collectorHeat = 5;
+  scenario.world.metrics.metaHealth = 10;
+  scenario.world.metrics.brandTrust = 10;
+  scenario.world.metrics.sentiment = 5;
   appendCashEntry(scenario.world.cash, {
     day: scenario.world.day,
     category: "OPERATING_COST",
@@ -23,12 +38,5 @@ export function createDeathSpiralWorld(
     name: "death-spiral-world",
     purpose:
       "An insolvent, fully churned world exercises terminal risk and atomic stop behavior.",
-    metricState: {
-      hype: 10,
-      collectorHeat: 5,
-      metaHealth: 10,
-      brandTrust: 10,
-      sentiment: 5,
-    },
   };
 }

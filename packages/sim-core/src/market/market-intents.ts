@@ -74,6 +74,18 @@ function requiredCardCounts(
   return required;
 }
 
+function tradableCardCount(
+  world: WorldState,
+  playerId: PlayerId,
+  cardId: CardId,
+): number {
+  return Math.max(
+    0,
+    ownedCardCount(world, playerId, cardId) -
+      (requiredCardCounts(world, playerId).get(cardId) ?? 0),
+  );
+}
+
 function validListings(world: WorldState) {
   return world.market.listings
     .filter((listing) => {
@@ -218,16 +230,37 @@ function generateCollectorBuys(
 }
 
 function generateListedSells(world: WorldState): SellIntent[] {
-  return validListings(world).map((listing) => ({
-    ownerId: listing.ownerId,
-    printingId: listing.printingId,
-    quantity: Math.min(
+  const committedByOwnerCard = new Map<string, number>();
+  return validListings(world).flatMap((listing): SellIntent[] => {
+    const cardId = world.printings[listing.printingId]!.cardId;
+    const key = `${listing.ownerId}\u0000${cardId}`;
+    const remainingTradable = Math.max(
+      0,
+      tradableCardCount(world, listing.ownerId, cardId) -
+        (committedByOwnerCard.get(key) ?? 0),
+    );
+    const quantity = Math.min(
       listing.quantity,
       world.players[listing.ownerId]!.collection[listing.printingId]!,
-    ),
-    minPrice: listing.price,
-    reason: "LISTING",
-  }));
+      remainingTradable,
+    );
+    if (quantity <= 0) {
+      return [];
+    }
+    committedByOwnerCard.set(
+      key,
+      (committedByOwnerCard.get(key) ?? 0) + quantity,
+    );
+    return [
+      {
+        ownerId: listing.ownerId,
+        printingId: listing.printingId,
+        quantity,
+        minPrice: listing.price,
+        reason: "LISTING",
+      },
+    ];
+  });
 }
 
 function generateBudgetSells(
@@ -265,6 +298,24 @@ function generateBudgetSells(
     }
 
     const [printingId, owned] = premiumHolding;
+    const cardId = world.printings[printingId]?.cardId;
+    if (cardId === undefined) {
+      continue;
+    }
+    const alreadyCommitted = listedSells
+      .filter(
+        (intent) =>
+          intent.ownerId === player.id &&
+          world.printings[intent.printingId]?.cardId === cardId,
+      )
+      .reduce((total, intent) => total + intent.quantity, 0);
+    const tradable = Math.max(
+      0,
+      tradableCardCount(world, player.id, cardId) - alreadyCommitted,
+    );
+    if (tradable === 0) {
+      continue;
+    }
     const reference = listings.find(
       (listing) =>
         listing.printingId === printingId && listing.ownerId !== player.id,
@@ -278,6 +329,7 @@ function generateBudgetSells(
       printingId,
       quantity: Math.min(
         owned,
+        tradable,
         ECONOMY_CONFIG.secondaryMarket.maxBudgetSellerQuantity,
       ),
       minPrice: reference.price,

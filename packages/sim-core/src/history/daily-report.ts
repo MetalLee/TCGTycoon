@@ -1,3 +1,4 @@
+import type { LifecycleDeltas } from "@tcgtycoon/domain";
 import type { EcosystemRiskState } from "../metrics/ecosystem-risk";
 
 export type DailyReport = {
@@ -11,6 +12,11 @@ export type DailyReport = {
   activePlayers: number;
   accessibility: number;
   metaHealth: number;
+  hype: number;
+  collectorHeat: number;
+  brandTrust: number;
+  sentiment: number;
+  lifecycleDeltas: LifecycleDeltas;
   cashBalance: number;
   ecosystemRisk: EcosystemRiskState;
   notableEventCount: number;

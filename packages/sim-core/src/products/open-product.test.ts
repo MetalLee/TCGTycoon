@@ -12,6 +12,7 @@ import {
 import { DeterministicRng } from "@tcgtycoon/rules-engine";
 import { describe, expect, it } from "vitest";
 import { createInitialPopulation } from "../population/create-population";
+import { createInitialWorldMetrics } from "../metrics/world-metrics";
 import { countWorldSupply, openBooster, openStarter } from "./open-product";
 
 const launchExpansionId = expansionId("set-product-test");
@@ -76,7 +77,7 @@ function createProductWorld(): {
     owner,
     starterPrintingIds,
     world: {
-      schemaVersion: 1,
+      schemaVersion: 2,
       simulationVersion: "1",
       ruleVersion: "1",
       balanceVersion: "1",
@@ -114,9 +115,17 @@ function createProductWorld(): {
       agents: population.agents,
       decks: {},
       cohorts: population.cohorts,
-      market: { listings: [] },
-      meta: { deckStats: {} },
-      metrics: { activePlayers: 0 },
+      market: { listings: [], snapshots: {} },
+      meta: { deckStats: {}, matchups: {} },
+      metrics: createInitialWorldMetrics({
+        potential: 0,
+        interested: 0,
+        newByAge: [0, 0, 0, 0, 0, 0, 0],
+        active: 0,
+        atRisk: 0,
+        churned: 0,
+        returning: 0,
+      }),
       cash: { balance: 0, ledger: [] },
       history: { events: [] },
     },

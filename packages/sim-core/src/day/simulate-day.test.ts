@@ -12,6 +12,7 @@ import {
 } from "@tcgtycoon/domain";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_BALANCE_CONFIG } from "./day-context";
+import { createInitialWorldMetrics } from "../metrics/world-metrics";
 import { simulateDay } from "./simulate-day";
 import {
   validateWorldInvariants,
@@ -55,7 +56,7 @@ function createDayWorld(): WorldState {
   }));
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -114,9 +115,17 @@ function createDayWorld(): WorldState {
     agents: {},
     decks: {},
     cohorts: [{ id: "cohort-active", count: 1 }],
-    market: { listings: [] },
-    meta: { deckStats: {} },
-    metrics: { activePlayers: 1 },
+    market: { listings: [], snapshots: {} },
+    meta: { deckStats: {}, matchups: {} },
+    metrics: createInitialWorldMetrics({
+      potential: 0,
+      interested: 0,
+      newByAge: [0, 0, 0, 0, 0, 0, 0],
+      active: 1,
+      atRisk: 0,
+      churned: 0,
+      returning: 0,
+    }),
     cash: { balance: 0, ledger: [] },
     history: { events: [] },
   };
@@ -158,6 +167,52 @@ describe("simulateDay", () => {
     expect(world).toEqual(before);
     expect(result.nextState).not.toBe(world);
     expect(result.nextState.day).toBe(world.day + 1);
+  });
+
+  it("commits lifecycle flows and core health metrics to canonical state", () => {
+    const world = createDayWorld();
+    world.metrics.lifecycle.potential = 1_000;
+    const result = simulateDay(world, [], DEFAULT_BALANCE_CONFIG);
+    const metrics = result.nextState.metrics as unknown as Record<
+      string,
+      unknown
+    >;
+
+    expect(metrics).toEqual(
+      expect.objectContaining({
+        hype: expect.any(Number),
+        collectorHeat: expect.any(Number),
+        metaHealth: expect.any(Number),
+        brandTrust: expect.any(Number),
+        sentiment: expect.any(Number),
+        lifecycle: expect.any(Object),
+        lifecycleDeltas: expect.any(Object),
+        ecosystemRisk: expect.any(String),
+      }),
+    );
+    expect(result.report).toEqual(
+      expect.objectContaining({
+        hype: expect.any(Number),
+        brandTrust: expect.any(Number),
+        lifecycleDeltas: expect.any(Object),
+      }),
+    );
+    expect(
+      result.nextState.metrics.lifecycleDeltas.potentialToInterested,
+    ).toBeGreaterThan(0);
+    expect(result.report.lifecycleDeltas).toEqual(
+      result.nextState.metrics.lifecycleDeltas,
+    );
+  });
+
+  it("rejects unknown runtime PublisherCommands", () => {
+    expect(() =>
+      simulateDay(
+        createDayWorld(),
+        [{ type: "DELETE_WORLD" }] as never,
+        DEFAULT_BALANCE_CONFIG,
+      ),
+    ).toThrow();
   });
 });
 

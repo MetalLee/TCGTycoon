@@ -1,8 +1,10 @@
 import {
+  type CardId,
   type PlayerId,
   type PrintingId,
   type WorldState,
 } from "@tcgtycoon/domain";
+import { ECONOMY_CONFIG } from "@tcgtycoon/balance";
 import { toCurrency } from "../economy/cash-ledger";
 
 export type AuctionBuyOrder = {
@@ -144,6 +146,84 @@ function validateTrade(world: WorldState, trade: AuctionTrade): void {
   validateOrder(trade.quantity, trade.price, "Trade");
 }
 
+function requiredCardCount(
+  world: WorldState,
+  ownerId: PlayerId,
+  cardId: CardId,
+): number {
+  const player = world.players[ownerId];
+  if (player === undefined) {
+    return 0;
+  }
+  return [...player.deckIds].sort(compareIds).reduce((required, id) => {
+    const deck = world.decks[id];
+    const entry = deck?.cards.find((candidate) => candidate.cardId === cardId);
+    return Math.max(required, entry?.count ?? 0);
+  }, 0);
+}
+
+function worldPrintingSupply(
+  world: WorldState,
+  printingId: PrintingId,
+): number {
+  return Object.values(world.players).reduce(
+    (total, player) => total + (player.collection[printingId] ?? 0),
+    0,
+  );
+}
+
+function updateMarketSnapshots(
+  world: WorldState,
+  results: readonly AuctionResult[],
+  applied: readonly AuctionTrade[],
+): void {
+  for (const snapshot of Object.values(world.market.snapshots)) {
+    snapshot.dailyVolume = 0;
+    snapshot.availableSupply = world.market.listings
+      .filter((listing) => listing.printingId === snapshot.printingId)
+      .reduce((total, listing) => total + listing.quantity, 0);
+    const totalSupply = worldPrintingSupply(world, snapshot.printingId);
+    snapshot.liquidity =
+      totalSupply === 0
+        ? 0
+        : Math.min(1, snapshot.availableSupply / totalSupply);
+  }
+
+  for (const result of [...results].sort((left, right) =>
+    compareIds(left.printingId, right.printingId),
+  )) {
+    const trades = applied.filter(
+      (trade) => trade.printingId === result.printingId,
+    );
+    const volume = trades.reduce((total, trade) => total + trade.quantity, 0);
+    const previous = world.market.snapshots[result.printingId];
+    const lastPrice = trades.at(-1)?.price ?? previous?.lastPrice;
+    if (lastPrice === undefined) {
+      continue;
+    }
+    const availableSupply = world.market.listings
+      .filter((listing) => listing.printingId === result.printingId)
+      .reduce((total, listing) => total + listing.quantity, 0);
+    const totalSupply = worldPrintingSupply(world, result.printingId);
+    const priceHistory =
+      volume === 0
+        ? [...(previous?.priceHistory ?? [])]
+        : [
+            ...(previous?.priceHistory ?? []),
+            { day: world.day, price: lastPrice, volume },
+          ].slice(-ECONOMY_CONFIG.secondaryMarket.maxPriceHistoryDays);
+    world.market.snapshots[result.printingId] = {
+      printingId: result.printingId,
+      lastPrice,
+      dailyVolume: volume,
+      availableSupply,
+      liquidity:
+        totalSupply === 0 ? 0 : Math.min(1, availableSupply / totalSupply),
+      priceHistory,
+    };
+  }
+}
+
 export function applyMarketTrades(
   world: WorldState,
   results: readonly AuctionResult[],
@@ -165,6 +245,15 @@ export function applyMarketTrades(
     virtualHoldings.get(holdingKey(ownerId, printingId)) ??
     world.players[ownerId]!.collection[printingId] ??
     0;
+  const cardHolding = (ownerId: PlayerId, cardId: CardId) =>
+    Object.keys(world.printings)
+      .sort(compareIds)
+      .reduce((total, printingId) => {
+        const printing = world.printings[printingId]!;
+        return printing.cardId === cardId
+          ? total + holding(ownerId, printing.id)
+          : total;
+      }, 0);
   const applied: AuctionTrade[] = [];
 
   for (const trade of orderedTrades) {
@@ -172,12 +261,23 @@ export function applyMarketTrades(
       continue;
     }
     const sellerHolding = holding(trade.sellerId, trade.printingId);
+    const cardId = world.printings[trade.printingId]!.cardId;
+    const sellerTradable = Math.max(
+      0,
+      cardHolding(trade.sellerId, cardId) -
+        requiredCardCount(world, trade.sellerId, cardId),
+    );
     const buyerWallet = wallet(trade.buyerId);
     const affordable =
       trade.price === 0
         ? trade.quantity
         : Math.floor(buyerWallet / trade.price);
-    const quantity = Math.min(trade.quantity, sellerHolding, affordable);
+    const quantity = Math.min(
+      trade.quantity,
+      sellerHolding,
+      sellerTradable,
+      affordable,
+    );
     if (quantity <= 0) {
       continue;
     }
@@ -223,6 +323,7 @@ export function applyMarketTrades(
   world.market.listings = world.market.listings.filter(
     (listing) => listing.quantity > 0,
   );
+  updateMarketSnapshots(world, results, applied);
 
   return applied;
 }

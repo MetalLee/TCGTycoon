@@ -2,11 +2,7 @@ import { pathToFileURL } from "node:url";
 import {
   hashWorldState,
   simulateDay,
-  updateWorldMetrics,
-  type DailyReport,
   type EcosystemRiskState,
-  type WorldMetricSignals,
-  type WorldMetricState,
 } from "../packages/sim-core/src/index";
 import {
   BasicPublisherBot,
@@ -117,60 +113,12 @@ export function parseSimulationArgs(
   };
 }
 
-function averageSatisfaction(world: WorldState): number {
-  const players = Object.values(world.players);
-  if (players.length === 0) {
-    return 0;
-  }
-  return (
-    players.reduce((total, player) => total + player.satisfaction, 0) /
-    players.length
-  );
-}
-
-function metricSignals(
-  world: WorldState,
-  report: DailyReport,
-): WorldMetricSignals {
-  const playerCount = Math.max(1, Object.keys(world.players).length);
-  const satisfaction = averageSatisfaction(world);
-  const riskAttention =
-    report.ecosystemRisk === "STABLE"
-      ? 0
-      : report.ecosystemRisk === "STRAINED"
-        ? 0.1
-        : report.ecosystemRisk === "DECLINING"
-          ? 0.25
-          : 0.5;
-
-  return {
-    positiveAttention: Math.min(
-      1,
-      (report.unitsSold + report.matchesSampled / 10) / playerCount,
-    ),
-    negativeAttention: riskAttention,
-    sentimentTarget: satisfaction * 100,
-    collector: {
-      tradingVolume: Math.min(1, report.marketTrades / playerCount),
-      liquidity: world.market.listings.length > 0 ? 0.8 : 0.3,
-      priceMomentum: 0.5,
-      scarcityExcitement: 1 - report.accessibility / 100,
-      productFreshness: report.unitsSold > 0 ? 0.8 : 0.4,
-      collectorConfidence: satisfaction,
-    },
-    metaHealthTarget: report.metaHealth,
-    brandTrustTarget: satisfaction * 100,
-  };
-}
-
 export function runSimulation(options: SimulationOptions): SimulationRunResult {
   validateOptions(options);
   const scenario = scenarioFactories[options.scenario](options.seed);
   const bot = new BasicPublisherBot(scenario.botConfig);
   let state = scenario.world;
-  let metrics: WorldMetricState = { ...scenario.metricState };
   let stateHash = hashWorldState(state);
-  let riskState: EcosystemRiskState = "STABLE";
 
   for (
     let elapsedDays = 0;
@@ -184,8 +132,6 @@ export function runSimulation(options: SimulationOptions): SimulationRunResult {
     );
     state = result.nextState;
     stateHash = result.stateHash;
-    riskState = result.report.ecosystemRisk;
-    metrics = updateWorldMetrics(metrics, metricSignals(state, result.report));
   }
 
   return {
@@ -193,13 +139,13 @@ export function runSimulation(options: SimulationOptions): SimulationRunResult {
     summary: {
       finalDay: state.day,
       activePlayers: state.metrics.activePlayers,
-      hype: metrics.hype,
-      metaHealth: metrics.metaHealth,
-      brandTrust: metrics.brandTrust,
+      hype: state.metrics.hype,
+      metaHealth: state.metrics.metaHealth,
+      brandTrust: state.metrics.brandTrust,
       cash: state.cash.balance,
       marketListings: state.market.listings.length,
       deckCount: Object.keys(state.decks).length,
-      riskState,
+      riskState: state.metrics.ecosystemRisk,
       stateHash,
     },
   };

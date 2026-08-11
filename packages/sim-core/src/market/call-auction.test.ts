@@ -9,6 +9,7 @@ import {
 } from "@tcgtycoon/domain";
 import { describe, expect, it } from "vitest";
 import { createInitialPopulation } from "../population/create-population";
+import { createInitialWorldMetrics } from "../metrics/world-metrics";
 import { applyMarketTrades, clearPrintingAuction } from "./call-auction";
 import { generateMarketIntents } from "./market-intents";
 
@@ -23,7 +24,7 @@ function createMarketWorld(): WorldState {
   seller.collection[marketPrintingId] = 3;
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -77,9 +78,18 @@ function createMarketWorld(): WorldState {
           price: 54,
         },
       ],
+      snapshots: {},
     },
-    meta: { deckStats: {} },
-    metrics: { activePlayers: 0 },
+    meta: { deckStats: {}, matchups: {} },
+    metrics: createInitialWorldMetrics({
+      potential: 0,
+      interested: 0,
+      newByAge: [0, 0, 0, 0, 0, 0, 0],
+      active: 0,
+      atRisk: 0,
+      churned: 0,
+      returning: 0,
+    }),
     cash: { balance: 0, ledger: [] },
     history: { events: [] },
   };
@@ -151,6 +161,22 @@ describe("clearPrintingAuction", () => {
     expect(buyer.collection[marketPrintingId]).toBe(3);
     expect(seller.tcgWallet).toBe(201);
     expect(buyer.tcgWallet).toBe(799);
+    expect(
+      (
+        world.market as typeof world.market & {
+          snapshots: Record<
+            string,
+            { lastPrice: number; dailyVolume: number; priceHistory: unknown[] }
+          >;
+        }
+      ).snapshots[marketPrintingId],
+    ).toEqual(
+      expect.objectContaining({
+        lastPrice: 67,
+        dailyVolume: 3,
+        priceHistory: [expect.objectContaining({ day: 1, volume: 3 })],
+      }),
+    );
   });
 });
 

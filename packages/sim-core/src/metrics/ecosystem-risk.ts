@@ -1,7 +1,7 @@
 import { METRICS_CONFIG } from "@tcgtycoon/balance";
+import type { EcosystemRiskState } from "@tcgtycoon/domain";
 
-export type EcosystemRiskState =
-  "STABLE" | "STRAINED" | "DECLINING" | "DEATH_SPIRAL" | "TERMINAL";
+export type { EcosystemRiskState } from "@tcgtycoon/domain";
 
 export type EcosystemRiskInput = {
   activePlayers: number;

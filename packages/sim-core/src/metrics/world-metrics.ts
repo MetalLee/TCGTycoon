@@ -1,4 +1,5 @@
 import { METRICS_CONFIG } from "@tcgtycoon/balance";
+import type { LifecyclePopulationState, WorldMetrics } from "@tcgtycoon/domain";
 import type { MatchupStats, MetaDeckStats } from "../meta/meta-aggregation";
 
 export type MetaHealthInput = {
@@ -22,13 +23,10 @@ export type MetaHealthResult = {
   stalenessPenalty: number;
 };
 
-export type WorldMetricState = {
-  hype: number;
-  collectorHeat: number;
-  metaHealth: number;
-  brandTrust: number;
-  sentiment: number;
-};
+export type WorldMetricState = Pick<
+  WorldMetrics,
+  "hype" | "collectorHeat" | "metaHealth" | "brandTrust" | "sentiment"
+>;
 
 export type CollectorSignals = {
   tradingVolume: number;
@@ -54,6 +52,49 @@ function clampUnit(value: number): number {
 
 function clampMetric(value: number): number {
   return Math.min(100, Math.max(0, value));
+}
+
+export function activeLifecyclePopulation(
+  lifecycle: LifecyclePopulationState,
+): number {
+  return (
+    lifecycle.active +
+    lifecycle.atRisk +
+    lifecycle.returning +
+    lifecycle.newByAge.reduce((total, count) => total + count, 0)
+  );
+}
+
+export function createInitialWorldMetrics(
+  lifecycle: LifecyclePopulationState,
+): WorldMetrics {
+  const activePlayers = activeLifecyclePopulation(lifecycle);
+  return {
+    activePlayers,
+    previousActivePlayers: activePlayers,
+    hype: 50,
+    collectorHeat: 50,
+    metaHealth: 50,
+    brandTrust: 50,
+    sentiment: 50,
+    accessibility: 50,
+    lifecycle: structuredClone(lifecycle),
+    lifecycleDeltas: {
+      potentialToInterested: 0,
+      interestedToNew: 0,
+      newToActive: 0,
+      activeToAtRisk: 0,
+      atRiskToChurned: 0,
+      churnedToReturning: 0,
+      returningToActive: 0,
+    },
+    acquisitionToChurnRatio: 1,
+    retentionRate: 1,
+    activePlayerTrend: 0,
+    consecutiveDeclineDays: 0,
+    consecutiveLowActivityDays: 0,
+    ecosystemRisk: "STABLE",
+  };
 }
 
 function normalizedEntropy(usages: readonly number[]): number {

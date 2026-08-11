@@ -1,27 +1,16 @@
 import { METRICS_CONFIG } from "@tcgtycoon/balance";
+import type {
+  LifecycleDeltas,
+  LifecyclePopulationState,
+} from "@tcgtycoon/domain";
 import { DeterministicRng, deriveSeed } from "@tcgtycoon/rules-engine";
 
-export type LifecyclePopulationState = {
-  potential: number;
-  interested: number;
-  newByAge: number[];
-  active: number;
-  atRisk: number;
-  churned: number;
-  returning: number;
-};
+export type {
+  LifecycleDeltas,
+  LifecyclePopulationState,
+} from "@tcgtycoon/domain";
 
 export type LifecycleRates = {
-  potentialToInterested: number;
-  interestedToNew: number;
-  newToActive: number;
-  activeToAtRisk: number;
-  atRiskToChurned: number;
-  churnedToReturning: number;
-  returningToActive: number;
-};
-
-export type LifecycleDeltas = {
   potentialToInterested: number;
   interestedToNew: number;
   newToActive: number;

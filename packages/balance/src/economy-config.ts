@@ -22,6 +22,7 @@ export const ECONOMY_CONFIG = {
     maxCollectorQuantity: 1,
     budgetSellerThreshold: 0.75,
     maxBudgetSellerQuantity: 1,
+    maxPriceHistoryDays: 365,
   },
   printingVariantSuffixes: {
     normal: "-normal",

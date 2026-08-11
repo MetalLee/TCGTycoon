@@ -12,6 +12,7 @@ import {
 } from "../../packages/domain/src/index";
 import { DeterministicRng } from "../../packages/rules-engine/src/index";
 import {
+  createInitialWorldMetrics,
   sampleDailyMatches,
   updateMetaState,
 } from "../../packages/sim-core/src/index";
@@ -144,7 +145,7 @@ function createHiddenComboWorld(): {
     observer,
     opponent,
     world: {
-      schemaVersion: 1,
+      schemaVersion: 2,
       simulationVersion: "1",
       ruleVersion: "1",
       balanceVersion: "1",
@@ -174,9 +175,17 @@ function createHiddenComboWorld(): {
         [publicDeck.id]: publicDeck,
       },
       cohorts: [],
-      market: { listings: [] },
-      meta: { deckStats: {} },
-      metrics: { activePlayers: 2 },
+      market: { listings: [], snapshots: {} },
+      meta: { deckStats: {}, matchups: {} },
+      metrics: createInitialWorldMetrics({
+        potential: 0,
+        interested: 0,
+        newByAge: [0, 0, 0, 0, 0, 0, 0],
+        active: 2,
+        atRisk: 0,
+        churned: 1,
+        returning: 0,
+      }),
       cash: { balance: 0, ledger: [] },
       history: { events: [] },
     },

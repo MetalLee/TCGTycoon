@@ -1,4 +1,4 @@
-import { ECONOMY_CONFIG } from "@tcgtycoon/balance";
+import { ECONOMY_CONFIG, POPULATION_CONFIG } from "@tcgtycoon/balance";
 import {
   playerId,
   printingId,
@@ -12,7 +12,7 @@ import {
   openStarter,
   resolvePrimarySales,
   type BalanceConfig,
-  type WorldMetricState,
+  createInitialWorldMetrics,
 } from "@tcgtycoon/sim-core";
 import { DeterministicRng, deriveSeed } from "@tcgtycoon/rules-engine";
 import { fireFixtureDeck, machineFixtureDeck } from "../decks/core-fixtures";
@@ -38,7 +38,6 @@ export type WorldScenario = {
   purpose: string;
   world: WorldState;
   balanceConfig: BalanceConfig;
-  metricState: WorldMetricState;
   botConfig: BasicPublisherBotConfig;
 };
 
@@ -71,7 +70,12 @@ function retainScenarioPopulation(world: WorldState): void {
       .sort((left, right) => compareIds(left.id, right.id))
       .map((agent) => [agent.id, agent]),
   );
-  world.cohorts = [{ id: "cohort-scenario", count: retainedIds.length }];
+  world.cohorts = [
+    {
+      id: "cohort-scenario",
+      count: POPULATION_CONFIG.standardPersistentPlayerCount,
+    },
+  ];
 }
 
 function addInitialInventory(world: WorldState): void {
@@ -159,7 +163,18 @@ export function createBalancedWorld(seed = "balanced-world"): WorldScenario {
     knownCardIds: machineFixtureDeck.cards.map((entry) => entry.cardId),
     knownDeckIds: [machineFixtureDeck.id],
   };
-  world.metrics.activePlayers = 2;
+  world.metrics = createInitialWorldMetrics({
+    potential: POPULATION_CONFIG.standardPersistentPlayerCount - 2,
+    interested: 0,
+    newByAge: [0, 0, 0, 0, 0, 0, 0],
+    active: 2,
+    atRisk: 0,
+    churned: 0,
+    returning: 0,
+  });
+  world.metrics.collectorHeat = 45;
+  world.metrics.brandTrust = 60;
+  world.metrics.sentiment = 60;
 
   return {
     name: "balanced-world",
@@ -173,13 +188,6 @@ export function createBalancedWorld(seed = "balanced-world"): WorldScenario {
       },
       dailyOperatingCost: 1,
       inventoryHoldingCostPerUnit: 0,
-    },
-    metricState: {
-      hype: 50,
-      collectorHeat: 45,
-      metaHealth: 50,
-      brandTrust: 60,
-      sentiment: 60,
     },
     botConfig: {
       stockThreshold: 8,

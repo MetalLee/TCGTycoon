@@ -8,6 +8,7 @@ import {
 } from "@tcgtycoon/domain";
 import {
   SIMULATION_VERSION,
+  createInitialWorldMetrics,
   createInitialPopulation,
 } from "@tcgtycoon/sim-core";
 import { coreCardFixtures } from "../cards/core-fixtures";
@@ -54,7 +55,7 @@ export function createTestWorld(seed: string): WorldState {
   }));
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     simulationVersion: SIMULATION_VERSION,
     ruleVersion: RULE_VERSION,
     balanceVersion: BALANCE_VERSION,
@@ -83,9 +84,25 @@ export function createTestWorld(seed: string): WorldState {
     agents: population.agents,
     decks: byId(deckGenomes),
     cohorts: population.cohorts,
-    market: { listings: [] },
-    meta: { deckStats: {} },
-    metrics: { activePlayers: 0 },
+    market: { listings: [], snapshots: {} },
+    meta: { deckStats: {}, matchups: {} },
+    metrics: createInitialWorldMetrics({
+      potential: 0,
+      interested: 0,
+      newByAge: [
+        POPULATION_CONFIG.standardPersistentPlayerCount,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ],
+      active: 0,
+      atRisk: 0,
+      churned: 0,
+      returning: 0,
+    }),
     cash: {
       balance: POPULATION_CONFIG.initialPublisherCash,
       ledger: [],

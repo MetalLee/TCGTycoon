@@ -10,6 +10,7 @@ export type WorldInvariantCode =
   | "ILLEGAL_DECK"
   | "NON_FINITE_NUMBER"
   | "NEGATIVE_PRICE"
+  | "OUT_OF_RANGE"
   | "DUPLICATE_ID"
   | "INCORRECT_DAY_INCREMENT";
 
@@ -50,6 +51,22 @@ function requirePrice(value: number, path: string): void {
   requireFinite(value, path);
   if (value < 0) {
     fail("NEGATIVE_PRICE", path, `${path} must not be negative.`);
+  }
+}
+
+function requireRange(
+  value: number,
+  minimum: number,
+  maximum: number,
+  path: string,
+): void {
+  requireFinite(value, path);
+  if (value < minimum || value > maximum) {
+    fail(
+      "OUT_OF_RANGE",
+      path,
+      `${path} must be between ${minimum} and ${maximum}.`,
+    );
   }
 }
 
@@ -156,6 +173,95 @@ export function validateWorldInvariants(
     requirePrice(listing.price, `market.listings[${index}].price`);
     requireQuantity(listing.quantity, `market.listings[${index}].quantity`);
   });
+  for (const printingId of Object.keys(world.market.snapshots).sort(
+    compareIds,
+  )) {
+    const snapshot = world.market.snapshots[printingId]!;
+    if (snapshot.printingId !== printingId) {
+      fail(
+        "MISSING_ID",
+        `market.snapshots.${printingId}.printingId`,
+        `Market snapshot ${printingId} must contain its canonical map ID.`,
+      );
+    }
+    requireReference(
+      world.printings[printingId] !== undefined,
+      `market.snapshots.${printingId}.printingId`,
+      printingId,
+    );
+    requirePrice(
+      snapshot.lastPrice,
+      `market.snapshots.${printingId}.lastPrice`,
+    );
+    requireQuantity(
+      snapshot.dailyVolume,
+      `market.snapshots.${printingId}.dailyVolume`,
+    );
+    requireQuantity(
+      snapshot.availableSupply,
+      `market.snapshots.${printingId}.availableSupply`,
+    );
+    requireRange(
+      snapshot.liquidity,
+      0,
+      1,
+      `market.snapshots.${printingId}.liquidity`,
+    );
+    snapshot.priceHistory.forEach((entry, index) => {
+      requireQuantity(
+        entry.day,
+        `market.snapshots.${printingId}.priceHistory[${index}].day`,
+      );
+      requirePrice(
+        entry.price,
+        `market.snapshots.${printingId}.priceHistory[${index}].price`,
+      );
+      requireQuantity(
+        entry.volume,
+        `market.snapshots.${printingId}.priceHistory[${index}].volume`,
+      );
+    });
+  }
+
+  for (const [name, value] of Object.entries({
+    hype: world.metrics.hype,
+    collectorHeat: world.metrics.collectorHeat,
+    metaHealth: world.metrics.metaHealth,
+    brandTrust: world.metrics.brandTrust,
+    sentiment: world.metrics.sentiment,
+    accessibility: world.metrics.accessibility,
+  })) {
+    requireRange(value, 0, 100, `metrics.${name}`);
+  }
+  requireQuantity(world.metrics.activePlayers, "metrics.activePlayers");
+  requireQuantity(
+    world.metrics.previousActivePlayers,
+    "metrics.previousActivePlayers",
+  );
+  requirePrice(
+    world.metrics.acquisitionToChurnRatio,
+    "metrics.acquisitionToChurnRatio",
+  );
+  requireRange(world.metrics.retentionRate, 0, 1, "metrics.retentionRate");
+  requireQuantity(
+    world.metrics.consecutiveDeclineDays,
+    "metrics.consecutiveDeclineDays",
+  );
+  requireQuantity(
+    world.metrics.consecutiveLowActivityDays,
+    "metrics.consecutiveLowActivityDays",
+  );
+  world.metrics.lifecycle.newByAge.forEach((count, index) =>
+    requireQuantity(count, `metrics.lifecycle.newByAge[${index}]`),
+  );
+  const { newByAge, ...lifecycleCounts } = world.metrics.lifecycle;
+  void newByAge;
+  for (const [name, value] of Object.entries(lifecycleCounts)) {
+    requireQuantity(value, `metrics.lifecycle.${name}`);
+  }
+  for (const [name, value] of Object.entries(world.metrics.lifecycleDeltas)) {
+    requireQuantity(value, `metrics.lifecycleDeltas.${name}`);
+  }
   for (const runId of Object.keys(world.printRuns).sort(compareIds)) {
     const run = world.printRuns[runId]!;
     requireQuantity(run.quantity, `printRuns.${runId}.quantity`);

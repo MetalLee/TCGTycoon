@@ -8,6 +8,7 @@ import {
 import { DeterministicRng } from "@tcgtycoon/rules-engine";
 import { describe, expect, it } from "vitest";
 import { createInitialPopulation } from "../population/create-population";
+import { createInitialWorldMetrics } from "../metrics/world-metrics";
 import {
   completePrintRunsDueToday,
   generatePrimaryDemand,
@@ -21,7 +22,7 @@ const boosterPrintRunId = printRunId("print-run-primary-booster");
 function createPrimaryMarketWorld(): WorldState {
   const population = createInitialPopulation("primary-market-test");
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -57,9 +58,17 @@ function createPrimaryMarketWorld(): WorldState {
     agents: population.agents,
     decks: {},
     cohorts: population.cohorts,
-    market: { listings: [] },
-    meta: { deckStats: {} },
-    metrics: { activePlayers: 0 },
+    market: { listings: [], snapshots: {} },
+    meta: { deckStats: {}, matchups: {} },
+    metrics: createInitialWorldMetrics({
+      potential: 0,
+      interested: 0,
+      newByAge: [0, 0, 0, 0, 0, 0, 0],
+      active: 0,
+      atRisk: 0,
+      churned: 0,
+      returning: 0,
+    }),
     cash: { balance: 0, ledger: [] },
     history: { events: [] },
   };
@@ -88,6 +97,7 @@ describe("primary product demand and sales", () => {
   it("resolves deterministically without directly changing World metrics", () => {
     const firstWorld = createPrimaryMarketWorld();
     const secondWorld = createPrimaryMarketWorld();
+    const initialMetrics = structuredClone(firstWorld.metrics);
 
     const first = generatePrimaryDemand(firstWorld, new DeterministicRng(99n));
     const second = generatePrimaryDemand(
@@ -97,8 +107,8 @@ describe("primary product demand and sales", () => {
 
     expect(first).toEqual(second);
     expect(first.length).toBeGreaterThan(0);
-    expect(firstWorld.metrics).toEqual({ activePlayers: 0 });
-    expect(secondWorld.metrics).toEqual({ activePlayers: 0 });
+    expect(firstWorld.metrics).toEqual(initialMetrics);
+    expect(secondWorld.metrics).toEqual(initialMetrics);
   });
 
   it("caps sales at inventory, charges the buyer and queues opening requests", () => {

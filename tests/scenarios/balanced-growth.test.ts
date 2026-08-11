@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { validateWorldInvariants } from "../../packages/sim-core/src/index";
+import {
+  simulateDay,
+  validateWorldInvariants,
+} from "../../packages/sim-core/src/index";
 import {
   BasicPublisherBot,
   createBalancedWorld,
@@ -81,6 +84,24 @@ describe("headless world simulation", () => {
       expect(Number.isFinite(metric)).toBe(true);
     }
     validateWorldInvariants(result.finalState);
+  });
+
+  it("mutates and adopts owned legal decks during live simulation", () => {
+    const scenario = createBalancedWorld("live-deck-evolution");
+    let world = scenario.world;
+
+    for (let day = 0; day < 30; day += 1) {
+      world = simulateDay(world, [], scenario.balanceConfig).nextState;
+    }
+
+    const adoptedDecks = Object.values(world.players)
+      .flatMap((player) => player.deckIds)
+      .map((id) => world.decks[id]!)
+      .filter((deck) => deck.generation > 0);
+    expect(adoptedDecks.length).toBeGreaterThan(0);
+    expect(adoptedDecks.every((deck) => deck.parentDeckIds.length > 0)).toBe(
+      true,
+    );
   });
 
   it.each(SCENARIO_NAMES)("constructs a valid %s fixture", (scenario) => {

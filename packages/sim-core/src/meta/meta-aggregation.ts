@@ -1,31 +1,21 @@
 import { META_CONFIG } from "@tcgtycoon/balance";
-import type { CardId, DeckId, PlayerId, WorldState } from "@tcgtycoon/domain";
+import type {
+  CardId,
+  DeckId,
+  MatchupStats,
+  MetaConfidence,
+  MetaDeckStats,
+  PlayerId,
+  WorldState,
+} from "@tcgtycoon/domain";
 import { recordKnowledgeExposure } from "../society/knowledge";
 import type { SampledMatchResult } from "./sample-matches";
 
-export type MetaConfidence = "VERY_LOW" | "LOW" | "MEDIUM" | "HIGH";
-
-export type MetaDeckStats = {
-  matches: number;
-  wins: number;
-  losses: number;
-  observedWinRate: number;
-  usageRate: number;
-  averageGameLength: number;
-  sampleCount: number;
-  confidence: MetaConfidence;
-};
-
-export type MatchupStats = {
-  deckAId: DeckId;
-  deckBId: DeckId;
-  matches: number;
-  deckAWins: number;
-  deckBWins: number;
-  observedDeckAWinRate: number;
-  sampleCount: number;
-  confidence: MetaConfidence;
-};
+export type {
+  MatchupStats,
+  MetaConfidence,
+  MetaDeckStats,
+} from "@tcgtycoon/domain";
 
 export type MatchKnowledgeEvent = {
   type: "MATCH_EXPOSURE";
@@ -261,6 +251,7 @@ export function updateMetaState(
   );
 
   world.meta.deckStats = finalizedDeckStats;
+  world.meta.matchups = finalizedMatchups;
   return {
     deckStats: finalizedDeckStats,
     matchups: finalizedMatchups,

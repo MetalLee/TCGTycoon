@@ -1,15 +1,24 @@
-import { METRICS_CONFIG, RULES_CONFIG } from "@tcgtycoon/balance";
 import {
+  DECK_EVOLUTION_CONFIG,
+  META_CONFIG,
+  METRICS_CONFIG,
+  RULES_CONFIG,
+} from "@tcgtycoon/balance";
+import {
+  parsePublisherCommands,
   printRunId,
+  type DeckId,
   type PublisherCommand,
   type WorldEvent,
   type WorldState,
 } from "@tcgtycoon/domain";
 import { validateDeck } from "@tcgtycoon/rules-engine";
 import {
+  mutateDeck,
   generateCandidateDecks,
   playerOwnsGenome,
 } from "../deck-evolution/deck-builder";
+import { calculateAdoptionScore } from "../deck-evolution/adoption";
 import { toDeckDefinition } from "../deck-evolution/deck-genome";
 import { appendCashEntry, toCurrency } from "../economy/cash-ledger";
 import { createDailyReport, type DailyReport } from "../history/daily-report";
@@ -35,7 +44,12 @@ import {
   calculateSatisfactionTarget,
   updateSatisfaction,
 } from "../metrics/satisfaction";
-import { calculateMetaHealth } from "../metrics/world-metrics";
+import {
+  activeLifecyclePopulation,
+  calculateMetaHealth,
+  updateWorldMetrics,
+} from "../metrics/world-metrics";
+import { processLifecycleDay } from "../population/lifecycle";
 import { openBooster, openStarter } from "../products/open-product";
 import {
   completePrintRunsDueToday,
@@ -74,6 +88,21 @@ type DayContext = {
 
 function compareIds(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function clampUnit(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+function averagePlayerSatisfaction(world: WorldState): number {
+  const players = Object.values(world.players);
+  if (players.length === 0) {
+    return 0;
+  }
+  return (
+    players.reduce((total, player) => total + player.satisfaction, 0) /
+    players.length
+  );
 }
 
 function emptyMetaResult(): MetaAggregationResult {
@@ -167,6 +196,50 @@ function phase01CommandsAndPrintCompletion(context: DayContext): void {
 }
 
 function phase02PopulationExposureAndLifecycle(context: DayContext): void {
+  const metrics = context.state.metrics;
+  const rates = METRICS_CONFIG.lifecycle.rates;
+  const satisfaction = averagePlayerSatisfaction(context.state);
+  const lifecycle = processLifecycleDay(metrics.lifecycle, {
+    worldSeed: context.state.worldSeed,
+    day: context.previousDay,
+    rates: {
+      potentialToInterested: clampUnit(
+        rates.potentialToInterestedBase +
+          (metrics.hype / 100) * rates.potentialToInterestedHypeWeight,
+      ),
+      interestedToNew: clampUnit(
+        rates.interestedToNewBase +
+          (metrics.accessibility / 100) *
+            rates.interestedToNewAccessibilityWeight,
+      ),
+      newToActive: clampUnit(
+        rates.newToActiveBase +
+          satisfaction * rates.newToActiveSatisfactionWeight,
+      ),
+      activeToAtRisk: clampUnit(
+        rates.activeToAtRiskBase +
+          (1 - satisfaction) * rates.activeToAtRiskDissatisfactionWeight,
+      ),
+      atRiskToChurned: clampUnit(
+        rates.atRiskToChurnedBase +
+          (1 - satisfaction) * rates.atRiskToChurnedDissatisfactionWeight,
+      ),
+      churnedToReturning: clampUnit(
+        rates.churnedToReturningBase +
+          ((metrics.hype + metrics.brandTrust) / 200) *
+            rates.churnedToReturningHypeTrustWeight,
+      ),
+      returningToActive: clampUnit(
+        rates.returningToActiveBase +
+          satisfaction * rates.returningToActiveSatisfactionWeight,
+      ),
+    },
+  });
+  metrics.previousActivePlayers = metrics.activePlayers;
+  metrics.lifecycle = lifecycle.population;
+  metrics.lifecycleDeltas = lifecycle.deltas;
+  metrics.activePlayers = activeLifecyclePopulation(lifecycle.population);
+
   for (const playerId of Object.keys(context.state.players).sort(compareIds)) {
     const player = context.state.players[playerId]!;
     if (player.activity !== "CHURNED") {
@@ -215,6 +288,53 @@ function phase03PrimarySalesAndProductOpening(context: DayContext): void {
   openPurchasedProducts(context);
 }
 
+function deckComplexity(context: DayContext, deckId: DeckId): number {
+  const deck = context.state.decks[deckId];
+  if (deck === undefined) {
+    return 0;
+  }
+  const totalEffects = deck.cards.reduce((total, entry) => {
+    const card = context.state.cards[entry.cardId];
+    return (
+      total +
+      (card?.keywords.length ?? 0) +
+      (card?.triggers.reduce(
+        (triggerTotal, trigger) => triggerTotal + trigger.effects.length,
+        0,
+      ) ?? 0)
+    );
+  }, 0);
+  return clampUnit(totalEffects / RULES_CONFIG.deckSize);
+}
+
+function adoptionContext(
+  context: DayContext,
+  playerId: string,
+  deckId: DeckId,
+  novelty: number,
+) {
+  const player = context.state.players[playerId]!;
+  const stats = context.state.meta.deckStats[deckId];
+  return {
+    performance: stats?.observedWinRate ?? 0.5,
+    socialExposure: player.knowledge.knownDeckIds.includes(deckId)
+      ? DECK_EVOLUTION_CONFIG.knownDeckSocialExposure
+      : DECK_EVOLUTION_CONFIG.inheritedDeckSocialExposure,
+    tournamentPrestige: clampUnit(
+      (stats?.sampleCount ?? 0) / META_CONFIG.confidenceMinimumSamples.high,
+    ),
+    influencerExposure: Object.values(context.state.agents).some(
+      (agent) => agent.playerId === player.id,
+    )
+      ? DECK_EVOLUTION_CONFIG.namedAgentInfluencerExposure
+      : 0,
+    novelty,
+    deckPrice: deckMarketCost(context, deckId),
+    missingCardCount: 0,
+    complexity: deckComplexity(context, deckId),
+  };
+}
+
 function phase04BuildOrRepairDecks(context: DayContext): void {
   const cards = Object.values(context.state.cards);
   for (const playerId of Object.keys(context.state.players).sort(compareIds)) {
@@ -222,15 +342,57 @@ function phase04BuildOrRepairDecks(context: DayContext): void {
     if (player.activity === "CHURNED") {
       continue;
     }
-    const hasOwnedLegalDeck = player.deckIds.some((id) => {
-      const deck = context.state.decks[id];
-      return (
-        deck !== undefined &&
-        playerOwnsGenome(player, context.state, deck) &&
-        validateDeck(toDeckDefinition(deck), cards).valid
+    const ownedLegalDeck = player.deckIds
+      .map((id) => context.state.decks[id])
+      .find((deck) => {
+        return (
+          deck !== undefined &&
+          playerOwnsGenome(player, context.state, deck) &&
+          validateDeck(toDeckDefinition(deck), cards).valid
+        );
+      });
+    if (ownedLegalDeck !== undefined) {
+      const rng = phaseRng(context.state, "deck-evolution", playerId);
+      const explorationChance = clampUnit(
+        DECK_EVOLUTION_CONFIG.explorationBaseChance +
+          player.motivation.brewer *
+            DECK_EVOLUTION_CONFIG.brewerExplorationWeight,
       );
-    });
-    if (hasOwnedLegalDeck) {
+      if (rng.nextFloat() >= explorationChance) {
+        continue;
+      }
+      const child = mutateDeck(ownedLegalDeck, player, context.state, rng);
+      context.state.decks[child.id] = child;
+      const parentScore = calculateAdoptionScore(
+        player,
+        ownedLegalDeck,
+        adoptionContext(
+          context,
+          playerId,
+          ownedLegalDeck.id,
+          DECK_EVOLUTION_CONFIG.parentNovelty,
+        ),
+      );
+      const childScore = calculateAdoptionScore(
+        player,
+        child,
+        adoptionContext(
+          context,
+          playerId,
+          child.id,
+          DECK_EVOLUTION_CONFIG.childNovelty,
+        ),
+      );
+      if (childScore >= parentScore) {
+        player.deckIds = player.deckIds.map((id) =>
+          id === ownedLegalDeck.id ? child.id : id,
+        );
+        player.knowledge.knownDeckIds = [
+          ...new Set([...player.knowledge.knownDeckIds, child.id]),
+        ].sort(compareIds);
+      } else {
+        delete context.state.decks[child.id];
+      }
       continue;
     }
     const candidate = generateCandidateDecks(
@@ -307,12 +469,18 @@ function deckMarketCost(context: DayContext, deckId: string): number {
     return METRICS_CONFIG.accessibility.comfortableMedianMetaDeckCost * 2;
   }
   return deck.cards.reduce((total, entry) => {
-    const prices = context.state.market.listings
-      .filter(
-        (listing) =>
-          context.state.printings[listing.printingId]?.cardId === entry.cardId,
-      )
-      .map((listing) => listing.price);
+    const printingIds = Object.values(context.state.printings)
+      .filter((printing) => printing.cardId === entry.cardId)
+      .map((printing) => printing.id);
+    const prices = [
+      ...printingIds.flatMap((printingId) => {
+        const snapshot = context.state.market.snapshots[printingId];
+        return snapshot === undefined ? [] : [snapshot.lastPrice];
+      }),
+      ...context.state.market.listings
+        .filter((listing) => printingIds.includes(listing.printingId))
+        .map((listing) => listing.price),
+    ];
     const price =
       prices.length === 0
         ? METRICS_CONFIG.accessibility.comfortableMedianMetaDeckCost * 2
@@ -393,7 +561,9 @@ function phase08AccessibilitySatisfactionAndChurn(context: DayContext): void {
     accessibility: context.accessibility,
     staleDays: 0,
   }).score;
-  const players = Object.values(context.state.players);
+  const players = Object.values(context.state.players).sort((left, right) =>
+    compareIds(left.id, right.id),
+  );
   const activePlayers = players.filter(
     (player) => player.activity !== "CHURNED",
   ).length;
@@ -413,8 +583,57 @@ function phase08AccessibilitySatisfactionAndChurn(context: DayContext): void {
       collectionExperience: Math.min(1, ownedCards / RULES_CONFIG.deckSize),
     });
     player.satisfaction = updateSatisfaction(player.satisfaction, target);
+
+    const rng = phaseRng(
+      context.state,
+      "persistent-player-lifecycle",
+      player.id,
+    );
+    const rates = METRICS_CONFIG.lifecycle.rates;
+    if (
+      player.activity === "NEW" &&
+      player.tenureDays >= METRICS_CONFIG.lifecycle.onboardingDays &&
+      rng.nextFloat() <
+        clampUnit(
+          rates.newToActiveBase +
+            player.satisfaction * rates.newToActiveSatisfactionWeight,
+        )
+    ) {
+      player.activity = "ACTIVE";
+    } else if (
+      player.activity === "ACTIVE" &&
+      rng.nextFloat() <
+        clampUnit(
+          rates.activeToAtRiskBase +
+            (1 - player.satisfaction) *
+              rates.activeToAtRiskDissatisfactionWeight,
+        )
+    ) {
+      player.activity = "AT_RISK";
+    } else if (
+      player.activity === "AT_RISK" &&
+      rng.nextFloat() <
+        clampUnit(
+          rates.atRiskToChurnedBase +
+            (1 - player.satisfaction) *
+              rates.atRiskToChurnedDissatisfactionWeight,
+        )
+    ) {
+      player.activity = "CHURNED";
+    } else if (
+      player.activity === "CHURNED" &&
+      rng.nextFloat() <
+        clampUnit(
+          rates.churnedToReturningBase +
+            ((context.state.metrics.hype + context.state.metrics.brandTrust) /
+              200) *
+              rates.churnedToReturningHypeTrustWeight,
+        )
+    ) {
+      player.activity = "ACTIVE";
+      player.tenureDays += 1;
+    }
   }
-  context.state.metrics.activePlayers = activePlayers;
 }
 
 function phase09StructuredCommunityEvents(context: DayContext): void {
@@ -426,9 +645,87 @@ function phase09StructuredCommunityEvents(context: DayContext): void {
   }
 }
 
-function phase10UpdateCoreWorldMetrics(): void {
-  // Canonical WorldMetrics currently stores Active Players only. Abstract
-  // metric targets are calculated above and exposed in the Daily Report.
+function average(values: readonly number[], fallback: number): number {
+  return values.length === 0
+    ? fallback
+    : values.reduce((total, value) => total + value, 0) / values.length;
+}
+
+function marketPriceMomentum(context: DayContext): number {
+  const movements = Object.values(context.state.market.snapshots).flatMap(
+    (snapshot) => {
+      const history = snapshot.priceHistory;
+      if (history.length < 2) {
+        return [];
+      }
+      const previous = history[history.length - 2]!.price;
+      const current = history[history.length - 1]!.price;
+      return [
+        clampUnit(
+          METRICS_CONFIG.signals.neutralPriceMomentum +
+            (current - previous) / Math.max(1, previous),
+        ),
+      ];
+    },
+  );
+  return average(movements, METRICS_CONFIG.signals.neutralPriceMomentum);
+}
+
+function phase10UpdateCoreWorldMetrics(context: DayContext): void {
+  const metrics = context.state.metrics;
+  const satisfaction = averagePlayerSatisfaction(context.state);
+  const playerCount = Math.max(1, metrics.activePlayers);
+  const snapshots = Object.values(context.state.market.snapshots);
+  const nextHealth = updateWorldMetrics(metrics, {
+    positiveAttention: clampUnit(
+      (context.sales.unitsSold +
+        context.matches.length / METRICS_CONFIG.signals.matchAttentionDivisor) /
+        playerCount,
+    ),
+    negativeAttention: clampUnit(
+      (1 - satisfaction) *
+        METRICS_CONFIG.signals.dissatisfactionAttentionWeight,
+    ),
+    sentimentTarget: satisfaction * 100,
+    collector: {
+      tradingVolume: clampUnit(context.marketTrades / playerCount),
+      liquidity: average(
+        snapshots.map((snapshot) => snapshot.liquidity),
+        0,
+      ),
+      priceMomentum: marketPriceMomentum(context),
+      scarcityExcitement: 1 - context.accessibility / 100,
+      productFreshness:
+        context.sales.unitsSold > 0
+          ? METRICS_CONFIG.signals.productFreshnessWithSales
+          : METRICS_CONFIG.signals.productFreshnessWithoutSales,
+      collectorConfidence: satisfaction,
+    },
+    metaHealthTarget: context.metaHealth,
+    brandTrustTarget: satisfaction * 100,
+  });
+  Object.assign(metrics, nextHealth);
+  metrics.accessibility = context.accessibility;
+
+  const deltas = metrics.lifecycleDeltas;
+  const acquisition = deltas.interestedToNew + deltas.churnedToReturning;
+  const churn = deltas.atRiskToChurned;
+  metrics.acquisitionToChurnRatio = acquisition / Math.max(1, churn);
+  metrics.retentionRate = clampUnit(
+    (metrics.previousActivePlayers - churn) /
+      Math.max(1, metrics.previousActivePlayers),
+  );
+  metrics.activePlayerTrend =
+    (metrics.activePlayers - metrics.previousActivePlayers) /
+    Math.max(1, metrics.previousActivePlayers);
+  metrics.consecutiveDeclineDays =
+    metrics.activePlayerTrend < 0 ? metrics.consecutiveDeclineDays + 1 : 0;
+  metrics.consecutiveLowActivityDays =
+    metrics.activePlayers <
+      METRICS_CONFIG.ecosystemRisk.terminalActivePlayers &&
+    metrics.hype < METRICS_CONFIG.ecosystemRisk.terminalHype
+      ? metrics.consecutiveLowActivityDays + 1
+      : 0;
 }
 
 function phase11ApplyCashExpenses(context: DayContext): void {
@@ -456,28 +753,28 @@ function phase11ApplyCashExpenses(context: DayContext): void {
   }
 }
 
-function phase12IncrementAndValidate(context: DayContext): void {
+function phase12Increment(context: DayContext): void {
   context.state.day = context.previousDay + 1;
-  validateWorldInvariants(context.state, context.previousDay);
 }
 
 function phase13EvaluateRiskAndGameOver(context: DayContext): void {
-  const playerCount = Object.keys(context.state.players).length;
-  const activePlayers = context.state.metrics.activePlayers;
+  const metrics = context.state.metrics;
   context.ecosystemRisk = evaluateEcosystemRisk({
-    activePlayers,
-    hype: 50,
-    brandTrust: 50,
-    acquisitionToChurnRatio: 1,
-    retentionRate: playerCount === 0 ? 0 : activePlayers / playerCount,
-    activePlayerTrend: 0,
-    consecutiveDeclineDays: 0,
-    consecutiveLowActivityDays: 0,
+    activePlayers: metrics.activePlayers,
+    hype: metrics.hype,
+    brandTrust: metrics.brandTrust,
+    acquisitionToChurnRatio: metrics.acquisitionToChurnRatio,
+    retentionRate: metrics.retentionRate,
+    activePlayerTrend: metrics.activePlayerTrend,
+    consecutiveDeclineDays: metrics.consecutiveDeclineDays,
+    consecutiveLowActivityDays: metrics.consecutiveLowActivityDays,
     cash: context.state.cash.balance,
   });
+  metrics.ecosystemRisk = context.ecosystemRisk;
   if (context.ecosystemRisk === "TERMINAL") {
     context.state.status = "GAME_OVER";
   }
+  validateWorldInvariants(context.state, context.previousDay);
 }
 
 function phase14CreateReport(context: DayContext): DailyReport {
@@ -491,7 +788,12 @@ function phase14CreateReport(context: DayContext): DailyReport {
     marketTrades: context.marketTrades,
     activePlayers: context.state.metrics.activePlayers,
     accessibility: context.accessibility,
-    metaHealth: context.metaHealth,
+    metaHealth: context.state.metrics.metaHealth,
+    hype: context.state.metrics.hype,
+    collectorHeat: context.state.metrics.collectorHeat,
+    brandTrust: context.state.metrics.brandTrust,
+    sentiment: context.state.metrics.sentiment,
+    lifecycleDeltas: { ...context.state.metrics.lifecycleDeltas },
     cashBalance: context.state.cash.balance,
     ecosystemRisk: context.ecosystemRisk,
     notableEventCount: context.notableEvents.length,
@@ -507,7 +809,7 @@ export function simulateDay(
   const context: DayContext = {
     state: structuredClone(state),
     previousDay: state.day,
-    commands,
+    commands: parsePublisherCommands(commands),
     config,
     notableEvents: [],
     completedPrintRuns: [],
@@ -530,9 +832,9 @@ export function simulateDay(
   phase07ClearSecondaryMarket(context);
   phase08AccessibilitySatisfactionAndChurn(context);
   phase09StructuredCommunityEvents(context);
-  phase10UpdateCoreWorldMetrics();
+  phase10UpdateCoreWorldMetrics(context);
   phase11ApplyCashExpenses(context);
-  phase12IncrementAndValidate(context);
+  phase12Increment(context);
   phase13EvaluateRiskAndGameOver(context);
   const report = phase14CreateReport(context);
 

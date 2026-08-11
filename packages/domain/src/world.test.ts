@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { agentId, cardId, expansionId, factionId, playerId, productId } from "./ids";
+import {
+  agentId,
+  cardId,
+  expansionId,
+  factionId,
+  playerId,
+  productId,
+} from "./ids";
 import type { WorldState } from "./world";
 
 const createEmptyWorldFixture = (): WorldState => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   simulationVersion: "2",
   ruleVersion: "1",
   balanceVersion: "1",
@@ -75,9 +82,42 @@ const createEmptyWorldFixture = (): WorldState => ({
   },
   decks: {},
   cohorts: [],
-  market: { listings: [] },
-  meta: { deckStats: {} },
-  metrics: { activePlayers: 0 },
+  market: { listings: [], snapshots: {} },
+  meta: { deckStats: {}, matchups: {} },
+  metrics: {
+    activePlayers: 0,
+    previousActivePlayers: 0,
+    hype: 50,
+    collectorHeat: 50,
+    metaHealth: 50,
+    brandTrust: 50,
+    sentiment: 50,
+    accessibility: 50,
+    lifecycle: {
+      potential: 0,
+      interested: 0,
+      newByAge: [0, 0, 0, 0, 0, 0, 0],
+      active: 0,
+      atRisk: 0,
+      churned: 0,
+      returning: 0,
+    },
+    lifecycleDeltas: {
+      potentialToInterested: 0,
+      interestedToNew: 0,
+      newToActive: 0,
+      activeToAtRisk: 0,
+      atRiskToChurned: 0,
+      churnedToReturning: 0,
+      returningToActive: 0,
+    },
+    acquisitionToChurnRatio: 1,
+    retentionRate: 1,
+    activePlayerTrend: 0,
+    consecutiveDeclineDays: 0,
+    consecutiveLowActivityDays: 0,
+    ecosystemRisk: "STABLE",
+  },
   cash: { balance: 0, ledger: [] },
   history: { events: [] },
 });
@@ -87,8 +127,12 @@ describe("WorldState", () => {
     const world = createEmptyWorldFixture();
 
     expect(world.cards["card-fire-cub"]!.id).toBe("card-fire-cub");
-    expect(world.products["product-launch-booster"]!.expansionId).toBe("set-launch");
-    expect(world.products["product-launch-booster"]!).not.toHaveProperty("expansion");
+    expect(world.products["product-launch-booster"]!.expansionId).toBe(
+      "set-launch",
+    );
+    expect(world.products["product-launch-booster"]!).not.toHaveProperty(
+      "expansion",
+    );
   });
 
   it("stores named agents as references to persistent players and cash entries in a ledger", () => {
@@ -100,7 +144,8 @@ describe("WorldState", () => {
 
   it("keys physical collections by PrintingId", () => {
     const player = createEmptyWorldFixture().players["player-ash"]!;
-    const collection: Record<import("./ids").PrintingId, number> = player.collection;
+    const collection: Record<import("./ids").PrintingId, number> =
+      player.collection;
 
     expect(collection).toEqual({});
   });

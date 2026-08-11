@@ -48,12 +48,12 @@ export function createCollectorBubbleWorld(
     quantity: 1,
     price: 120,
   });
+  scenario.world.metrics.collectorHeat = 90;
 
   return {
     ...scenario,
     name: "collector-bubble-world",
     purpose:
       "A product-opened collectible is listed at a speculative price for a whale collector.",
-    metricState: { ...scenario.metricState, collectorHeat: 90 },
   };
 }
