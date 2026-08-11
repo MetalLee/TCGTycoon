@@ -3,6 +3,7 @@ import type { WorldHistory } from "./events";
 import type { MarketState } from "./market";
 import type { DeckGenome, MetaState } from "./meta";
 import type { WorldMetrics } from "./metrics";
+import type { OperationProject } from "./operations";
 import type { NamedAgent, PersistentPlayer, PopulationCohort } from "./players";
 import type { Expansion, Printing, PrintRun, ProductSku } from "./products";
 
@@ -31,6 +32,7 @@ export type WorldState = {
   worldSeed: string;
   day: number;
   status: "SETUP" | "LIVE" | "GAME_OVER";
+  operations?: Record<string, OperationProject>;
   cards: Record<string, CardDefinition>;
   printings: Record<string, Printing>;
   expansions: Record<string, Expansion>;

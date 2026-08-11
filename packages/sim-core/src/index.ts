@@ -17,6 +17,7 @@ export * from "./metrics/accessibility";
 export * from "./metrics/ecosystem-risk";
 export * from "./metrics/satisfaction";
 export * from "./metrics/world-metrics";
+export * from "./operations/scheduler";
 export * from "./population/create-population";
 export * from "./population/lifecycle";
 export * from "./products/open-product";
