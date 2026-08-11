@@ -1,4 +1,6 @@
+export * from "./ai/battle-ai";
 export * from "./battle/effects";
+export * from "./battle/match-engine";
 export * from "./battle/state-check";
 export * from "./battle/targeting";
 export * from "./battle/triggers";

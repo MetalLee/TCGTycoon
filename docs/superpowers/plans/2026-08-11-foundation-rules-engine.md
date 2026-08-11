@@ -830,7 +830,7 @@ export type MatchResult = {
 export function simulateMatch(input: MatchInput): MatchResult;
 ```
 
-- [ ] **Step 1: Write a failing test that two simple legal fixture decks finish a match**
+- [x] **Step 1: Write a failing test that two simple legal fixture decks finish a match**
 
 ```ts
 const result = simulateMatch(fixtureMatchInput(12345n));
@@ -839,13 +839,13 @@ expect(result.turns).toBeGreaterThan(0);
 expect(result.turns).toBeLessThan(100);
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/rules-engine/src/battle/match-engine.test.ts
 ```
 
-- [ ] **Step 3: Implement legal-action enumeration**
+- [x] **Step 3: Implement legal-action enumeration**
 
 The Battle AI may only choose from explicit legal actions:
 
@@ -855,7 +855,7 @@ The Battle AI may only choose from explicit legal actions:
 
 No LLM call or stochastic hidden heuristic outside `DeterministicRng` is allowed.
 
-- [ ] **Step 4: Implement baseline action scoring**
+- [x] **Step 4: Implement baseline action scoring**
 
 Keep MVP Battle AI intentionally simple and deterministic:
 
@@ -866,11 +866,11 @@ Keep MVP Battle AI intentionally simple and deterministic:
 - Value strategy weights card/board preservation more strongly.
 - Ties are broken using stable action ordering then seeded RNG only when necessary.
 
-- [ ] **Step 5: Implement match loop with a safety turn ceiling used only as engine guard**
+- [x] **Step 5: Implement match loop with a safety turn ceiling used only as engine guard**
 
 Fatigue should normally end games. Add a high guard such as 200 turns to throw/flag an invariant failure rather than silently declaring a winner.
 
-- [ ] **Step 6: Run match-engine and rule suites**
+- [x] **Step 6: Run match-engine and rule suites**
 
 ```bash
 pnpm vitest run packages/rules-engine/src/battle/match-engine.test.ts
@@ -878,7 +878,7 @@ pnpm test:rules
 pnpm typecheck
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/rules-engine
