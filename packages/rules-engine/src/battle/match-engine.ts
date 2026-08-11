@@ -1,3 +1,4 @@
+import { RULES_CONFIG } from "@tcgtycoon/balance";
 import type { CardDefinition, CardId, DeckDefinition } from "@tcgtycoon/domain";
 import {
   chooseBattleAction,
@@ -69,6 +70,24 @@ function emptyPlayerStatistics(): MatchPlayerStatistics {
     spellsPlayed: 0,
     attacks: 0,
   };
+}
+
+function appendMainPhaseActionWarning(warnings: MatchWarning[]): void {
+  if (
+    warnings.some(
+      (warning) =>
+        warning.code === "POTENTIAL_INFINITE_COMBO" &&
+        warning.limit === "ACTIONS",
+    )
+  ) {
+    return;
+  }
+
+  warnings.push({
+    code: "POTENTIAL_INFINITE_COMBO",
+    message: `Main phase stopped after reaching the ${RULES_CONFIG.maxActionsPerChain}-action safety limit.`,
+    limit: "ACTIONS",
+  });
 }
 
 function validateStrategy(strategy: BattleStrategy, side: MatchSide): void {
@@ -303,7 +322,21 @@ export function simulateMatch(input: MatchInput): MatchResult {
     const strategy =
       state.activeSide === "A" ? input.strategyA : input.strategyB;
     let turnEnded = false;
+    let turnActionCount = 0;
     while (!turnEnded && state.winner === null) {
+      if (turnActionCount >= RULES_CONFIG.maxActionsPerChain) {
+        appendMainPhaseActionWarning(warnings);
+        executeAction(
+          state,
+          { type: "END_TURN", side: state.activeSide },
+          input.cards,
+          warnings,
+          statistics,
+        );
+        turnEnded = true;
+        break;
+      }
+
       const action = chooseBattleAction({
         state,
         cards: input.cards,
@@ -311,6 +344,7 @@ export function simulateMatch(input: MatchInput): MatchResult {
         decisionSequence: actionCount,
       });
       actionCount += 1;
+      turnActionCount += 1;
       turnEnded = executeAction(
         state,
         action,

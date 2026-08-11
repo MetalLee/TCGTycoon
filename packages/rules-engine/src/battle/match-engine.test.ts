@@ -73,4 +73,47 @@ describe("simulateMatch", () => {
     expect(result.turns).toBeGreaterThan(0);
     expect(result.turns).toBeLessThan(100);
   });
+
+  it("terminates a legal zero-cost self-replacing spell loop", () => {
+    const loopFactionId = factionId("loop");
+    const loopCards: CardDefinition[] = Array.from(
+      { length: 10 },
+      (_, index) => {
+        const id = cardId(`card-loop-${index + 1}`);
+        return {
+          id,
+          name: `Loop ${index + 1}`,
+          type: "SPELL",
+          factionId: loopFactionId,
+          rarity: "COMMON",
+          cost: 0,
+          keywords: [],
+          triggers: [
+            {
+              trigger: "ON_PLAY",
+              conditions: [],
+              effects: [{ type: "CREATE_CARD", cardId: id, amount: 1 }],
+            },
+          ],
+        };
+      },
+    );
+    const loopDeck = fixtureDeck("loop", loopCards);
+    const result = simulateMatch({
+      seed: 99n,
+      deckA: loopDeck,
+      deckB: loopDeck,
+      cards: new Map(loopCards.map((card) => [card.id, card])),
+      strategyA: baselineStrategy,
+      strategyB: baselineStrategy,
+    });
+
+    expect(result.warnings).toContainEqual(
+      expect.objectContaining({
+        code: "POTENTIAL_INFINITE_COMBO",
+        limit: "ACTIONS",
+      }),
+    );
+    expect(result.turns).toBeLessThan(200);
+  });
 });
