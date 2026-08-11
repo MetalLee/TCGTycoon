@@ -285,7 +285,7 @@ git commit -m "feat: run finite internal playtests"
 - Consumes: BanlistVersion, Deck validator, scheduled operations, expansion release order.
 - Produces: `schedulePolicyChange`, `activatePolicyChanges`, `getActiveBanlist`, `applyStandardRotation`, policy-aware deck legality.
 
-- [ ] **Step 1: Write failing policy tests**
+- [x] **Step 1: Write failing policy tests**
 
 Required:
 
@@ -298,21 +298,21 @@ it("sixth Standard set rotates the oldest set", () => {});
 it("rotation does not delete physical cards or Printings", () => {});
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/policies.test.ts
 ```
 
-- [ ] **Step 3: Implement versioned policy snapshots**
+- [x] **Step 3: Implement versioned policy snapshots**
 
 Every change creates a new immutable BanlistVersion with `effectiveDay`, banned IDs and restricted IDs. Matches/tournaments store the active version ID.
 
-- [ ] **Step 4: Re-run Meta after policy effects through normal deck rebuild/match flow**
+- [x] **Step 4: Re-run Meta after policy effects through normal deck rebuild/match flow**
 
 Do not implement `winRate -= X`. Tests should show restricting a 2-copy combo engine changes legal decks and therefore future simulated performance.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/policies.test.ts tests/scenarios/restrict-combo.test.ts
