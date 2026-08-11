@@ -20,3 +20,19 @@ export const POPULATION_CONFIG = {
 } as const;
 
 export const BALANCE_VERSION = "1" as const;
+
+export const DECK_EVOLUTION_CONFIG = {
+  candidateRandomness: 0.25,
+  maxMutationReplacements: 1,
+  adoption: {
+    performanceWeight: 0.3,
+    preferenceWeight: 0.2,
+    socialExposureWeight: 0.1,
+    tournamentPrestigeWeight: 0.1,
+    influencerExposureWeight: 0.1,
+    noveltyWeight: 0.1,
+    deckCostPenaltyWeight: 0.25,
+    missingCardPenaltyWeight: 0.35,
+    complexityPenaltyWeight: 0.1,
+  },
+} as const;

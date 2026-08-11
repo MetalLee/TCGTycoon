@@ -600,7 +600,7 @@ git add packages/sim-core/src/market tests/scenarios/physical-supply-conservatio
 - Consumes: CardDefinitions, player Collections, known cards/decks, Phase 1 deck validator and match engine.
 - Produces: `DeckGenome`, `generateCandidateDecks(player, world, rng)`, `mutateDeck(parent, player, world, rng)`, `calculateAdoptionScore(player, deck, context)`.
 
-- [ ] **Step 1: Write ownership and single-faction failing tests**
+- [x] **Step 1: Write ownership and single-faction failing tests**
 
 Required:
 
@@ -610,14 +610,14 @@ it("never mixes two non-neutral factions", () => {});
 it("mutates only a small bounded number of entries", () => {});
 ```
 
-- [ ] **Step 2: Write adoption-score tests**
+- [x] **Step 2: Write adoption-score tests**
 
 Construct a Competitive and Budget player. For the same strong expensive deck:
 
 - Competitive score should be higher than a weak deck if affordable/owned.
 - Budget player's score should drop materially with high missing-card/price penalty.
 
-- [ ] **Step 3: Implement DeckGenome lineage**
+- [x] **Step 3: Implement DeckGenome lineage**
 
 ```ts
 export type DeckGenome = {
@@ -632,15 +632,15 @@ export type DeckGenome = {
 };
 ```
 
-- [ ] **Step 4: Implement heuristic candidate generation and bounded mutation**
+- [x] **Step 4: Implement heuristic candidate generation and bounded mutation**
 
 Use Card DSL features to derive simple card-role/synergy scores. Do not call LLMs and do not hard-code final named archetypes.
 
-- [ ] **Step 5: Implement KnowledgeState updates**
+- [x] **Step 5: Implement KnowledgeState updates**
 
 A player learns decks/cards only through owned cards, matches, public tournament-style events (Phase 3), or structured social exposure. World Ground Truth does not automatically enter player knowledge.
 
-- [ ] **Step 6: Run focused tests and commit**
+- [x] **Step 6: Run focused tests and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/deck-evolution
