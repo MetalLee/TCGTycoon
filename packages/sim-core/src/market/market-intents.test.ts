@@ -217,4 +217,27 @@ describe("endogenous market supply", () => {
       }),
     );
   });
+
+  it("turns public tournament deck attention into competitive card demand", () => {
+    const world = createMarketWorld();
+    world.players[buyerId]!.deckIds = [];
+    world.players[buyerId]!.knowledge.knownDeckIds = [buyerDeckId];
+
+    refreshEndogenousListings(world);
+    const withoutAttention = generateMarketIntents(world);
+    const withAttention = generateMarketIntents(world, {
+      featuredDeckIds: [buyerDeckId],
+    });
+
+    expect(withoutAttention.buys).not.toContainEqual(
+      expect.objectContaining({ ownerId: buyerId }),
+    );
+    expect(withAttention.buys).toContainEqual(
+      expect.objectContaining({
+        ownerId: buyerId,
+        printingId: marketPrintingId,
+        reason: "COMPETITIVE_NEED",
+      }),
+    );
+  });
 });

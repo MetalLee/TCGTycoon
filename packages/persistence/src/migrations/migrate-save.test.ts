@@ -52,6 +52,14 @@ describe("migrateSave", () => {
     expect(migrated.state.market).toEqual(
       expect.objectContaining({ snapshots: {} }),
     );
+    expect(migrated.state.operations).toEqual({});
+    expect(migrated.state.expansionProjects).toEqual({});
+    expect(migrated.state.operationEvidence).toEqual({
+      playtests: { runs: {}, reports: {} },
+      tournamentAttention: [],
+    });
+    expect(migrated.state.announcementState).toEqual({ announcements: [] });
+    expect(migrated.state.dailyReports).toEqual({});
   });
 
   it("migrates v2 production data to paid-production schema defaults", () => {

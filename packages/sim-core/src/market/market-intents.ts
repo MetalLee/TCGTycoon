@@ -1,6 +1,7 @@
 import { ECONOMY_CONFIG } from "@tcgtycoon/balance";
 import {
   type CardId,
+  type DeckId,
   type PlayerId,
   type PrintingId,
   type WorldState,
@@ -30,6 +31,7 @@ export type MarketIntents = {
 
 export type MarketPolicyContext = {
   bannedCardIds?: readonly CardId[];
+  featuredDeckIds?: readonly DeckId[];
 };
 
 function compareIds(left: string, right: string): number {
@@ -56,6 +58,7 @@ function ownedCardCount(
 function requiredCardCounts(
   world: WorldState,
   playerId: PlayerId,
+  featuredDeckIds: ReadonlySet<DeckId> = new Set(),
 ): Map<CardId, number> {
   const required = new Map<CardId, number>();
   const player = world.players[playerId];
@@ -63,7 +66,13 @@ function requiredCardCounts(
     return required;
   }
 
-  for (const deckId of [...player.deckIds].sort(compareIds)) {
+  const eligibleDeckIds = [
+    ...new Set([
+      ...player.deckIds,
+      ...player.knowledge.knownDeckIds.filter((id) => featuredDeckIds.has(id)),
+    ]),
+  ].sort(compareIds);
+  for (const deckId of eligibleDeckIds) {
     const deck = world.decks[deckId];
     if (deck === undefined) {
       continue;
@@ -115,6 +124,7 @@ function validListings(world: WorldState) {
 function generateCompetitiveBuys(
   world: WorldState,
   bannedCardIds: ReadonlySet<CardId>,
+  featuredDeckIds: ReadonlySet<DeckId>,
 ): BuyIntent[] {
   const listings = validListings(world);
   const buys: BuyIntent[] = [];
@@ -126,7 +136,7 @@ function generateCompetitiveBuys(
       continue;
     }
     let remainingBudget = player.tcgWallet;
-    const required = requiredCardCounts(world, player.id);
+    const required = requiredCardCounts(world, player.id, featuredDeckIds);
     for (const [cardId, requiredQuantity] of [...required.entries()].sort(
       ([left], [right]) => compareIds(left, right),
     )) {
@@ -465,6 +475,7 @@ export function generateMarketIntents(
   const competitiveBuys = generateCompetitiveBuys(
     world,
     new Set(policy.bannedCardIds ?? []),
+    new Set(policy.featuredDeckIds ?? []),
   );
   const collectorBuys = generateCollectorBuys(world, competitiveBuys);
   const listedSells = generateListedSells(world);

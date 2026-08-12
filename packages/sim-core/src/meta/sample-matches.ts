@@ -87,8 +87,12 @@ function dailyMatchTarget(eligiblePlayerCount: number): number {
 export function sampleDailyMatches(
   world: WorldState,
   rng: DeterministicRng,
+  deckEligible: (deck: DeckGenome) => boolean = () => true,
 ): SampledMatchResult[] {
-  const eligible = eligiblePlayers(world);
+  const eligible = eligiblePlayers(world).flatMap((entry) => {
+    const decks = entry.decks.filter(deckEligible);
+    return decks.length === 0 ? [] : [{ ...entry, decks }];
+  });
   const target = dailyMatchTarget(eligible.length);
   const cards = new Map(
     Object.values(world.cards).map((card) => [card.id, card]),

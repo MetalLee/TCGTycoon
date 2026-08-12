@@ -97,7 +97,7 @@ tests/e2e/*
 - Consumes: WorldState/PublisherCommand from Phase 2.
 - Produces: `ExpansionProject`, `OperationProject`, `OperationStatus`, typed schedule records, expanded `PublisherCommand` union and `advanceScheduledOperations(world, day)`.
 
-- [ ] **Step 1: Write failing scheduler tests**
+- [x] **Step 1: Write failing scheduler tests**
 
 Cover:
 
@@ -108,13 +108,13 @@ it("completes an operation exactly on its configured completion day", () => {});
 it("does not progress projects during Setup unless the setup service explicitly requests setup playtest progress", () => {});
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/scheduler.test.ts
 ```
 
-- [ ] **Step 3: Implement explicit project states**
+- [x] **Step 3: Implement explicit project states**
 
 Use:
 
@@ -125,7 +125,7 @@ export type OperationStatus =
 
 `OperationProject` includes stable ID, type, createdDay, optional startDay/completionDay, status and a typed `payload` discriminated by project type.
 
-- [ ] **Step 4: Extend PublisherCommand**
+- [x] **Step 4: Extend PublisherCommand**
 
 Add exact command variants for this phase:
 
@@ -148,7 +148,7 @@ ADJUST_MSRP;
 
 Each command carries only IDs/values; no React objects or callbacks.
 
-- [ ] **Step 5: Run tests/typecheck and commit**
+- [x] **Step 5: Run tests/typecheck and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/scheduler.test.ts
@@ -172,7 +172,7 @@ git commit -m "feat: model scheduled publisher operations"
 - Consumes: Expansion/CardDefinition domain, Card DSL validator, scheduler.
 - Produces: `createExpansion`, `applyCardDraftUpdate`, `advanceExpansionDesign`, `finalizeExpansion`.
 
-- [ ] **Step 1: Write failing pipeline tests**
+- [x] **Step 1: Write failing pipeline tests**
 
 Required cases:
 
@@ -185,13 +185,13 @@ it("refuses gameplay edits after Finalize", () => {});
 it("allows player to Finalize with warnings but never with invalid Card DSL", () => {});
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/expansion-pipeline.test.ts
 ```
 
-- [ ] **Step 3: Implement exact stage model**
+- [x] **Step 3: Implement exact stage model**
 
 ```ts
 export type ExpansionStage =
@@ -200,11 +200,11 @@ export type ExpansionStage =
 
 Card draft state stores `gameplayRevision`, `rulesLocked` and design-slot metadata. Finalized CardDefinitions become canonical immutable rule objects for later Printings.
 
-- [ ] **Step 4: Implement deterministic Launch Setup fixture service**
+- [x] **Step 4: Implement deterministic Launch Setup fixture service**
 
 Fixture helper produces a legal 48-card Launch Set and four legal Starter Decks for offline/E2E tests. This is test/setup content, not a hidden live AI generator.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/expansion-pipeline.test.ts
@@ -229,7 +229,7 @@ git commit -m "feat: implement expansion development pipeline"
 - Consumes: Rules Engine, Deck Evolution search utilities, unreleased expansion snapshot.
 - Produces: `startPlaytest`, `advancePlaytest`, `completePlaytest`, `PlaytestReport`, `PlaytestAnomaly`, revision snapshot validation.
 
-- [ ] **Step 1: Write failing duration/cost/revision tests**
+- [x] **Step 1: Write failing duration/cost/revision tests**
 
 Default config:
 
@@ -241,11 +241,11 @@ deep: { durationDays: 7, matchBudget: 75_000 }
 
 Test that gameplay revision changes mark an old report `STALE`.
 
-- [ ] **Step 2: Write a hidden-combo scenario**
+- [x] **Step 2: Write a hidden-combo scenario**
 
 A Deep Test must search more candidate decks/matches than Quick and should discover the prepared combo in the deterministic fixture where Quick does not, without reading a “hidden combo truth” flag.
 
-- [ ] **Step 3: Implement test search modes**
+- [x] **Step 3: Implement test search modes**
 
 Report only discovered evidence:
 
@@ -260,7 +260,7 @@ Report only discovered evidence:
 
 Never add an undiscovered hidden issue field.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/playtest.test.ts
@@ -285,7 +285,7 @@ git commit -m "feat: run finite internal playtests"
 - Consumes: BanlistVersion, Deck validator, scheduled operations, expansion release order.
 - Produces: `schedulePolicyChange`, `activatePolicyChanges`, `getActiveBanlist`, `applyStandardRotation`, policy-aware deck legality.
 
-- [ ] **Step 1: Write failing policy tests**
+- [x] **Step 1: Write failing policy tests**
 
 Required:
 
@@ -298,21 +298,21 @@ it("sixth Standard set rotates the oldest set", () => {});
 it("rotation does not delete physical cards or Printings", () => {});
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/policies.test.ts
 ```
 
-- [ ] **Step 3: Implement versioned policy snapshots**
+- [x] **Step 3: Implement versioned policy snapshots**
 
 Every change creates a new immutable BanlistVersion with `effectiveDay`, banned IDs and restricted IDs. Matches/tournaments store the active version ID.
 
-- [ ] **Step 4: Re-run Meta after policy effects through normal deck rebuild/match flow**
+- [x] **Step 4: Re-run Meta after policy effects through normal deck rebuild/match flow**
 
 Do not implement `winRate -= X`. Tests should show restricting a 2-copy combo engine changes legal decks and therefore future simulated performance.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/policies.test.ts tests/scenarios/restrict-combo.test.ts
@@ -337,7 +337,7 @@ git commit -m "feat: version standard ban and rotation policy"
 - Consumes: persistent players, owned legal decks, Rules Engine, active BanlistVersion.
 - Produces: tournament registration, bracket/match results, Top 8, winner, public deck-list knowledge events and structured attention events.
 
-- [ ] **Step 1: Write failing preset/registration tests**
+- [x] **Step 1: Write failing preset/registration tests**
 
 Defaults:
 
@@ -349,15 +349,15 @@ MAJOR: { maxPlayers: 512, prepDays: 10 }
 
 Assert players without legal owned decks cannot register.
 
-- [ ] **Step 2: Write tournament-shock scenario**
+- [x] **Step 2: Write tournament-shock scenario**
 
 A cold deck with low public knowledge wins a deterministic Regional/Major. Assert the tournament result creates a public knowledge event and later adoption/demand changes; do not directly set its usage rate.
 
-- [ ] **Step 3: Implement deterministic pairings/bracket**
+- [x] **Step 3: Implement deterministic pairings/bracket**
 
 Use stable seeded pairing order. Persist important match action logs for final and designated notable upsets.
 
-- [ ] **Step 4: Verify/commit**
+- [x] **Step 4: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/tournaments.test.ts
@@ -384,15 +384,15 @@ git commit -m "feat: simulate official tournaments"
 - Consumes: cohorts, product availability, operation scheduler, WorldEvent model.
 - Produces: five campaign types, daily exposure deltas, `OfficialAnnouncement`, finite structured `Commitment` types and fulfillment/breach events.
 
-- [ ] **Step 1: Write failing campaign tests**
+- [x] **Step 1: Write failing campaign tests**
 
 Campaign duration choices: 3, 7, 14 days. Assert campaign increases relevant exposure but never directly mutates Active Players.
 
-- [ ] **Step 2: Write stockout scenario**
+- [x] **Step 2: Write stockout scenario**
 
 New Player Campaign + all Starter products out of stock should increase Interested/awareness while Interested -> New conversion remains constrained.
 
-- [ ] **Step 3: Implement official announcement model**
+- [x] **Step 3: Implement official announcement model**
 
 Supported topics:
 
@@ -407,11 +407,11 @@ Supported topics:
 
 Free-form text is presentation data. Structured bound action/commitment drives future Trust evaluation.
 
-- [ ] **Step 4: Implement communication saturation as BalanceConfig attention decay**
+- [x] **Step 4: Implement communication saturation as BalanceConfig attention decay**
 
 Repeated low-impact announcements reduce incremental attention; they do not generate free Hype.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/sim-core/src/operations/marketing.test.ts tests/scenarios/marketing-stockout.test.ts
@@ -437,7 +437,7 @@ git commit -m "feat: model marketing and official communication"
 - Consumes: Tasks 1–6 plus Phase 2 subsystems.
 - Produces: complete deterministic daily operations order matching the authoritative spec.
 
-- [ ] **Step 1: Write failing multi-operation ordering test**
+- [x] **Step 1: Write failing multi-operation ordering test**
 
 Fixture day contains:
 
@@ -450,7 +450,7 @@ Fixture day contains:
 
 Assert all effects occur in the approved order and the resulting state is deterministic.
 
-- [ ] **Step 2: Integrate exact order**
+- [x] **Step 2: Integrate exact order**
 
 The function must now explicitly execute:
 
@@ -470,11 +470,11 @@ cash
 invariants/risk/game over/report
 ```
 
-- [ ] **Step 3: Add Milestones**
+- [x] **Step 3: Add Milestones**
 
 Record durable structured milestones such as first 1k players, first ban, first Major winner, first card above configured price milestones and Death-Spiral recovery. Milestones never modify outcomes themselves.
 
-- [ ] **Step 4: Verify determinism**
+- [x] **Step 4: Verify determinism**
 
 ```bash
 pnpm vitest run packages/sim-core/src/day/publisher-day.test.ts tests/determinism/publisher-world-determinism.test.ts
@@ -482,7 +482,7 @@ pnpm test:scenarios
 pnpm typecheck
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/sim-core/src/day packages/sim-core/src/history tests/determinism
@@ -513,11 +513,11 @@ git commit -m "feat: integrate publisher operations into day loop"
 - Consumes: no WorldState mutation yet.
 - Produces: Web app routes matching the spec and `UiStore` containing presentation-only state.
 
-- [ ] **Step 1: Add app dependencies**
+- [x] **Step 1: Add app dependencies**
 
 Use workspace commands to add React, React DOM, React Router, Zustand, Tailwind/Vite integration and testing-library dependencies. Use current compatible releases and commit the lockfile.
 
-- [ ] **Step 2: Write failing route smoke test**
+- [x] **Step 2: Write failing route smoke test**
 
 Assert routes exist for:
 
@@ -544,17 +544,17 @@ Assert routes exist for:
 /settings
 ```
 
-- [ ] **Step 3: Run and verify failure**
+- [x] **Step 3: Run and verify failure**
 
 ```bash
 pnpm --filter @tcgtycoon/game test -- router.test.tsx
 ```
 
-- [ ] **Step 4: Implement app shell and route placeholders**
+- [x] **Step 4: Implement app shell and route placeholders**
 
 `UiStore` may hold sidebar collapsed state, active table view and theme; it must not contain canonical cash/cards/players/world state.
 
-- [ ] **Step 5: Add root scripts**
+- [x] **Step 5: Add root scripts**
 
 ```json
 {
@@ -563,7 +563,7 @@ pnpm --filter @tcgtycoon/game test -- router.test.tsx
 }
 ```
 
-- [ ] **Step 6: Verify/commit**
+- [x] **Step 6: Verify/commit**
 
 ```bash
 pnpm typecheck
@@ -591,7 +591,7 @@ git commit -m "feat: scaffold publisher web application"
 - Consumes: `simulateDay`, WorldState, PublisherCommand, SaveRepository contract.
 - Produces: `GameSessionController.load`, `queueCommand`, `discardPendingCommand`, `endDay`, `subscribe`; worker protocol `SIMULATE_DAY_REQUEST|PROGRESS|RESULT|ERROR`.
 
-- [ ] **Step 1: Write failing atomic End Day test**
+- [x] **Step 1: Write failing atomic End Day test**
 
 With a fake worker/repository:
 
@@ -599,15 +599,15 @@ With a fake worker/repository:
 - save failure leaves current state/day unchanged,
 - pending commands clear only after successful commit.
 
-- [ ] **Step 2: Implement the worker protocol**
+- [x] **Step 2: Implement the worker protocol**
 
 Worker receives a structured clone of canonical state/commands/config and returns deterministic result. No AI/network imports.
 
-- [ ] **Step 3: Implement controller as the only mutable application-session boundary**
+- [x] **Step 3: Implement controller as the only mutable application-session boundary**
 
 React pages read snapshots and dispatch typed commands. Do not expose `setWorldState()` to feature components.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 ```bash
 pnpm --filter @tcgtycoon/game test -- GameSessionController.test.ts
@@ -639,15 +639,15 @@ git commit -m "feat: run atomic end day in simulation worker"
 - Consumes: SaveRepository contract, deterministic Launch fixture/manual structured card editor paths.
 - Produces: Web `SaveRepository`, multiple save slots, Setup Phase service ending at Day 1 launch.
 
-- [ ] **Step 1: Add Dexie and fake IndexedDB test dependency**
+- [x] **Step 1: Add Dexie and fake IndexedDB test dependency**
 
 Use `fake-indexeddb` for Vitest adapter tests.
 
-- [ ] **Step 2: Write failing save repository tests**
+- [x] **Step 2: Write failing save repository tests**
 
 Cover list/save/load/delete and current+previous autosave snapshots. Persist canonical envelopes, not React/UI state.
 
-- [ ] **Step 3: Write Setup service test**
+- [x] **Step 3: Write Setup service test**
 
 Offline deterministic Setup must create:
 
@@ -657,11 +657,11 @@ Offline deterministic Setup must create:
 - selected initial Print Runs/products,
 - `status = LIVE`, `day = 1` after Launch.
 
-- [ ] **Step 4: Implement wizard steps**
+- [x] **Step 4: Implement wizard steps**
 
 The wizard may use manual/fixture card completion in Phase 3; AI buttons are disabled/Mock until Phase 4. Player can edit structured cards.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/persistence/src/indexeddb apps/game/src/features/new-game/setup-service.test.ts
@@ -695,23 +695,23 @@ git commit -m "feat: create web saves and launch setup flow"
 - Consumes: WorldState/report/session controller.
 - Produces: pure selectors `selectDashboardView(world)`, UI semantics and End Day warnings/Proceed Anyway flow.
 
-- [ ] **Step 1: Write selector tests for Health Overview and Current Drivers**
+- [x] **Step 1: Write selector tests for Health Overview and Current Drivers**
 
 Assert selector returns Active Players, Hype, Collector Heat, Meta Health, Brand Trust, Cash, conservative runway and top positive/negative contributors without mutating world.
 
-- [ ] **Step 2: Implement shell with required primary nav/header**
+- [x] **Step 2: Implement shell with required primary nav/header**
 
 Primary nav: Dashboard, Cards, Expansions, Playtest, Meta, Market, Community, Tournaments, Operations. Header includes Players, Hype, Meta, Trust, Cash, Day and End Day.
 
-- [ ] **Step 3: Implement End Day review**
+- [x] **Step 3: Implement End Day review**
 
 Warnings may mention low stock, critical Meta, completed Playtest and near tournament, but `Proceed Anyway` always exists unless simulation is currently running.
 
-- [ ] **Step 4: Implement Daily Report**
+- [x] **Step 4: Implement Daily Report**
 
 Render 3–6 sorted notable stories plus metric deltas. Each story has entity-navigation metadata; do not create dead text cards.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm --filter @tcgtycoon/game test -- dashboard EndDayDialog
@@ -745,23 +745,23 @@ git commit -m "feat: add publisher dashboard and daily report"
 - Consumes: card/expansion/playtest selectors and GameSession queued commands.
 - Produces: full structured manual design path for offline MVP.
 
-- [ ] **Step 1: Write Card Studio command test**
+- [x] **Step 1: Write Card Studio command test**
 
 Editing cost/effect must queue `UPDATE_CARD_DRAFT`; component must never alter session snapshot directly. Rules-locked card disables gameplay editor.
 
-- [ ] **Step 2: Implement Card Database/Detail tabs**
+- [x] **Step 2: Implement Card Database/Detail tabs**
 
 Overview, Performance, Market, History. Known Synergy data only comes from public knowledge selectors.
 
-- [ ] **Step 3: Implement Set Review**
+- [x] **Step 3: Implement Set Review**
 
 Table supports accept, edit, delete/regenerate placeholder/manual replacement and bulk low-risk acceptance where legal.
 
-- [ ] **Step 4: Implement Playtest Lab/Report**
+- [x] **Step 4: Implement Playtest Lab/Report**
 
 Expose Quick/Standard/Deep cost/duration, report freshness, risks, Decks/Cards/Matchups/Anomalies/Replays tabs. Wording must say “not discovered” rather than “does not exist.”
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm --filter @tcgtycoon/game test -- CardStudio SetReview
@@ -800,31 +800,31 @@ git commit -m "feat: add card and expansion workbench"
 - Consumes: canonical selectors and PublisherCommands.
 - Produces: remaining publisher workflows and entity cross-navigation.
 
-- [ ] **Step 1: Write Meta diagnostic tests**
+- [x] **Step 1: Write Meta diagnostic tests**
 
 Assert low-confidence decks render sample confidence and Meta Health explanations include actual contributors instead of a Tier-list-only view.
 
-- [ ] **Step 2: Implement deterministic MatchReplay from persisted Action Log**
+- [x] **Step 2: Implement deterministic MatchReplay from persisted Action Log**
 
 Support play/pause/step and 1x/2x/4x presentation speed. Playback does not re-run Battle AI.
 
-- [ ] **Step 3: Implement Market**
+- [x] **Step 3: Implement Market**
 
 Show Primary vs Secondary views, product inventory/sales/Pack EV, Printing price/volume/supply/history. No Buy/Sell action exists for the publisher.
 
-- [ ] **Step 4: Implement Community and Agent Profile**
+- [x] **Step 4: Implement Community and Agent Profile**
 
 Phase 3 uses deterministic/template post text from structured CommunityPostIntents. Posts navigate to referenced cards/decks/tournaments/market objects.
 
-- [ ] **Step 5: Implement Tournament and Operations flows**
+- [x] **Step 5: Implement Tournament and Operations flows**
 
 Creation forms queue commands; Calendar shows next 30 days and Policies shows active Banlist/Rotation. Policy dialog displays current usage/win-rate/price/tournament context without recommending an “optimal” choice.
 
-- [ ] **Step 6: Implement Ctrl/Cmd+K command palette**
+- [x] **Step 6: Implement Ctrl/Cmd+K command palette**
 
 Search cards, expansions, agents, decks and tournaments using local selectors/index. No remote search.
 
-- [ ] **Step 7: Verify/commit**
+- [x] **Step 7: Verify/commit**
 
 ```bash
 pnpm --filter @tcgtycoon/game test -- MetaOverview PolicyDialog
@@ -846,15 +846,39 @@ git commit -m "feat: complete publisher workbench views"
 - Create: `tests/e2e/expansion-release.spec.ts`
 - Create: `tests/e2e/tournament-shock.spec.ts`
 - Create: `tests/e2e/end-day-save.spec.ts`
+- Create: `tests/e2e/helpers.ts`
 - Modify: root `package.json`
+- Modify: `pnpm-lock.yaml`
 - Modify: `.github/workflows/ci.yml`
+- Create: `vitest.config.mts` to keep Playwright specs out of the Vitest suite.
+- Modify: `apps/game/src/app/GameApp.tsx`
+- Modify: `apps/game/src/app/router.tsx`
+- Modify: `apps/game/src/app/game-session/GameSessionController.ts`
+- Modify: `apps/game/src/components/layout/AppShell.tsx`
+- Modify: `apps/game/src/features/new-game/setup-service.ts`
+- Modify: `apps/game/src/pages/NewGamePage.tsx`
+- Modify: `apps/game/src/pages/PlaytestPage.tsx`
+- Modify: `apps/game/src/pages/ExpansionDetailPage.tsx`
+- Modify: matching publisher workflow pages/components required by the six flows.
+- Modify: `packages/domain/src/world.ts`
+- Modify: `packages/domain/src/expansions.ts`
+- Modify: `packages/sim-core/src/day/simulate-day.ts`
+- Modify: `packages/sim-core/src/day/world-invariants.ts`
+- Modify: `packages/sim-core/src/operations/expansion-pipeline.ts`
+- Modify: `packages/persistence/src/migrations/*`
+- Modify: matching persistence repository tests for the current schema.
+- Test: focused session-bootstrap, expansion-command and save-migration coverage.
 
 **Interfaces:**
 
 - Consumes: complete Phase 3 Web app.
 - Produces: six required user-flow regressions and `pnpm test:e2e`.
+- Amendment authorized 2026-08-12: complete the missing production session/bootstrap
+  and publisher-command wiring exposed by the first red E2E. Persist canonical
+  expansion-project state with an explicit migration so the required expansion
+  flow can use the public UI rather than direct IndexedDB mutation.
 
-- [ ] **Step 1: Add Playwright and root scripts**
+- [x] **Step 1: Add Playwright and root scripts**
 
 ```json
 {
@@ -865,7 +889,7 @@ git commit -m "feat: complete publisher workbench views"
 
 Use deterministic seeded fixture/new-game shortcuts only through supported application setup APIs, not direct mutation of IndexedDB internals inside feature assertions.
 
-- [ ] **Step 2: Implement all six required E2E flows**
+- [x] **Step 2: Implement all six required E2E flows**
 
 Each spec asserts final user-visible and canonical effects, not only button presence.
 
@@ -875,7 +899,7 @@ Examples:
 - After policy command and effective day, affected deck legality changes.
 - After tournament completion, winning deck appears in results and subsequent public knowledge.
 
-- [ ] **Step 3: Run complete offline Phase 3 gate**
+- [x] **Step 3: Run complete offline Phase 3 gate**
 
 Set AI mode explicitly offline/mock:
 
@@ -890,7 +914,7 @@ AI_MODE=mock pnpm build:web
 
 Expected: all green with no external AI/API requirement.
 
-- [ ] **Step 4: Run a 100-day headless regression after UI/operations work**
+- [x] **Step 4: Run a 100-day headless regression after UI/operations work**
 
 ```bash
 pnpm sim --days 100 --seed 12345 --scenario balanced-world
@@ -898,7 +922,7 @@ pnpm sim --days 100 --seed 12345 --scenario balanced-world
 
 Compare state hash with a second identical run.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/e2e apps/game/playwright.config.ts package.json .github/workflows/ci.yml
@@ -923,3 +947,45 @@ Before Phase 4:
 10. FACT, ESTIMATE and OPINION are visually/semantically distinguishable.
 11. The six E2E flows pass with `AI_MODE=mock`.
 12. The core Web MVP is already a complete playable game before generative AI/Tauri are added.
+
+---
+
+## Phase 3B completion-remediation addendum (2026-08-12)
+
+The completion review found that the green gate did not exercise several required
+production integrations. Phase 3B is not complete until all items below are green.
+
+### Persistence and interfaces
+
+- Increment the persisted schema and migrate existing saves without discarding data.
+- Persist active `PlaytestRun`s, completed `PlaytestReport`s, and official
+  `AnnouncementState` in canonical `WorldState`.
+- `PUBLISH_ANNOUNCEMENT` may carry a typed structured commitment (`type`,
+  `subjectId`, and `dueDay`).
+- `GameSessionController.endDay()` returns the committed `DaySimulationResult` so
+  the shell can navigate to `/daily-report/:day` with the report and notable events
+  only after the atomic save succeeds.
+
+### Deterministic runtime integration
+
+- Advance and complete persisted playtests in the day loop; retain anomaly replay
+  action logs and mark prior reports stale after a gameplay revision.
+- Apply Ban/Restrict and Standard rotation legality to every deck used by normal
+  matches, mutations, and tournaments. Pass banned card IDs into competitive market
+  intent generation.
+- Feed tournament matches into Meta aggregation and persist tournament attention so
+  it affects next-day adoption/market inputs without changing match win rates.
+- Persist announcements, evaluate commitments every day, and emit fulfillment or
+  breach trust events exactly once.
+
+### Web acceptance
+
+- Set Review actions and Card Studio queue typed `PublisherCommand`s; no advertised
+  action may be wired to a no-op.
+- FACT, ESTIMATE, and OPINION semantics are used on actual user-facing content.
+- History and Settings are functional pages, not placeholders.
+- The six E2E specs must traverse the exact six journeys in the roadmap and assert
+  their canonical consequences, not reduced substitutes.
+- A deterministic 100-day fixture exercises expansion, playtest, finalize, print,
+  campaign, tournament, announcement, and policy commands in addition to stock
+  replenishment.

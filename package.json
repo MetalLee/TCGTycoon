@@ -9,11 +9,15 @@
     "test": "vitest run",
     "test:rules": "vitest run packages/rules-engine packages/domain",
     "test:scenarios": "vitest run tests/scenarios",
+    "test:e2e": "playwright test --config apps/game/playwright.config.ts",
     "sim": "tsx scripts/simulate-days.ts",
-    "sim:match": "tsx scripts/simulate-match.ts"
+    "sim:match": "tsx scripts/simulate-match.ts",
+    "dev:web": "pnpm --filter @tcgtycoon/game dev",
+    "build:web": "pnpm --filter @tcgtycoon/game build"
   },
   "devDependencies": {
     "@eslint/js": "latest",
+    "@playwright/test": "^1.62.1",
     "@types/node": "latest",
     "eslint": "latest",
     "prettier": "latest",
