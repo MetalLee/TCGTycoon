@@ -1,0 +1,11 @@
+{
+  "name": "@tcgtycoon/ai-contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@tcgtycoon/domain": "workspace:*",
+    "zod": "^4.4.3"
+  }
+}
