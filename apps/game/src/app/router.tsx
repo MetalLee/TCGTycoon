@@ -6,6 +6,7 @@ import {
   type RouteObject,
 } from "react-router";
 import { PlaceholderPage } from "../pages/PlaceholderPage";
+import { NewGamePage } from "../pages/NewGamePage";
 import { useUiStore } from "../state/ui-store";
 
 const navigation = [
@@ -80,7 +81,7 @@ export const appRoutes: RouteObject[] = [
     element: <AppShell />,
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
-      page("new-game", "New Game"),
+      { path: "new-game", element: <NewGamePage /> },
       page("dashboard", "Dashboard"),
       page("cards", "Cards"),
       page("cards/:cardId", "Card Details"),

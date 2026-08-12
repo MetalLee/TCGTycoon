@@ -639,15 +639,15 @@ git commit -m "feat: run atomic end day in simulation worker"
 - Consumes: SaveRepository contract, deterministic Launch fixture/manual structured card editor paths.
 - Produces: Web `SaveRepository`, multiple save slots, Setup Phase service ending at Day 1 launch.
 
-- [ ] **Step 1: Add Dexie and fake IndexedDB test dependency**
+- [x] **Step 1: Add Dexie and fake IndexedDB test dependency**
 
 Use `fake-indexeddb` for Vitest adapter tests.
 
-- [ ] **Step 2: Write failing save repository tests**
+- [x] **Step 2: Write failing save repository tests**
 
 Cover list/save/load/delete and current+previous autosave snapshots. Persist canonical envelopes, not React/UI state.
 
-- [ ] **Step 3: Write Setup service test**
+- [x] **Step 3: Write Setup service test**
 
 Offline deterministic Setup must create:
 
@@ -657,11 +657,11 @@ Offline deterministic Setup must create:
 - selected initial Print Runs/products,
 - `status = LIVE`, `day = 1` after Launch.
 
-- [ ] **Step 4: Implement wizard steps**
+- [x] **Step 4: Implement wizard steps**
 
 The wizard may use manual/fixture card completion in Phase 3; AI buttons are disabled/Mock until Phase 4. Player can edit structured cards.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/persistence/src/indexeddb apps/game/src/features/new-game/setup-service.test.ts
