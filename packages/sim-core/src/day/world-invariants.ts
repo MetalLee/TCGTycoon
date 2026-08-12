@@ -157,6 +157,7 @@ export function validateWorldInvariants(
   validateEntityMap(world.players, "players");
   validateEntityMap(world.agents, "agents");
   validateEntityMap(world.decks, "decks");
+  validateEntityMap(world.operations ?? {}, "operations");
 
   requireFinite(world.cash.balance, "cash.balance");
   validateFiniteTree(world.metrics, "metrics");
@@ -355,6 +356,100 @@ export function validateWorldInvariants(
     world.history.events.map((event) => event.id),
     "history.events",
   );
+
+  for (const operationId of Object.keys(world.operations ?? {}).sort(
+    compareIds,
+  )) {
+    const operation = world.operations![operationId]!;
+    requireQuantity(
+      operation.createdDay,
+      `operations.${operationId}.createdDay`,
+    );
+    requireQuantity(
+      operation.progressDays,
+      `operations.${operationId}.progressDays`,
+    );
+    if (operation.startDay !== undefined) {
+      requireQuantity(operation.startDay, `operations.${operationId}.startDay`);
+    }
+    if (operation.completionDay !== undefined) {
+      requireQuantity(
+        operation.completionDay,
+        `operations.${operationId}.completionDay`,
+      );
+    }
+    if (operation.lastAdvancedDay !== undefined) {
+      requireQuantity(
+        operation.lastAdvancedDay,
+        `operations.${operationId}.lastAdvancedDay`,
+      );
+    }
+    switch (operation.type) {
+      case "EXPANSION_DESIGN":
+      case "PLAYTEST":
+        requireReference(
+          world.expansions[operation.payload.expansionId] !== undefined,
+          `operations.${operationId}.payload.expansionId`,
+          operation.payload.expansionId,
+        );
+        break;
+      case "PRINT_RUN":
+        requireReference(
+          world.printRuns[operation.payload.printRunId] !== undefined,
+          `operations.${operationId}.payload.printRunId`,
+          operation.payload.printRunId,
+        );
+        requireReference(
+          world.products[operation.payload.productId] !== undefined,
+          `operations.${operationId}.payload.productId`,
+          operation.payload.productId,
+        );
+        break;
+      case "RELEASE":
+      case "MSRP_ADJUSTMENT":
+        requireReference(
+          world.products[operation.payload.productId] !== undefined,
+          `operations.${operationId}.payload.productId`,
+          operation.payload.productId,
+        );
+        break;
+      case "POLICY_CHANGE":
+        requireReference(
+          world.cards[operation.payload.cardId] !== undefined,
+          `operations.${operationId}.payload.cardId`,
+          operation.payload.cardId,
+        );
+        break;
+      case "TOURNAMENT": {
+        const scheduled = world.history.events.some((event) => {
+          if (
+            !event.type.startsWith("TOURNAMENT_SCHEDULED_") ||
+            event.day !== operation.createdDay ||
+            event.context?.reason === undefined
+          ) {
+            return false;
+          }
+          try {
+            return (
+              (JSON.parse(event.context.reason) as { tournamentId?: string })
+                .tournamentId === operation.payload.tournamentId
+            );
+          } catch {
+            return false;
+          }
+        });
+        requireReference(
+          scheduled,
+          `operations.${operationId}.payload.tournamentId`,
+          operation.payload.tournamentId,
+        );
+        break;
+      }
+      case "CAMPAIGN":
+      case "ANNOUNCEMENT":
+        break;
+    }
+  }
 
   for (const printingId of Object.keys(world.printings).sort(compareIds)) {
     const printing = world.printings[printingId]!;

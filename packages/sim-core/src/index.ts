@@ -8,6 +8,7 @@ export * from "./deck-evolution/deck-builder";
 export * from "./deck-evolution/deck-genome";
 export { appendCashEntry } from "./economy/cash-ledger";
 export * from "./history/daily-report";
+export * from "./history/milestones";
 export * from "./market/call-auction";
 export * from "./market/deck-cost";
 export * from "./market/market-intents";

@@ -437,7 +437,7 @@ git commit -m "feat: model marketing and official communication"
 - Consumes: Tasks 1–6 plus Phase 2 subsystems.
 - Produces: complete deterministic daily operations order matching the authoritative spec.
 
-- [ ] **Step 1: Write failing multi-operation ordering test**
+- [x] **Step 1: Write failing multi-operation ordering test**
 
 Fixture day contains:
 
@@ -450,7 +450,7 @@ Fixture day contains:
 
 Assert all effects occur in the approved order and the resulting state is deterministic.
 
-- [ ] **Step 2: Integrate exact order**
+- [x] **Step 2: Integrate exact order**
 
 The function must now explicitly execute:
 
@@ -470,11 +470,11 @@ cash
 invariants/risk/game over/report
 ```
 
-- [ ] **Step 3: Add Milestones**
+- [x] **Step 3: Add Milestones**
 
 Record durable structured milestones such as first 1k players, first ban, first Major winner, first card above configured price milestones and Death-Spiral recovery. Milestones never modify outcomes themselves.
 
-- [ ] **Step 4: Verify determinism**
+- [x] **Step 4: Verify determinism**
 
 ```bash
 pnpm vitest run packages/sim-core/src/day/publisher-day.test.ts tests/determinism/publisher-world-determinism.test.ts
@@ -482,7 +482,7 @@ pnpm test:scenarios
 pnpm typecheck
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/sim-core/src/day packages/sim-core/src/history tests/determinism
