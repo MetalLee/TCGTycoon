@@ -678,7 +678,7 @@ git commit -m "test: lock web desktop simulation parity"
 - Consumes: Phase 2/3 headless simulator, migrations and Publisher Bot.
 - Produces: `pnpm test:long-run` and multi-seed balance smoke runner.
 
-- [ ] **Step 1: Add test scripts**
+- [x] **Step 1: Add test scripts**
 
 ```json
 {
@@ -688,19 +688,19 @@ git commit -m "test: lock web desktop simulation parity"
 }
 ```
 
-- [ ] **Step 2: Implement 1000/3000-day invariant tests**
+- [x] **Step 2: Implement 1000/3000-day invariant tests**
 
 Tests assert finite values, valid references, no negative supply, valid day progression and no stuck simulation. Do not assert one exact player count; assert configured sane bounds/trends for prepared scenarios.
 
-- [ ] **Step 3: Implement 100-seed smoke runner**
+- [x] **Step 3: Implement 100-seed smoke runner**
 
 Summarize distributions for lifespan, max Active Players, ending Cash, number of expansions/bans, top deck dominance and invalid/crashed seeds. Exit nonzero if any invariant/crash occurs.
 
-- [ ] **Step 4: Add migration fixture regression**
+- [x] **Step 4: Add migration fixture regression**
 
 Keep at least one committed old-schema SaveEnvelope fixture once schema v2 exists; until then round-trip the current fixture and assert the migration API is invoked.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 pnpm test:long-run
