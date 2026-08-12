@@ -695,23 +695,23 @@ git commit -m "feat: create web saves and launch setup flow"
 - Consumes: WorldState/report/session controller.
 - Produces: pure selectors `selectDashboardView(world)`, UI semantics and End Day warnings/Proceed Anyway flow.
 
-- [ ] **Step 1: Write selector tests for Health Overview and Current Drivers**
+- [x] **Step 1: Write selector tests for Health Overview and Current Drivers**
 
 Assert selector returns Active Players, Hype, Collector Heat, Meta Health, Brand Trust, Cash, conservative runway and top positive/negative contributors without mutating world.
 
-- [ ] **Step 2: Implement shell with required primary nav/header**
+- [x] **Step 2: Implement shell with required primary nav/header**
 
 Primary nav: Dashboard, Cards, Expansions, Playtest, Meta, Market, Community, Tournaments, Operations. Header includes Players, Hype, Meta, Trust, Cash, Day and End Day.
 
-- [ ] **Step 3: Implement End Day review**
+- [x] **Step 3: Implement End Day review**
 
 Warnings may mention low stock, critical Meta, completed Playtest and near tournament, but `Proceed Anyway` always exists unless simulation is currently running.
 
-- [ ] **Step 4: Implement Daily Report**
+- [x] **Step 4: Implement Daily Report**
 
 Render 3–6 sorted notable stories plus metric deltas. Each story has entity-navigation metadata; do not create dead text cards.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm --filter @tcgtycoon/game test -- dashboard EndDayDialog

@@ -1,76 +1,9 @@
-import {
-  createBrowserRouter,
-  Navigate,
-  NavLink,
-  Outlet,
-  type RouteObject,
-} from "react-router";
+import { createBrowserRouter, Navigate, type RouteObject } from "react-router";
+import { AppShell } from "../components/layout/AppShell";
+import { DailyReportPage } from "../pages/DailyReportPage";
+import { DashboardPage } from "../pages/DashboardPage";
 import { PlaceholderPage } from "../pages/PlaceholderPage";
 import { NewGamePage } from "../pages/NewGamePage";
-import { useUiStore } from "../state/ui-store";
-
-const navigation = [
-  ["/dashboard", "Dashboard"],
-  ["/cards", "Cards"],
-  ["/expansions", "Expansions"],
-  ["/meta", "Meta"],
-  ["/market", "Market"],
-  ["/community", "Community"],
-  ["/tournaments", "Tournaments"],
-  ["/operations", "Operations"],
-  ["/history", "History"],
-  ["/settings", "Settings"],
-] as const;
-
-function AppShell() {
-  const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed);
-  const toggleSidebar = useUiStore((state) => state.toggleSidebar);
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <aside
-        aria-label="Publisher navigation"
-        className={`fixed inset-y-0 left-0 border-r border-slate-800 bg-slate-900 p-4 transition-[width] ${sidebarCollapsed ? "w-20" : "w-64"}`}
-      >
-        <div className="mb-6 flex items-center justify-between gap-2">
-          <span className={sidebarCollapsed ? "sr-only" : "font-semibold"}>
-            TCGTycoon
-          </span>
-          <button
-            type="button"
-            aria-label={
-              sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
-            }
-            className="rounded border border-slate-700 px-2 py-1"
-            onClick={toggleSidebar}
-          >
-            {sidebarCollapsed ? ">" : "<"}
-          </button>
-        </div>
-        <nav className="space-y-1">
-          {navigation.map(([to, label]) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `block rounded px-3 py-2 text-sm ${
-                  isActive
-                    ? "bg-emerald-500/15 text-emerald-300"
-                    : "text-slate-300 hover:bg-slate-800"
-                }`
-              }
-            >
-              {sidebarCollapsed ? label.slice(0, 1) : label}
-            </NavLink>
-          ))}
-        </nav>
-      </aside>
-      <main className={sidebarCollapsed ? "ml-20 p-8" : "ml-64 p-8"}>
-        <Outlet />
-      </main>
-    </div>
-  );
-}
 
 function page(path: string, title: string): RouteObject {
   return { path, element: <PlaceholderPage title={title} /> };
@@ -82,11 +15,12 @@ export const appRoutes: RouteObject[] = [
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: "new-game", element: <NewGamePage /> },
-      page("dashboard", "Dashboard"),
+      { path: "dashboard", element: <DashboardPage /> },
       page("cards", "Cards"),
       page("cards/:cardId", "Card Details"),
       page("expansions", "Expansions"),
       page("expansions/:setId", "Expansion Details"),
+      page("playtest", "Playtest"),
       page("playtest/:reportId", "Playtest Report"),
       page("meta", "Meta"),
       page("meta/decks/:deckId", "Deck Details"),
@@ -98,7 +32,7 @@ export const appRoutes: RouteObject[] = [
       page("tournaments", "Tournaments"),
       page("tournaments/:tournamentId", "Tournament Details"),
       page("operations", "Operations"),
-      page("daily-report/:day", "Daily Report"),
+      { path: "daily-report/:day", element: <DailyReportPage /> },
       page("history", "History"),
       page("settings", "Settings"),
       page("*", "Not Found"),
