@@ -4,12 +4,23 @@ import { CardDetailPage } from "../pages/CardDetailPage";
 import { CardsPage } from "../pages/CardsPage";
 import { DailyReportPage } from "../pages/DailyReportPage";
 import { DashboardPage } from "../pages/DashboardPage";
+import { DeckDetailPage } from "../pages/DeckDetailPage";
 import { ExpansionDetailPage } from "../pages/ExpansionDetailPage";
 import { ExpansionsPage } from "../pages/ExpansionsPage";
+import { AgentProfilePage } from "../pages/AgentProfilePage";
+import { CommunityPage } from "../pages/CommunityPage";
+import { MarketPage } from "../pages/MarketPage";
+import { MatchReplayPage } from "../pages/MatchReplayPage";
+import { MetaPage } from "../pages/MetaPage";
+import { OperationsPage } from "../pages/OperationsPage";
 import { PlaceholderPage } from "../pages/PlaceholderPage";
 import { NewGamePage } from "../pages/NewGamePage";
 import { PlaytestPage } from "../pages/PlaytestPage";
 import { PlaytestReportPage } from "../pages/PlaytestReportPage";
+import { PrintingDetailPage } from "../pages/PrintingDetailPage";
+import { ProductDetailPage } from "../pages/ProductDetailPage";
+import { TournamentDetailPage } from "../pages/TournamentDetailPage";
+import { TournamentsPage } from "../pages/TournamentsPage";
 
 function page(path: string, title: string): RouteObject {
   return { path, element: <PlaceholderPage title={title} /> };
@@ -28,16 +39,17 @@ export const appRoutes: RouteObject[] = [
       { path: "expansions/:setId", element: <ExpansionDetailPage /> },
       { path: "playtest", element: <PlaytestPage /> },
       { path: "playtest/:reportId", element: <PlaytestReportPage /> },
-      page("meta", "Meta"),
-      page("meta/decks/:deckId", "Deck Details"),
-      page("matches/:matchId", "Match Replay"),
-      page("market", "Market"),
-      page("products/:productId", "Product Details"),
-      page("community", "Community"),
-      page("agents/:agentId", "Agent Profile"),
-      page("tournaments", "Tournaments"),
-      page("tournaments/:tournamentId", "Tournament Details"),
-      page("operations", "Operations"),
+      { path: "meta", element: <MetaPage /> },
+      { path: "meta/decks/:deckId", element: <DeckDetailPage /> },
+      { path: "matches/:matchId", element: <MatchReplayPage /> },
+      { path: "market", element: <MarketPage /> },
+      { path: "products/:productId", element: <ProductDetailPage /> },
+      { path: "printings/:printingId", element: <PrintingDetailPage /> },
+      { path: "community", element: <CommunityPage /> },
+      { path: "agents/:agentId", element: <AgentProfilePage /> },
+      { path: "tournaments", element: <TournamentsPage /> },
+      { path: "tournaments/:tournamentId", element: <TournamentDetailPage /> },
+      { path: "operations", element: <OperationsPage /> },
       { path: "daily-report/:day", element: <DailyReportPage /> },
       page("history", "History"),
       page("settings", "Settings"),

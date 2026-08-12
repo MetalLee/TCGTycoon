@@ -800,31 +800,31 @@ git commit -m "feat: add card and expansion workbench"
 - Consumes: canonical selectors and PublisherCommands.
 - Produces: remaining publisher workflows and entity cross-navigation.
 
-- [ ] **Step 1: Write Meta diagnostic tests**
+- [x] **Step 1: Write Meta diagnostic tests**
 
 Assert low-confidence decks render sample confidence and Meta Health explanations include actual contributors instead of a Tier-list-only view.
 
-- [ ] **Step 2: Implement deterministic MatchReplay from persisted Action Log**
+- [x] **Step 2: Implement deterministic MatchReplay from persisted Action Log**
 
 Support play/pause/step and 1x/2x/4x presentation speed. Playback does not re-run Battle AI.
 
-- [ ] **Step 3: Implement Market**
+- [x] **Step 3: Implement Market**
 
 Show Primary vs Secondary views, product inventory/sales/Pack EV, Printing price/volume/supply/history. No Buy/Sell action exists for the publisher.
 
-- [ ] **Step 4: Implement Community and Agent Profile**
+- [x] **Step 4: Implement Community and Agent Profile**
 
 Phase 3 uses deterministic/template post text from structured CommunityPostIntents. Posts navigate to referenced cards/decks/tournaments/market objects.
 
-- [ ] **Step 5: Implement Tournament and Operations flows**
+- [x] **Step 5: Implement Tournament and Operations flows**
 
 Creation forms queue commands; Calendar shows next 30 days and Policies shows active Banlist/Rotation. Policy dialog displays current usage/win-rate/price/tournament context without recommending an “optimal” choice.
 
-- [ ] **Step 6: Implement Ctrl/Cmd+K command palette**
+- [x] **Step 6: Implement Ctrl/Cmd+K command palette**
 
 Search cards, expansions, agents, decks and tournaments using local selectors/index. No remote search.
 
-- [ ] **Step 7: Verify/commit**
+- [x] **Step 7: Verify/commit**
 
 ```bash
 pnpm --filter @tcgtycoon/game test -- MetaOverview PolicyDialog

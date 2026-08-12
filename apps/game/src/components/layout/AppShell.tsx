@@ -4,7 +4,9 @@ import {
   type GameSessionController,
   type GameSessionSnapshot,
 } from "../../app/game-session/GameSessionController";
+import type { PublisherCommand } from "../../../../../packages/domain/src/index";
 import { EndDayDialog } from "../../features/end-day/EndDayDialog";
+import { CommandPalette } from "../../features/search/CommandPalette";
 import { useUiStore } from "../../state/ui-store";
 import { GlobalHeader } from "./GlobalHeader";
 
@@ -46,11 +48,24 @@ export type AppShellProps = {
   controller?: GameSessionController;
 };
 
+export type GameSessionOutlet = GameSessionSnapshot & {
+  queueCommand?: (command: PublisherCommand) => void;
+};
+
 export function AppShell({ controller }: AppShellProps) {
   const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
   const snapshot = useControllerSnapshot(controller);
   const [endDayOpen, setEndDayOpen] = useState(false);
+  const outlet: GameSessionOutlet = {
+    ...snapshot,
+    ...(controller === undefined
+      ? {}
+      : {
+          queueCommand: (command: PublisherCommand) =>
+            controller.queueCommand(command),
+        }),
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -98,9 +113,10 @@ export function AppShell({ controller }: AppShellProps) {
           onEndDay={() => setEndDayOpen(true)}
         />
         <main className="p-8">
-          <Outlet context={snapshot} />
+          <Outlet context={outlet} />
         </main>
       </div>
+      <CommandPalette world={snapshot.world} />
       {endDayOpen && snapshot.world !== null && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/80 p-4">
           <EndDayDialog
