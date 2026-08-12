@@ -152,6 +152,155 @@ const printRunV5Schema = printRunV3BaseSchema
     validatePrintRunState(run, context);
     validateUniqueIds(context, run.cardIds, ["cardIds"]);
   });
+const operationStatusSchema = z.enum([
+  "PLANNED",
+  "ACTIVE",
+  "COMPLETED",
+  "CANCELLED",
+  "FAILED",
+  "DELAYED",
+]);
+const operationBaseShape = {
+  id: idSchema,
+  createdDay: nonNegativeIntegerSchema,
+  startDay: nonNegativeIntegerSchema.optional(),
+  completionDay: nonNegativeIntegerSchema.optional(),
+  status: operationStatusSchema,
+  progressDays: nonNegativeIntegerSchema,
+  lastAdvancedDay: nonNegativeIntegerSchema.optional(),
+};
+const operationProjectSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      ...operationBaseShape,
+      type: z.literal("EXPANSION_DESIGN"),
+      payload: z.object({ expansionId: idSchema }).strict(),
+    })
+    .strict(),
+  z
+    .object({
+      ...operationBaseShape,
+      type: z.literal("PLAYTEST"),
+      payload: z
+        .object({
+          expansionId: idSchema,
+          tier: z.enum(["QUICK", "STANDARD", "DEEP"]),
+        })
+        .strict(),
+    })
+    .strict(),
+  z
+    .object({
+      ...operationBaseShape,
+      type: z.literal("PRINT_RUN"),
+      payload: z.object({ printRunId: idSchema, productId: idSchema }).strict(),
+    })
+    .strict(),
+  z
+    .object({
+      ...operationBaseShape,
+      type: z.literal("RELEASE"),
+      payload: z.object({ productId: idSchema }).strict(),
+    })
+    .strict(),
+  z
+    .object({
+      ...operationBaseShape,
+      type: z.literal("POLICY_CHANGE"),
+      payload: z
+        .object({ kind: z.enum(["BAN", "RESTRICTION"]), cardId: idSchema })
+        .strict(),
+    })
+    .strict(),
+  z
+    .object({
+      ...operationBaseShape,
+      type: z.literal("TOURNAMENT"),
+      payload: z.object({ tournamentId: idSchema }).strict(),
+    })
+    .strict(),
+  z
+    .object({
+      ...operationBaseShape,
+      type: z.literal("CAMPAIGN"),
+      payload: z
+        .object({
+          campaignType: z.enum([
+            "SOCIAL_MEDIA_ADS",
+            "STREAMER_SPONSORSHIP",
+            "NEW_PLAYER_CAMPAIGN",
+            "COLLECTOR_CAMPAIGN",
+            "TOURNAMENT_PROMOTION",
+          ]),
+        })
+        .strict(),
+    })
+    .strict(),
+  z
+    .object({
+      ...operationBaseShape,
+      type: z.literal("ANNOUNCEMENT"),
+      payload: z.object({ announcementId: idSchema }).strict(),
+    })
+    .strict(),
+  z
+    .object({
+      ...operationBaseShape,
+      type: z.literal("MSRP_ADJUSTMENT"),
+      payload: z.object({ productId: idSchema }).strict(),
+    })
+    .strict(),
+]);
+const expansionBriefV6Schema = z
+  .object({
+    theme: z.string(),
+    focusFactionIds: z.array(idSchema),
+    strategicDirections: z.array(z.string()),
+    productPositioning: z.string(),
+  })
+  .strict();
+const expansionCardDraftV6Schema = z
+  .object({
+    definition: cardDefinitionSchema,
+    gameplayRevision: nonNegativeIntegerSchema,
+    rulesLocked: z.boolean(),
+    slot: z
+      .object({
+        index: nonNegativeIntegerSchema,
+        intendedFactionId: idSchema,
+        intendedRarity: z.enum(["COMMON", "UNCOMMON", "RARE", "LEGENDARY"]),
+        intendedCardType: z.enum(["UNIT", "SPELL"]),
+      })
+      .strict(),
+    flavor: z
+      .object({ displayText: z.string(), flavorText: z.string() })
+      .strict(),
+  })
+  .strict();
+const expansionProjectV6Schema = z
+  .object({
+    id: idSchema,
+    operationId: idSchema,
+    name: z.string(),
+    size: z.union([z.literal(24), z.literal(32), z.literal(36)]),
+    createdDay: nonNegativeIntegerSchema,
+    brief: expansionBriefV6Schema,
+    cardIds: z.array(idSchema),
+    stage: z.enum([
+      "CONCEPT",
+      "DESIGN",
+      "PLAYTEST",
+      "FINALIZED",
+      "PRINTING",
+      "RELEASED",
+    ]),
+    designProgressDays: nonNegativeIntegerSchema,
+    designTargetDays: nonNegativeIntegerSchema,
+    cardDrafts: recordOf(expansionCardDraftV6Schema),
+    riskWarnings: z.array(z.string()),
+    finalizedCards: recordOf(cardDefinitionSchema),
+  })
+  .strict();
 const knowledgeSchema = z
   .object({
     knownCardIds: z.array(idSchema),
@@ -278,6 +427,7 @@ const cashLedgerEntrySchema = z
       "BOOSTER_REVENUE",
       "STARTER_REVENUE",
       "PRINTING",
+      "PLAYTEST",
       "OPERATING_COST",
       "INVENTORY_COST",
     ]),
@@ -954,6 +1104,58 @@ export const worldStateV5Schema = z
   .object({
     schemaVersion: z.literal(5),
     ...commonWorldShapeV2,
+    printings: recordOf(printingV3Schema),
+    products: recordOf(productV4Schema),
+    printRuns: recordOf(printRunV5Schema),
+    history: historyV4Schema,
+    market: z
+      .object({
+        listings: z.array(marketListingSchema),
+        snapshots: recordOf(printingMarketSnapshotSchema),
+      })
+      .strict(),
+    meta: z
+      .object({
+        deckStats: recordOf(metaDeckStatsV2Schema),
+        matchups: recordOf(matchupStatsSchema),
+      })
+      .strict(),
+    metrics: z
+      .object({
+        activePlayers: nonNegativeIntegerSchema,
+        previousActivePlayers: nonNegativeIntegerSchema,
+        hype: metricNumberSchema,
+        collectorHeat: metricNumberSchema,
+        metaHealth: metricNumberSchema,
+        brandTrust: metricNumberSchema,
+        sentiment: metricNumberSchema,
+        accessibility: metricNumberSchema,
+        lifecycle: lifecycleStateSchema,
+        lifecycleDeltas: lifecycleDeltasSchema,
+        acquisitionToChurnRatio: nonNegativeNumberSchema,
+        retentionRate: unitNumberSchema,
+        activePlayerTrend: finiteNumberSchema,
+        consecutiveDeclineDays: nonNegativeIntegerSchema,
+        consecutiveLowActivityDays: nonNegativeIntegerSchema,
+        ecosystemRisk: z.enum([
+          "STABLE",
+          "STRAINED",
+          "DECLINING",
+          "DEATH_SPIRAL",
+          "TERMINAL",
+        ]),
+      })
+      .strict(),
+  })
+  .strict()
+  .superRefine(validateWorldReferences);
+
+export const worldStateV6Schema = z
+  .object({
+    schemaVersion: z.literal(6),
+    ...commonWorldShapeV2,
+    operations: recordOf(operationProjectSchema),
+    expansionProjects: recordOf(expansionProjectV6Schema),
     printings: recordOf(printingV3Schema),
     products: recordOf(productV4Schema),
     printRuns: recordOf(printRunV5Schema),

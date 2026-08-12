@@ -4,6 +4,7 @@ import type { MarketState } from "./market";
 import type { DeckGenome, MetaState } from "./meta";
 import type { WorldMetrics } from "./metrics";
 import type { OperationProject } from "./operations";
+import type { ExpansionPipelineProject } from "./expansions";
 import type { NamedAgent, PersistentPlayer, PopulationCohort } from "./players";
 import type { Expansion, Printing, PrintRun, ProductSku } from "./products";
 
@@ -18,6 +19,7 @@ export type CashLedgerEntry = {
     | "BOOSTER_REVENUE"
     | "STARTER_REVENUE"
     | "PRINTING"
+    | "PLAYTEST"
     | "OPERATING_COST"
     | "INVENTORY_COST";
   sourceId?: string;
@@ -33,6 +35,7 @@ export type WorldState = {
   day: number;
   status: "SETUP" | "LIVE" | "GAME_OVER";
   operations?: Record<string, OperationProject>;
+  expansionProjects?: Record<string, ExpansionPipelineProject>;
   cards: Record<string, CardDefinition>;
   printings: Record<string, Printing>;
   expansions: Record<string, Expansion>;

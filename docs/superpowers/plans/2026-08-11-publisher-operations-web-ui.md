@@ -846,15 +846,39 @@ git commit -m "feat: complete publisher workbench views"
 - Create: `tests/e2e/expansion-release.spec.ts`
 - Create: `tests/e2e/tournament-shock.spec.ts`
 - Create: `tests/e2e/end-day-save.spec.ts`
+- Create: `tests/e2e/helpers.ts`
 - Modify: root `package.json`
+- Modify: `pnpm-lock.yaml`
 - Modify: `.github/workflows/ci.yml`
+- Create: `vitest.config.mts` to keep Playwright specs out of the Vitest suite.
+- Modify: `apps/game/src/app/GameApp.tsx`
+- Modify: `apps/game/src/app/router.tsx`
+- Modify: `apps/game/src/app/game-session/GameSessionController.ts`
+- Modify: `apps/game/src/components/layout/AppShell.tsx`
+- Modify: `apps/game/src/features/new-game/setup-service.ts`
+- Modify: `apps/game/src/pages/NewGamePage.tsx`
+- Modify: `apps/game/src/pages/PlaytestPage.tsx`
+- Modify: `apps/game/src/pages/ExpansionDetailPage.tsx`
+- Modify: matching publisher workflow pages/components required by the six flows.
+- Modify: `packages/domain/src/world.ts`
+- Modify: `packages/domain/src/expansions.ts`
+- Modify: `packages/sim-core/src/day/simulate-day.ts`
+- Modify: `packages/sim-core/src/day/world-invariants.ts`
+- Modify: `packages/sim-core/src/operations/expansion-pipeline.ts`
+- Modify: `packages/persistence/src/migrations/*`
+- Modify: matching persistence repository tests for the current schema.
+- Test: focused session-bootstrap, expansion-command and save-migration coverage.
 
 **Interfaces:**
 
 - Consumes: complete Phase 3 Web app.
 - Produces: six required user-flow regressions and `pnpm test:e2e`.
+- Amendment authorized 2026-08-12: complete the missing production session/bootstrap
+  and publisher-command wiring exposed by the first red E2E. Persist canonical
+  expansion-project state with an explicit migration so the required expansion
+  flow can use the public UI rather than direct IndexedDB mutation.
 
-- [ ] **Step 1: Add Playwright and root scripts**
+- [x] **Step 1: Add Playwright and root scripts**
 
 ```json
 {
@@ -865,7 +889,7 @@ git commit -m "feat: complete publisher workbench views"
 
 Use deterministic seeded fixture/new-game shortcuts only through supported application setup APIs, not direct mutation of IndexedDB internals inside feature assertions.
 
-- [ ] **Step 2: Implement all six required E2E flows**
+- [x] **Step 2: Implement all six required E2E flows**
 
 Each spec asserts final user-visible and canonical effects, not only button presence.
 
@@ -875,7 +899,7 @@ Examples:
 - After policy command and effective day, affected deck legality changes.
 - After tournament completion, winning deck appears in results and subsequent public knowledge.
 
-- [ ] **Step 3: Run complete offline Phase 3 gate**
+- [x] **Step 3: Run complete offline Phase 3 gate**
 
 Set AI mode explicitly offline/mock:
 
@@ -890,7 +914,7 @@ AI_MODE=mock pnpm build:web
 
 Expected: all green with no external AI/API requirement.
 
-- [ ] **Step 4: Run a 100-day headless regression after UI/operations work**
+- [x] **Step 4: Run a 100-day headless regression after UI/operations work**
 
 ```bash
 pnpm sim --days 100 --seed 12345 --scenario balanced-world
@@ -898,7 +922,7 @@ pnpm sim --days 100 --seed 12345 --scenario balanced-world
 
 Compare state hash with a second identical run.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/e2e apps/game/playwright.config.ts package.json .github/workflows/ci.yml

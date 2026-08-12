@@ -15,7 +15,7 @@ function createRepository(name: string): DexieSaveRepository {
 function createSave(id: string, day: number): SaveEnvelope {
   return {
     saveId: saveId(id),
-    schemaVersion: 5,
+    schemaVersion: 6,
     simulationVersion: "1",
     ruleVersion: "1",
     balanceVersion: "1",
@@ -24,13 +24,15 @@ function createSave(id: string, day: number): SaveEnvelope {
     createdAt: "2026-08-12T00:00:00.000Z",
     updatedAt: `2026-08-12T${String(day).padStart(2, "0")}:00:00.000Z`,
     state: {
-      schemaVersion: 5,
+      schemaVersion: 6,
       simulationVersion: "1",
       ruleVersion: "1",
       balanceVersion: "1",
       worldSeed: `seed-${id}`,
       day,
       status: "LIVE",
+      operations: {},
+      expansionProjects: {},
       cards: {},
       printings: {},
       expansions: {},

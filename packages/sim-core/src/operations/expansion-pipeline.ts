@@ -2,51 +2,24 @@ import { OPERATIONS_CONFIG, type OperationsConfig } from "@tcgtycoon/balance";
 import {
   type CardDefinition,
   type CardId,
-  type CardType,
+  type CardDraftFlavor,
   type ExpansionBrief,
+  type ExpansionCardDraft,
   type ExpansionId,
-  type ExpansionProject,
-  type FactionId,
+  type ExpansionPipelineProject,
   type OperationId,
   type OperationProject,
-  type Rarity,
 } from "@tcgtycoon/domain";
 import { validateCardDefinition } from "@tcgtycoon/rules-engine";
 
-export type ExpansionStage =
-  "CONCEPT" | "DESIGN" | "PLAYTEST" | "FINALIZED" | "PRINTING" | "RELEASED";
-
 export type PostLaunchExpansionSize = 24 | 32 | 36;
-
-export type DesignSlotMetadata = {
-  index: number;
-  intendedFactionId: FactionId;
-  intendedRarity: Rarity;
-  intendedCardType: CardType;
-};
-
-export type CardDraftFlavor = {
-  displayText: string;
-  flavorText: string;
-};
-
-export type ExpansionCardDraft = {
-  definition: CardDefinition;
-  gameplayRevision: number;
-  rulesLocked: boolean;
-  slot: DesignSlotMetadata;
-  flavor: CardDraftFlavor;
-};
-
-export type ExpansionPipelineProject = Omit<ExpansionProject, "size"> & {
-  size: PostLaunchExpansionSize;
-  stage: ExpansionStage;
-  designProgressDays: number;
-  designTargetDays: number;
-  cardDrafts: Record<string, ExpansionCardDraft>;
-  riskWarnings: string[];
-  finalizedCards: Record<string, CardDefinition>;
-};
+export type {
+  CardDraftFlavor,
+  DesignSlotMetadata,
+  ExpansionCardDraft,
+  ExpansionPipelineProject,
+  ExpansionStage,
+} from "@tcgtycoon/domain";
 
 export type CreateExpansionInput = {
   id: ExpansionId;
@@ -219,7 +192,23 @@ export function applyCardDraftUpdate(
 ): ExpansionCardDraft {
   const draft = project.cardDrafts[id];
   if (draft === undefined) {
-    throw new Error(`Unknown expansion Card Draft ${id}`);
+    if (update.definition === undefined) {
+      throw new Error(`Unknown expansion Card Draft ${id}`);
+    }
+    if (update.definition.id !== id) {
+      throw new Error("A Card Draft update cannot change its stable Card ID");
+    }
+    if (project.cardIds.length >= project.size) {
+      throw new Error(`Expansion already contains ${project.size} Card Drafts`);
+    }
+    const added = createDraft(update.definition, project.cardIds.length);
+    if (update.flavor !== undefined) {
+      added.flavor = { ...added.flavor, ...update.flavor };
+    }
+    project.cardDrafts[id] = added;
+    project.cardIds.push(id);
+    project.stage = "DESIGN";
+    return added;
   }
 
   if (update.definition !== undefined) {

@@ -29,12 +29,14 @@ function inferredStage(
   world: ExpansionsWorld,
   expansionId: ExpansionId,
 ): ExpansionStage {
+  const project = world.expansionProjects?.[expansionId];
   const products = Object.values(world.products).filter(
     (product) => product.expansionId === expansionId,
   );
   if (products.some((product) => product.releaseStatus === "LIVE")) {
     return "RELEASED";
   }
+  if (project !== undefined) return project.stage;
   if (
     Object.values(world.printRuns).some(
       (run) => run.sourceExpansionId === expansionId,
@@ -73,22 +75,28 @@ export function selectExpansions(world: ExpansionsWorld): ExpansionSummary[] {
       const products = Object.values(world.products).filter(
         (product) => product.expansionId === expansion.id,
       );
+      const project = world.expansionProjects?.[expansion.id];
       return {
         id: expansion.id,
         name: expansion.name,
-        cardCount: Object.values(world.cards).filter((card) =>
-          Object.values(world.printings).some(
-            (printing) =>
-              printing.cardId === card.id &&
-              printing.expansionId === expansion.id,
-          ),
-        ).length,
+        cardCount:
+          project === undefined
+            ? Object.values(world.cards).filter((card) =>
+                Object.values(world.printings).some(
+                  (printing) =>
+                    printing.cardId === card.id &&
+                    printing.expansionId === expansion.id,
+                ),
+              ).length
+            : Object.keys(project.cardDrafts).length,
         stage: inferredStage(world, expansion.id),
-        designProgressDays: designOperation?.progressDays ?? 0,
+        designProgressDays:
+          project?.designProgressDays ?? designOperation?.progressDays ?? 0,
         designTargetDays:
-          designOperation?.completionDay === undefined
+          project?.designTargetDays ??
+          (designOperation?.completionDay === undefined
             ? null
-            : designOperation.completionDay - designOperation.createdDay + 1,
+            : designOperation.completionDay - designOperation.createdDay + 1),
         productStatuses: products
           .map((product) => product.releaseStatus)
           .sort(compareText),

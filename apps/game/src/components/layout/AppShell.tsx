@@ -50,6 +50,9 @@ export type AppShellProps = {
 
 export type GameSessionOutlet = GameSessionSnapshot & {
   queueCommand?: (command: PublisherCommand) => void;
+  loadSave?: (
+    saveId: NonNullable<GameSessionSnapshot["saveId"]>,
+  ) => Promise<void>;
 };
 
 export function AppShell({ controller }: AppShellProps) {
@@ -64,6 +67,8 @@ export function AppShell({ controller }: AppShellProps) {
       : {
           queueCommand: (command: PublisherCommand) =>
             controller.queueCommand(command),
+          loadSave: (saveId: NonNullable<GameSessionSnapshot["saveId"]>) =>
+            controller.load(saveId),
         }),
   };
 

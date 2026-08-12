@@ -28,6 +28,7 @@ export function ProductDetailPage() {
       ) : (
         <ProductDetail
           view={view}
+          {...(outlet.world === null ? {} : { currentDay: outlet.world.day })}
           {...(outlet.queueCommand === undefined
             ? {}
             : { queueCommand: outlet.queueCommand })}

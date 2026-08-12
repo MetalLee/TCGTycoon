@@ -4,9 +4,14 @@ import type { ProductMarketView } from "../../selectors/market";
 export type ProductDetailProps = {
   view: ProductMarketView;
   queueCommand?: (command: PublisherCommand) => void;
+  currentDay?: number;
 };
 
-export function ProductDetail({ view, queueCommand }: ProductDetailProps) {
+export function ProductDetail({
+  view,
+  queueCommand,
+  currentDay,
+}: ProductDetailProps) {
   return (
     <article className="space-y-5">
       <header>
@@ -48,6 +53,21 @@ export function ProductDetail({ view, queueCommand }: ProductDetailProps) {
           >
             Queue 1,000-unit print run
           </button>
+          {view.status === "UNANNOUNCED" && currentDay !== undefined && (
+            <button
+              type="button"
+              className="rounded border border-sky-700 px-4 py-2 text-sky-300"
+              onClick={() =>
+                queueCommand({
+                  type: "SCHEDULE_RELEASE",
+                  productId: view.id,
+                  releaseDay: currentDay + 10,
+                })
+              }
+            >
+              Queue release after production
+            </button>
+          )}
           <button
             type="button"
             className="rounded border border-slate-700 px-4 py-2"

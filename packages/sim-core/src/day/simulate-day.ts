@@ -3,6 +3,7 @@ import {
   META_CONFIG,
   METRICS_CONFIG,
   OPERATIONS_CONFIG,
+  POPULATION_CONFIG,
   RULES_CONFIG,
   TOURNAMENT_CONFIG,
 } from "@tcgtycoon/balance";
@@ -10,6 +11,7 @@ import {
   operationId,
   parsePublisherCommands,
   printRunId,
+  productId,
   type CardId,
   type DeckId,
   type OperationProject,
@@ -85,6 +87,13 @@ import {
   type StandardRotationState,
 } from "../operations/policies";
 import { advanceScheduledOperations } from "../operations/scheduler";
+import {
+  advanceExpansionDesign,
+  applyCardDraftUpdate,
+  createExpansion,
+  finalizeExpansion,
+} from "../operations/expansion-pipeline";
+import { startPlaytest } from "../operations/playtest";
 import {
   registerTournamentEntrants,
   simulateTournament,
@@ -411,6 +420,19 @@ function phase02AdvanceProjectsAndPlaytests(context: DayContext): void {
   for (const operation of Object.values(projects).sort((left, right) =>
     compareIds(left.id, right.id),
   )) {
+    if (operation.type === "EXPANSION_DESIGN") {
+      const project =
+        context.state.expansionProjects?.[operation.payload.expansionId];
+      if (
+        project !== undefined &&
+        project.stage !== "PLAYTEST" &&
+        project.stage !== "FINALIZED" &&
+        project.stage !== "PRINTING" &&
+        project.stage !== "RELEASED"
+      ) {
+        advanceExpansionDesign(project, operation);
+      }
+    }
     if (
       operation.type === "PLAYTEST" &&
       previousStatuses.get(operation.id) !== "COMPLETED" &&
@@ -493,7 +515,7 @@ function applyPublisherCommand(
           index + 1,
         ).padStart(4, "0")}`,
       );
-      orderPrintRun(
+      const run = orderPrintRun(
         context.state,
         {
           id,
@@ -502,6 +524,10 @@ function applyPublisherCommand(
         },
         context.config.production,
       );
+      const project = context.state.expansionProjects?.[run.sourceExpansionId];
+      if (project !== undefined) {
+        project.stage = "PRINTING";
+      }
       addNotableEvent(context, "PRINT_RUN_ORDERED");
       break;
     }
@@ -563,13 +589,117 @@ function applyPublisherCommand(
       scheduleCommand(context, command, index);
       break;
     case "CREATE_EXPANSION":
-    case "UPDATE_EXPANSION_BRIEF":
-    case "UPDATE_CARD_DRAFT":
-    case "START_PLAYTEST":
-    case "FINALIZE_EXPANSION":
-      throw new Error(
-        `Publisher command ${command.type} requires canonical project state not yet present in WorldState`,
-      );
+      context.state.expansionProjects ??= {};
+      if (
+        context.state.expansionProjects[command.expansionId] !== undefined ||
+        context.state.expansions[command.expansionId] !== undefined
+      ) {
+        throw new Error(`Expansion ID already exists: ${command.expansionId}`);
+      }
+      {
+        const designOperationId = commandOperationId(
+          context,
+          index,
+          "expansion-design",
+        );
+        const project = createExpansion({
+          id: command.expansionId,
+          operationId: designOperationId,
+          name: command.name,
+          size: command.size,
+          createdDay: context.previousDay,
+          brief: command.brief,
+        });
+        context.state.expansionProjects[project.id] = project;
+        context.state.expansions[project.id] = {
+          id: project.id,
+          name: project.name,
+        };
+        context.state.operations ??= {};
+        context.state.operations[designOperationId] = {
+          id: designOperationId,
+          type: "EXPANSION_DESIGN",
+          createdDay: context.previousDay,
+          startDay: context.previousDay,
+          completionDay: context.previousDay + project.designTargetDays - 1,
+          status: "PLANNED",
+          progressDays: 0,
+          payload: { expansionId: project.id },
+        };
+      }
+      break;
+    case "UPDATE_EXPANSION_BRIEF": {
+      const project = context.state.expansionProjects?.[command.expansionId];
+      if (project === undefined) {
+        throw new Error(`Unknown Expansion Project ${command.expansionId}`);
+      }
+      if (
+        project.stage === "FINALIZED" ||
+        project.stage === "PRINTING" ||
+        project.stage === "RELEASED"
+      ) {
+        throw new Error(`Expansion ${project.id} gameplay rules are locked`);
+      }
+      project.brief = structuredClone(command.brief);
+      break;
+    }
+    case "UPDATE_CARD_DRAFT": {
+      const project = context.state.expansionProjects?.[command.expansionId];
+      if (project === undefined) {
+        throw new Error(`Unknown Expansion Project ${command.expansionId}`);
+      }
+      applyCardDraftUpdate(project, command.cardId, {
+        definition: command.draft,
+      });
+      break;
+    }
+    case "START_PLAYTEST": {
+      const project = context.state.expansionProjects?.[command.expansionId];
+      if (project === undefined) {
+        throw new Error(`Unknown Expansion Project ${command.expansionId}`);
+      }
+      const run = startPlaytest(project, command.tier, {
+        startDay: context.previousDay,
+        worldSeed: context.state.worldSeed,
+      });
+      if (context.state.cash.balance < run.cashCost) {
+        throw new Error(`Insufficient cash to start Playtest ${run.id}`);
+      }
+      appendCashEntry(context.state.cash, {
+        day: context.previousDay,
+        category: "PLAYTEST",
+        sourceId: run.id,
+        amount: -run.cashCost,
+      });
+      context.state.operations ??= {};
+      context.state.operations[run.operation.id] = run.operation;
+      break;
+    }
+    case "FINALIZE_EXPANSION": {
+      const project = context.state.expansionProjects?.[command.expansionId];
+      if (project === undefined) {
+        throw new Error(`Unknown Expansion Project ${command.expansionId}`);
+      }
+      const cards = finalizeExpansion(project);
+      for (const card of cards) {
+        if (context.state.cards[card.id] !== undefined) {
+          throw new Error(`Card ID already exists: ${card.id}`);
+        }
+        context.state.cards[card.id] = structuredClone(card);
+      }
+      const boosterId = productId(`product-${project.id}-booster`);
+      context.state.products[boosterId] = {
+        id: boosterId,
+        expansionId: project.id,
+        name: `${project.name} Booster`,
+        kind: "BOOSTER",
+        msrp: POPULATION_CONFIG.launchBoosterMsrp,
+        cardIds: cards.map((card) => card.id),
+        releaseStatus: "UNANNOUNCED",
+        internalReleaseDay: context.previousDay + 1,
+      };
+      break;
+    }
   }
 }
 
@@ -582,6 +712,16 @@ function phase03CommandsPrintCompletionAndReleases(context: DayContext): void {
     context.state,
     context.config.release,
   );
+  for (const release of releases) {
+    if (release.type !== "PRODUCT_RELEASED") continue;
+    const productId = release.context?.productId;
+    if (productId === undefined) continue;
+    const expansionId = context.state.products[productId]?.expansionId;
+    if (expansionId !== undefined) {
+      const project = context.state.expansionProjects?.[expansionId];
+      if (project !== undefined) project.stage = "RELEASED";
+    }
+  }
   recordReleaseEvents(context, releases);
   const firstReleaseByExpansion = new Map<string, number>();
   for (const product of Object.values(context.state.products).sort(

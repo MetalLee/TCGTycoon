@@ -10,7 +10,7 @@ export type CalendarItem = Readonly<{
   id: string;
   day: number;
   label: string;
-  type: OperationProject["type"];
+  type: OperationProject["type"] | "PRINT_RUN";
   status: string;
 }>;
 
@@ -84,7 +84,7 @@ export function selectOperationsView(world: WorldState): OperationsView {
         (right.completionDay ?? Number.MAX_SAFE_INTEGER) ||
       (left.id < right.id ? -1 : 1),
   );
-  const calendar = projects
+  const operationCalendar = projects
     .filter((operation) => {
       const day = operation.completionDay ?? operation.startDay;
       return day !== undefined && day >= world.day && day <= world.day + 30;
@@ -96,6 +96,28 @@ export function selectOperationsView(world: WorldState): OperationsView {
       type: operation.type,
       status: operation.status,
     }));
+  const printRunCalendar: CalendarItem[] = Object.values(world.printRuns)
+    .filter(
+      (run) =>
+        run.status === "PRINTING" &&
+        run.completionDay >= world.day &&
+        run.completionDay <= world.day + 30,
+    )
+    .sort(
+      (left, right) =>
+        left.completionDay - right.completionDay ||
+        (left.id < right.id ? -1 : left.id > right.id ? 1 : 0),
+    )
+    .map((run) => ({
+      id: run.id,
+      day: run.completionDay,
+      label: `Print run ${run.id}`,
+      type: "PRINT_RUN",
+      status: run.status,
+    }));
+  const calendar = [...operationCalendar, ...printRunCalendar].sort(
+    (left, right) => left.day - right.day || (left.id < right.id ? -1 : 1),
+  );
   const banned = new Set<CardId>();
   const restricted = new Set<CardId>();
   for (const operation of projects) {

@@ -37,6 +37,7 @@ export type GameSessionControllerOptions = {
   repository: SaveRepository;
   worker: SimulationWorkerTransport;
   config: BalanceConfig;
+  configForWorld?: (world: WorldState) => BalanceConfig;
   now?: () => string;
 };
 
@@ -61,6 +62,7 @@ export class GameSessionController {
   readonly #repository: SaveRepository;
   readonly #worker: SimulationWorkerTransport;
   readonly #config: BalanceConfig;
+  readonly #configForWorld: ((world: WorldState) => BalanceConfig) | undefined;
   readonly #now: () => string;
   readonly #listeners = new Set<() => void>();
   #save: SaveEnvelope | null = null;
@@ -78,6 +80,7 @@ export class GameSessionController {
     this.#repository = options.repository;
     this.#worker = options.worker;
     this.#config = structuredClone(options.config);
+    this.#configForWorld = options.configForWorld;
     this.#now = options.now ?? (() => new Date().toISOString());
   }
 
@@ -164,7 +167,7 @@ export class GameSessionController {
         requestId,
         state: currentWorld,
         commands,
-        config: this.#config,
+        config: this.#configForWorld?.(currentWorld) ?? this.#config,
         onProgress: (progress) => {
           if (this.#snapshot.status === "SIMULATING") {
             this.#update({ progress });

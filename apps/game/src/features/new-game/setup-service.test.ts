@@ -3,7 +3,10 @@ import {
   validateDeck,
 } from "../../../../../packages/rules-engine/src/index";
 import { describe, expect, it } from "vitest";
-import { createOfflineLaunch } from "./setup-service";
+import {
+  createOfflineLaunch,
+  createOfflineLaunchBalanceConfig,
+} from "./setup-service";
 
 describe("offline Launch Setup service", () => {
   it("creates the approved deterministic Launch content and enters live Day 1", () => {
@@ -54,5 +57,25 @@ describe("offline Launch Setup service", () => {
     ).toBe(true);
     expect(first.world.status).toBe("LIVE");
     expect(first.world.day).toBe(1);
+  });
+
+  it("provides persisted starter contents for the first live End Day", () => {
+    const launch = createOfflineLaunch({
+      seed: "offline-end-day",
+      gameName: "Aether Circuit",
+      setting: "Four leagues compete through living machines.",
+      visualKeywords: ["arcane", "industrial"],
+      boosterPrintQuantity: 1_000,
+      starterPrintQuantity: 250,
+    });
+
+    const config = createOfflineLaunchBalanceConfig(launch.world);
+
+    expect(Object.values(config.starterContents)).toHaveLength(4);
+    expect(
+      Object.values(config.starterContents).every(
+        (contents) => contents.length === 20,
+      ),
+    ).toBe(true);
   });
 });

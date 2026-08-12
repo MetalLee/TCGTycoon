@@ -171,6 +171,7 @@ function matchesFilters(card: CardListItem, filters: CardListFilters): boolean {
     (filters.minimumUsageRate === undefined ||
       card.usageRate >= filters.minimumUsageRate) &&
     (filters.minimumMarketPrice === undefined ||
+      filters.minimumMarketPrice <= 0 ||
       (card.market.lastPrice ?? -1) >= filters.minimumMarketPrice)
   );
 }

@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate, type RouteObject } from "react-router";
+import type { GameSessionController } from "./game-session/GameSessionController";
 import { AppShell } from "../components/layout/AppShell";
 import { CardDetailPage } from "../pages/CardDetailPage";
 import { CardsPage } from "../pages/CardsPage";
@@ -26,36 +27,50 @@ function page(path: string, title: string): RouteObject {
   return { path, element: <PlaceholderPage title={title} /> };
 }
 
-export const appRoutes: RouteObject[] = [
-  {
-    element: <AppShell />,
-    children: [
-      { index: true, element: <Navigate to="/dashboard" replace /> },
-      { path: "new-game", element: <NewGamePage /> },
-      { path: "dashboard", element: <DashboardPage /> },
-      { path: "cards", element: <CardsPage /> },
-      { path: "cards/:cardId", element: <CardDetailPage /> },
-      { path: "expansions", element: <ExpansionsPage /> },
-      { path: "expansions/:setId", element: <ExpansionDetailPage /> },
-      { path: "playtest", element: <PlaytestPage /> },
-      { path: "playtest/:reportId", element: <PlaytestReportPage /> },
-      { path: "meta", element: <MetaPage /> },
-      { path: "meta/decks/:deckId", element: <DeckDetailPage /> },
-      { path: "matches/:matchId", element: <MatchReplayPage /> },
-      { path: "market", element: <MarketPage /> },
-      { path: "products/:productId", element: <ProductDetailPage /> },
-      { path: "printings/:printingId", element: <PrintingDetailPage /> },
-      { path: "community", element: <CommunityPage /> },
-      { path: "agents/:agentId", element: <AgentProfilePage /> },
-      { path: "tournaments", element: <TournamentsPage /> },
-      { path: "tournaments/:tournamentId", element: <TournamentDetailPage /> },
-      { path: "operations", element: <OperationsPage /> },
-      { path: "daily-report/:day", element: <DailyReportPage /> },
-      page("history", "History"),
-      page("settings", "Settings"),
-      page("*", "Not Found"),
-    ],
-  },
-];
+export function createAppRoutes(
+  controller?: GameSessionController,
+): RouteObject[] {
+  return [
+    {
+      element: (
+        <AppShell {...(controller === undefined ? {} : { controller })} />
+      ),
+      children: [
+        { index: true, element: <Navigate to="/dashboard" replace /> },
+        { path: "new-game", element: <NewGamePage /> },
+        { path: "dashboard", element: <DashboardPage /> },
+        { path: "cards", element: <CardsPage /> },
+        { path: "cards/:cardId", element: <CardDetailPage /> },
+        { path: "expansions", element: <ExpansionsPage /> },
+        { path: "expansions/:setId", element: <ExpansionDetailPage /> },
+        { path: "playtest", element: <PlaytestPage /> },
+        { path: "playtest/:reportId", element: <PlaytestReportPage /> },
+        { path: "meta", element: <MetaPage /> },
+        { path: "meta/decks/:deckId", element: <DeckDetailPage /> },
+        { path: "matches/:matchId", element: <MatchReplayPage /> },
+        { path: "market", element: <MarketPage /> },
+        { path: "products/:productId", element: <ProductDetailPage /> },
+        { path: "printings/:printingId", element: <PrintingDetailPage /> },
+        { path: "community", element: <CommunityPage /> },
+        { path: "agents/:agentId", element: <AgentProfilePage /> },
+        { path: "tournaments", element: <TournamentsPage /> },
+        {
+          path: "tournaments/:tournamentId",
+          element: <TournamentDetailPage />,
+        },
+        { path: "operations", element: <OperationsPage /> },
+        { path: "daily-report/:day", element: <DailyReportPage /> },
+        page("history", "History"),
+        page("settings", "Settings"),
+        page("*", "Not Found"),
+      ],
+    },
+  ];
+}
 
-export const appRouter = createBrowserRouter(appRoutes);
+export function createAppRouter(controller?: GameSessionController) {
+  return createBrowserRouter(createAppRoutes(controller));
+}
+
+export const appRoutes = createAppRoutes();
+export const appRouter = createAppRouter();

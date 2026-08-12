@@ -1,12 +1,17 @@
 import { useOutletContext } from "react-router";
 import type { GameSessionSnapshot } from "../app/game-session/GameSessionController";
+import type { PublisherCommand } from "../../../../packages/domain/src/index";
 import { PlaytestLab } from "../features/playtest/PlaytestLab";
 
+type Outlet = GameSessionSnapshot & {
+  queueCommand?: (command: PublisherCommand) => void;
+};
+
 export function PlaytestPage() {
-  const snapshot = useOutletContext<GameSessionSnapshot>();
+  const snapshot = useOutletContext<Outlet>();
   const expansion = snapshot.world
-    ? Object.values(snapshot.world.expansions).sort((left, right) =>
-        left.id < right.id ? -1 : left.id > right.id ? 1 : 0,
+    ? Object.values(snapshot.world.expansionProjects ?? {}).sort(
+        (left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0),
       )[0]
     : undefined;
   return (
@@ -20,8 +25,8 @@ export function PlaytestPage() {
         <PlaytestLab
           expansionId={expansion.id}
           expansionName={expansion.name}
-          disabled
-          queueCommand={() => undefined}
+          disabled={snapshot.queueCommand === undefined}
+          queueCommand={snapshot.queueCommand ?? (() => undefined)}
         />
       )}
     </section>

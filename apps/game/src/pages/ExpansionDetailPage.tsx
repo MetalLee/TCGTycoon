@@ -1,10 +1,18 @@
-import { expansionId } from "../../../../packages/domain/src/index";
+import {
+  expansionId,
+  type PublisherCommand,
+} from "../../../../packages/domain/src/index";
 import { useOutletContext, useParams } from "react-router";
 import type { GameSessionSnapshot } from "../app/game-session/GameSessionController";
 import { selectExpansions } from "../selectors/expansions";
+import { ExpansionDetail } from "../features/expansions/ExpansionDetail";
+
+type Outlet = GameSessionSnapshot & {
+  queueCommand?: (command: PublisherCommand) => void;
+};
 
 export function ExpansionDetailPage() {
-  const snapshot = useOutletContext<GameSessionSnapshot>();
+  const snapshot = useOutletContext<Outlet>();
   const { setId } = useParams();
   const expansion =
     snapshot.world === null || setId === undefined
@@ -12,6 +20,10 @@ export function ExpansionDetailPage() {
       : selectExpansions(snapshot.world).find(
           (candidate) => candidate.id === expansionId(setId),
         );
+  const project =
+    snapshot.world === null || setId === undefined
+      ? undefined
+      : snapshot.world.expansionProjects?.[expansionId(setId)];
   return (
     <section className="space-y-8">
       <h1 className="text-3xl font-semibold">Expansion Details</h1>
@@ -19,6 +31,16 @@ export function ExpansionDetailPage() {
         <p className="rounded border border-slate-800 p-4 text-slate-300">
           This expansion is not available in the current session.
         </p>
+      ) : project !== undefined && snapshot.queueCommand !== undefined ? (
+        <ExpansionDetail
+          project={project as never}
+          queueCommand={snapshot.queueCommand}
+          onAcceptCard={() => undefined}
+          onEditCard={() => undefined}
+          onDeleteCard={() => undefined}
+          onRegenerateCard={() => undefined}
+          onManualReplaceCard={() => undefined}
+        />
       ) : (
         <article className="rounded-lg border border-slate-800 bg-slate-900/70 p-5">
           <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">

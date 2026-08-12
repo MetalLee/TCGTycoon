@@ -1,4 +1,5 @@
 import {
+  ECONOMY_CONFIG,
   BALANCE_VERSION,
   POPULATION_CONFIG,
   PRODUCTION_CONFIG,
@@ -14,12 +15,14 @@ import {
   type WorldState,
 } from "../../../../../packages/domain/src/index";
 import {
+  DEFAULT_BALANCE_CONFIG,
   SIMULATION_VERSION,
   advancePrintRuns,
   createInitialPopulation,
   createInitialWorldMetrics,
   orderPrintRun,
   validateWorldInvariants,
+  type BalanceConfig,
 } from "../../../../../packages/sim-core/src/index";
 import {
   createLaunchSetFixture,
@@ -46,6 +49,43 @@ export type OfflineLaunchResult = {
   starterDecks: DeckDefinition[];
   world: WorldState;
 };
+
+export function createOfflineLaunchBalanceConfig(
+  world: WorldState,
+): BalanceConfig {
+  const starterContents = Object.values(world.products)
+    .filter((product) => product.kind === "STARTER")
+    .sort((left, right) => compareIds(left.id, right.id))
+    .map((product) => {
+      const copiesPerCard =
+        ECONOMY_CONFIG.starter.cardsPerProduct / product.cardIds.length;
+      if (!Number.isInteger(copiesPerCard) || copiesPerCard <= 0) {
+        throw new Error(
+          `Starter product ${product.id} cannot form a ${ECONOMY_CONFIG.starter.cardsPerProduct}-card product`,
+        );
+      }
+      const contents = product.cardIds.flatMap((id) => {
+        const printing = Object.values(world.printings)
+          .filter(
+            (candidate) =>
+              candidate.sourceProductId === product.id &&
+              candidate.cardId === id,
+          )
+          .sort((left, right) => compareIds(left.id, right.id))[0];
+        if (printing === undefined) {
+          throw new Error(
+            `Starter product ${product.id} has no Printing for ${id}`,
+          );
+        }
+        return Array.from({ length: copiesPerCard }, () => printing.id);
+      });
+      return [product.id, contents] as const;
+    });
+  return {
+    ...DEFAULT_BALANCE_CONFIG,
+    starterContents: Object.fromEntries(starterContents),
+  };
+}
 
 function compareIds(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;

@@ -158,6 +158,7 @@ export function validateWorldInvariants(
   validateEntityMap(world.agents, "agents");
   validateEntityMap(world.decks, "decks");
   validateEntityMap(world.operations ?? {}, "operations");
+  validateEntityMap(world.expansionProjects ?? {}, "expansionProjects");
 
   requireFinite(world.cash.balance, "cash.balance");
   validateFiniteTree(world.metrics, "metrics");
@@ -448,6 +449,51 @@ export function validateWorldInvariants(
       case "CAMPAIGN":
       case "ANNOUNCEMENT":
         break;
+    }
+  }
+
+  for (const projectId of Object.keys(world.expansionProjects ?? {}).sort(
+    compareIds,
+  )) {
+    const project = world.expansionProjects![projectId]!;
+    requireReference(
+      world.expansions[project.id] !== undefined,
+      `expansionProjects.${projectId}.id`,
+      project.id,
+    );
+    requireReference(
+      world.operations?.[project.operationId]?.type === "EXPANSION_DESIGN",
+      `expansionProjects.${projectId}.operationId`,
+      project.operationId,
+    );
+    requireQuantity(
+      project.createdDay,
+      `expansionProjects.${projectId}.createdDay`,
+    );
+    requireQuantity(
+      project.designProgressDays,
+      `expansionProjects.${projectId}.designProgressDays`,
+    );
+    requireQuantity(
+      project.designTargetDays,
+      `expansionProjects.${projectId}.designTargetDays`,
+    );
+    requireUnique(project.cardIds, `expansionProjects.${projectId}.cardIds`);
+    for (const cardId of project.cardIds) {
+      requireReference(
+        project.cardDrafts[cardId] !== undefined,
+        `expansionProjects.${projectId}.cardDrafts`,
+        cardId,
+      );
+    }
+    if (project.stage === "FINALIZED") {
+      for (const cardId of project.cardIds) {
+        requireReference(
+          world.cards[cardId] !== undefined,
+          `expansionProjects.${projectId}.finalizedCards`,
+          cardId,
+        );
+      }
     }
   }
 

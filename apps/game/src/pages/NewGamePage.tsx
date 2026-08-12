@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate, useOutletContext } from "react-router";
 import {
   saveId,
   type SaveEnvelope,
@@ -11,8 +12,11 @@ import type {
 } from "../features/new-game/setup-service";
 import { SaveSlotList } from "../features/saves/SaveSlotList";
 import { webSaveRepository } from "../platform/save-repository";
+import type { GameSessionOutlet } from "../components/layout/AppShell";
 
 export function NewGamePage() {
+  const navigate = useNavigate();
+  const session = useOutletContext<GameSessionOutlet>();
   const [refreshToken, setRefreshToken] = useState(0);
   const [createdSlot, setCreatedSlot] = useState<string | null>(null);
 
@@ -22,21 +26,34 @@ export function NewGamePage() {
   ): Promise<void> {
     const timestamp = new Date().toISOString();
     const slotId = saveId(`save-${input.seed}`);
+    const state = {
+      ...result.world,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      operations: result.world.operations ?? {},
+      expansionProjects: result.world.expansionProjects ?? {},
+    };
     const envelope: SaveEnvelope = {
       saveId: slotId,
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      simulationVersion: result.world.simulationVersion,
-      ruleVersion: result.world.ruleVersion,
-      balanceVersion: result.world.balanceVersion,
+      simulationVersion: state.simulationVersion,
+      ruleVersion: state.ruleVersion,
+      balanceVersion: state.balanceVersion,
       appVersion: "0.1.0",
-      worldSeed: result.world.worldSeed,
+      worldSeed: state.worldSeed,
       createdAt: timestamp,
       updatedAt: timestamp,
-      state: result.world,
+      state,
     };
     await webSaveRepository.save(envelope);
+    await session.loadSave?.(slotId);
     setCreatedSlot(slotId);
     setRefreshToken((current) => current + 1);
+    navigate("/dashboard");
+  }
+
+  async function loadSlot(slotId: SaveEnvelope["saveId"]): Promise<void> {
+    await session.loadSave?.(slotId);
+    navigate("/dashboard");
   }
 
   return (
@@ -63,6 +80,7 @@ export function NewGamePage() {
         <SaveSlotList
           repository={webSaveRepository}
           refreshToken={refreshToken}
+          onLoad={loadSlot}
         />
       </section>
     </section>

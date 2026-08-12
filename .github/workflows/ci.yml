@@ -1,4 +1,4 @@
-name: Phase 1 CI
+name: Phase 3 CI
 
 on:
   push:
@@ -18,6 +18,10 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: AI_MODE=mock pnpm lint
+      - run: AI_MODE=mock pnpm typecheck
+      - run: AI_MODE=mock pnpm test
+      - run: AI_MODE=mock pnpm test:scenarios
+      - run: AI_MODE=mock pnpm test:e2e
+      - run: AI_MODE=mock pnpm build:web
