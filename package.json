@@ -15,7 +15,9 @@
     "dev:api": "pnpm --filter @tcgtycoon/api dev",
     "test:ai": "vitest run packages/ai-contracts apps/api",
     "dev:web": "pnpm --filter @tcgtycoon/game dev",
-    "build:web": "pnpm --filter @tcgtycoon/game build"
+    "build:web": "pnpm --filter @tcgtycoon/game build",
+    "dev:desktop": "pnpm --filter @tcgtycoon/desktop dev",
+    "build:desktop": "pnpm --filter @tcgtycoon/desktop build"
   },
   "devDependencies": {
     "@eslint/js": "latest",

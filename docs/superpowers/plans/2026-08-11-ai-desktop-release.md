@@ -521,11 +521,11 @@ git commit -m "feat: enrich community narrative after simulation"
 - Consumes: `apps/game` dev server/build output.
 - Produces: Tauri desktop wrapper with no duplicate React application.
 
-- [ ] **Step 1: Write config parity test**
+- [x] **Step 1: Write config parity test**
 
 Parse `tauri.conf.json` and assert desktop `beforeDevCommand`/`beforeBuildCommand` use the shared game app and configured frontend URL/dist path; there is no separate desktop React source tree.
 
-- [ ] **Step 2: Initialize Tauri v2 configuration**
+- [x] **Step 2: Initialize Tauri v2 configuration**
 
 Desktop package scripts should conceptually provide:
 
@@ -545,11 +545,11 @@ Root:
 }
 ```
 
-- [ ] **Step 3: Run desktop dev/build configuration verification**
+- [x] **Step 3: Run desktop dev/build configuration verification**
 
 At minimum run Tauri config check/build prerequisite command available in the installed toolchain plus root typecheck.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/desktop package.json pnpm-lock.yaml tests/parity/desktop-config.test.ts

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "TCGTycoon",
+  "version": "0.1.0",
+  "identifier": "com.tcgtycoon.desktop",
+  "build": {
+    "beforeDevCommand": "pnpm --dir ../game dev",
+    "beforeBuildCommand": "pnpm --dir ../game build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../../game/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "TCGTycoon",
+        "width": 1280,
+        "height": 800
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": false
+  }
+}
