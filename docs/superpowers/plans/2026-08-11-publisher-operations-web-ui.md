@@ -745,23 +745,23 @@ git commit -m "feat: add publisher dashboard and daily report"
 - Consumes: card/expansion/playtest selectors and GameSession queued commands.
 - Produces: full structured manual design path for offline MVP.
 
-- [ ] **Step 1: Write Card Studio command test**
+- [x] **Step 1: Write Card Studio command test**
 
 Editing cost/effect must queue `UPDATE_CARD_DRAFT`; component must never alter session snapshot directly. Rules-locked card disables gameplay editor.
 
-- [ ] **Step 2: Implement Card Database/Detail tabs**
+- [x] **Step 2: Implement Card Database/Detail tabs**
 
 Overview, Performance, Market, History. Known Synergy data only comes from public knowledge selectors.
 
-- [ ] **Step 3: Implement Set Review**
+- [x] **Step 3: Implement Set Review**
 
 Table supports accept, edit, delete/regenerate placeholder/manual replacement and bulk low-risk acceptance where legal.
 
-- [ ] **Step 4: Implement Playtest Lab/Report**
+- [x] **Step 4: Implement Playtest Lab/Report**
 
 Expose Quick/Standard/Deep cost/duration, report freshness, risks, Decks/Cards/Matchups/Anomalies/Replays tabs. Wording must say “not discovered” rather than “does not exist.”
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm --filter @tcgtycoon/game test -- CardStudio SetReview
