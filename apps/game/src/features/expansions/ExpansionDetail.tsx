@@ -6,6 +6,7 @@ import type { ExpansionPipelineProject } from "../../../../../packages/sim-core/
 import { SetReview } from "./SetReview";
 import type { CardId } from "../../../../../packages/domain/src/index";
 import { CardStudio } from "../cards/CardStudio";
+import { defaultAiClient, type AiClient } from "../../services/ai/ai-client";
 
 export type ExpansionDetailProps = {
   project: Readonly<ExpansionPipelineProject>;
@@ -13,6 +14,7 @@ export type ExpansionDetailProps = {
   onAcceptCard: (cardId: Parameters<SetReviewProps["onAccept"]>[0]) => void;
   onEditCard: (cardId: Parameters<SetReviewProps["onEdit"]>[0]) => void;
   selectedCardId?: CardId | undefined;
+  aiClient?: AiClient;
 };
 
 type SetReviewProps = React.ComponentProps<typeof SetReview>;
@@ -30,6 +32,7 @@ export function ExpansionDetail({
   onAcceptCard,
   onEditCard,
   selectedCardId,
+  aiClient = defaultAiClient,
 }: ExpansionDetailProps) {
   const finalized =
     project.stage === "FINALIZED" ||
@@ -71,6 +74,8 @@ export function ExpansionDetail({
         project={project}
         onAccept={onAcceptCard}
         onEdit={onEditCard}
+        queueCommand={queueCommand}
+        aiClient={aiClient}
       />
       {selectedCardId !== undefined &&
         project.cardDrafts[selectedCardId] !== undefined && (
@@ -78,6 +83,9 @@ export function ExpansionDetail({
             expansionId={project.id}
             draft={project.cardDrafts[selectedCardId]!}
             queueCommand={queueCommand}
+            aiClient={aiClient}
+            setTheme={project.brief.theme}
+            visualKeywords={project.brief.strategicDirections}
           />
         )}
     </article>

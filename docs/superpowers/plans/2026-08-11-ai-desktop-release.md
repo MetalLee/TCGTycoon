@@ -404,6 +404,8 @@ git commit -m "feat: isolate generated artwork assets"
 - Modify: `apps/game/src/features/new-game/NewGameWizard.tsx`
 - Modify: `apps/game/src/features/cards/CardStudio.tsx`
 - Modify: `apps/game/src/features/expansions/SetReview.tsx`
+- Modify: `apps/game/src/features/expansions/ExpansionDetail.tsx`
+- Modify: `apps/game/vite.config.ts`
 - Test: `apps/game/src/services/ai/ai-client.test.ts`
 - Test: `apps/game/src/features/cards/CardStudio.ai.test.tsx`
 
@@ -412,7 +414,7 @@ git commit -m "feat: isolate generated artwork assets"
 - Consumes: Gateway endpoints/contracts and existing PublisherCommand flow.
 - Produces: optional world/faction suggestions, card proposals and set-completion proposals that require player acceptance before queuing canonical edits.
 
-- [ ] **Step 1: Write failing Card Studio AI acceptance test**
+- [x] **Step 1: Write failing Card Studio AI acceptance test**
 
 Flow:
 
@@ -422,19 +424,19 @@ Flow:
 4. World snapshot remains unchanged.
 5. Only clicking Accept queues `UPDATE_CARD_DRAFT`.
 
-- [ ] **Step 2: Implement typed `AiClient`**
+- [x] **Step 2: Implement typed `AiClient`**
 
 Every response passes shared contract parse in the browser even though the server already validated it. Network timeout/error returns UI status, never a simulation command.
 
-- [ ] **Step 3: Integrate New Game/Set Review**
+- [x] **Step 3: Integrate New Game/Set Review**
 
 AI can propose four faction concepts and complete set slots, but offline manual/Mock flow remains available.
 
-- [ ] **Step 4: Verify AI-offline fallback**
+- [x] **Step 4: Verify AI-offline fallback**
 
 Run component tests with AiClient rejecting all requests; structured editing and Launch remain usable.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 pnpm --filter @tcgtycoon/game test -- CardStudio.ai ai-client
