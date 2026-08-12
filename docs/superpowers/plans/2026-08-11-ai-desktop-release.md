@@ -633,11 +633,11 @@ git commit -m "feat: persist desktop saves and artwork in SQLite"
 - Consumes: canonical fixture save and simulation core.
 - Produces: stable parity regression hash used by Web/Desktop builds.
 
-- [ ] **Step 1: Generate a committed canonical fixture from code**
+- [x] **Step 1: Generate a committed canonical fixture from code**
 
 Fixture includes real Cards, Products, Players, Collections, Meta and pending operations but no AI-rendered binary/text cache required for simulation.
 
-- [ ] **Step 2: Run the same command set through browser-compatible and Node/desktop-compatible execution paths**
+- [x] **Step 2: Run the same command set through browser-compatible and Node/desktop-compatible execution paths**
 
 Assert identical:
 
@@ -646,11 +646,11 @@ Assert identical:
 - important match hashes,
 - Cash/metrics/market quantities.
 
-- [ ] **Step 3: Verify no wall-clock dependence**
+- [x] **Step 3: Verify no wall-clock dependence**
 
 Run parity tests with different mocked system times/timezones; outputs must remain identical.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 pnpm vitest run tests/parity/simulation-parity.test.ts

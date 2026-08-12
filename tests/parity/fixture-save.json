@@ -1,0 +1,1019 @@
+{
+  "appVersion": "parity-fixture",
+  "balanceVersion": "1",
+  "createdAt": "2026-08-13T00:00:00.000Z",
+  "ruleVersion": "1",
+  "saveId": "save-web-desktop-simulation-parity",
+  "schemaVersion": 7,
+  "simulationVersion": "1",
+  "state": {
+    "agents": {
+      "agent-0001": {
+        "brandAttitude": -0.36268504656678124,
+        "followers": 5112,
+        "id": "agent-0001",
+        "influence": 0.6346915327738041,
+        "longTermSummary": "",
+        "name": "Agent 01",
+        "playerId": "player-0001",
+        "recentMemories": [],
+        "role": "PROFESSIONAL_PLAYER"
+      },
+      "agent-0002": {
+        "brandAttitude": 0.15989556403938798,
+        "followers": 819,
+        "id": "agent-0002",
+        "influence": 0.2734072597110022,
+        "longTermSummary": "",
+        "name": "Agent 02",
+        "playerId": "player-0002",
+        "recentMemories": [],
+        "role": "PROFESSIONAL_PLAYER"
+      }
+    },
+    "announcementState": { "announcements": [] },
+    "balanceVersion": "1",
+    "cards": {
+      "card-fire-charger": {
+        "attack": 2,
+        "cost": 2,
+        "factionId": "fire",
+        "health": 1,
+        "id": "card-fire-charger",
+        "keywords": ["CHARGE"],
+        "name": "Fire Charger",
+        "rarity": "COMMON",
+        "triggers": [],
+        "type": "UNIT"
+      },
+      "card-fire-cub": {
+        "attack": 1,
+        "cost": 1,
+        "factionId": "fire",
+        "health": 2,
+        "id": "card-fire-cub",
+        "keywords": ["TAUNT"],
+        "name": "Fire Cub",
+        "rarity": "COMMON",
+        "triggers": [],
+        "type": "UNIT"
+      },
+      "card-fire-drinker": {
+        "attack": 4,
+        "cost": 4,
+        "factionId": "fire",
+        "health": 3,
+        "id": "card-fire-drinker",
+        "keywords": ["LIFESTEAL"],
+        "name": "Fire Drinker",
+        "rarity": "COMMON",
+        "triggers": [],
+        "type": "UNIT"
+      },
+      "card-fire-guardian": {
+        "attack": 2,
+        "cost": 3,
+        "factionId": "fire",
+        "health": 4,
+        "id": "card-fire-guardian",
+        "keywords": ["DIVINE_SHIELD"],
+        "name": "Fire Guardian",
+        "rarity": "COMMON",
+        "triggers": [],
+        "type": "UNIT"
+      },
+      "card-fire-herald": {
+        "attack": 2,
+        "cost": 3,
+        "factionId": "fire",
+        "health": 3,
+        "id": "card-fire-herald",
+        "keywords": ["BATTLECRY"],
+        "name": "Fire Herald",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [
+              { "amount": 1, "target": "ENEMY_HERO", "type": "DEAL_DAMAGE" }
+            ],
+            "trigger": "ON_PLAY"
+          }
+        ],
+        "type": "UNIT"
+      },
+      "card-fire-phoenix": {
+        "attack": 3,
+        "cost": 4,
+        "factionId": "fire",
+        "health": 3,
+        "id": "card-fire-phoenix",
+        "keywords": ["DEATHRATTLE"],
+        "name": "Fire Phoenix",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [
+              { "amount": 1, "tokenCardId": "card-fire-cub", "type": "SUMMON" }
+            ],
+            "trigger": "ON_DEATH"
+          }
+        ],
+        "type": "UNIT"
+      },
+      "card-fire-runner": {
+        "attack": 3,
+        "cost": 2,
+        "factionId": "fire",
+        "health": 1,
+        "id": "card-fire-runner",
+        "keywords": ["RUSH"],
+        "name": "Fire Runner",
+        "rarity": "COMMON",
+        "triggers": [],
+        "type": "UNIT"
+      },
+      "card-fire-stalker": {
+        "attack": 3,
+        "cost": 3,
+        "factionId": "fire",
+        "health": 2,
+        "id": "card-fire-stalker",
+        "keywords": ["STEALTH"],
+        "name": "Fire Stalker",
+        "rarity": "COMMON",
+        "triggers": [],
+        "type": "UNIT"
+      },
+      "card-fire-twins": {
+        "attack": 3,
+        "cost": 5,
+        "factionId": "fire",
+        "health": 5,
+        "id": "card-fire-twins",
+        "keywords": ["WINDFURY"],
+        "name": "Fire Twins",
+        "rarity": "COMMON",
+        "triggers": [],
+        "type": "UNIT"
+      },
+      "card-fire-venom": {
+        "attack": 1,
+        "cost": 4,
+        "factionId": "fire",
+        "health": 5,
+        "id": "card-fire-venom",
+        "keywords": ["POISONOUS"],
+        "name": "Fire Venom",
+        "rarity": "COMMON",
+        "triggers": [],
+        "type": "UNIT"
+      },
+      "card-machine-bolt": {
+        "cost": 2,
+        "factionId": "machine",
+        "id": "card-machine-bolt",
+        "keywords": [],
+        "name": "Machine Bolt",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [
+              { "amount": 2, "target": "ENEMY_UNIT", "type": "DEAL_DAMAGE" }
+            ],
+            "trigger": "ON_PLAY"
+          }
+        ],
+        "type": "SPELL"
+      },
+      "card-machine-buffer": {
+        "attack": 3,
+        "cost": 4,
+        "factionId": "machine",
+        "health": 4,
+        "id": "card-machine-buffer",
+        "keywords": ["BATTLECRY"],
+        "name": "Machine Buffer",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [
+              { "amount": 1, "target": "FRIENDLY_UNIT", "type": "BUFF_ATTACK" }
+            ],
+            "trigger": "ON_PLAY"
+          }
+        ],
+        "type": "UNIT"
+      },
+      "card-machine-disruptor": {
+        "attack": 4,
+        "cost": 4,
+        "factionId": "machine",
+        "health": 3,
+        "id": "card-machine-disruptor",
+        "keywords": ["BATTLECRY"],
+        "name": "Machine Disruptor",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [
+              { "amount": 1, "target": "ENEMY_UNIT", "type": "DEBUFF_ATTACK" }
+            ],
+            "trigger": "ON_PLAY"
+          }
+        ],
+        "type": "UNIT"
+      },
+      "card-machine-fabricate": {
+        "cost": 3,
+        "factionId": "machine",
+        "id": "card-machine-fabricate",
+        "keywords": [],
+        "name": "Machine Fabricate",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [
+              {
+                "amount": 1,
+                "cardId": "card-neutral-scout",
+                "type": "CREATE_CARD"
+              }
+            ],
+            "trigger": "ON_PLAY"
+          }
+        ],
+        "type": "SPELL"
+      },
+      "card-machine-guard": {
+        "attack": 1,
+        "cost": 2,
+        "factionId": "machine",
+        "health": 4,
+        "id": "card-machine-guard",
+        "keywords": ["TAUNT"],
+        "name": "Machine Guard",
+        "rarity": "COMMON",
+        "triggers": [],
+        "type": "UNIT"
+      },
+      "card-machine-overclock": {
+        "cost": 1,
+        "factionId": "machine",
+        "id": "card-machine-overclock",
+        "keywords": [],
+        "name": "Machine Overclock",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [{ "amount": 1, "type": "GAIN_MANA_THIS_TURN" }],
+            "trigger": "ON_PLAY"
+          }
+        ],
+        "type": "SPELL"
+      },
+      "card-machine-recall": {
+        "cost": 2,
+        "factionId": "machine",
+        "id": "card-machine-recall",
+        "keywords": [],
+        "name": "Machine Recall",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [
+              { "target": "FRIENDLY_UNIT", "type": "RETURN_TO_HAND" }
+            ],
+            "trigger": "ON_PLAY"
+          }
+        ],
+        "type": "SPELL"
+      },
+      "card-machine-repairer": {
+        "attack": 2,
+        "cost": 3,
+        "factionId": "machine",
+        "health": 3,
+        "id": "card-machine-repairer",
+        "keywords": ["BATTLECRY"],
+        "name": "Machine Repairer",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [
+              { "amount": 2, "target": "FRIENDLY_HERO", "type": "HEAL" }
+            ],
+            "trigger": "ON_PLAY"
+          }
+        ],
+        "type": "UNIT"
+      },
+      "card-machine-rocket": {
+        "attack": 3,
+        "cost": 3,
+        "factionId": "machine",
+        "health": 2,
+        "id": "card-machine-rocket",
+        "keywords": ["CHARGE"],
+        "name": "Machine Rocket",
+        "rarity": "COMMON",
+        "triggers": [],
+        "type": "UNIT"
+      },
+      "card-machine-salvager": {
+        "attack": 3,
+        "cost": 3,
+        "factionId": "machine",
+        "health": 2,
+        "id": "card-machine-salvager",
+        "keywords": ["DEATHRATTLE"],
+        "name": "Machine Salvager",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [
+              { "amount": 1, "target": "FRIENDLY_HERO", "type": "DRAW" }
+            ],
+            "trigger": "ON_DEATH"
+          }
+        ],
+        "type": "UNIT"
+      },
+      "card-neutral-banner": {
+        "attack": 2,
+        "cost": 3,
+        "factionId": "neutral",
+        "health": 3,
+        "id": "card-neutral-banner",
+        "keywords": ["BATTLECRY"],
+        "name": "Neutral Banner",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [
+              { "amount": 1, "target": "FRIENDLY_UNIT", "type": "BUFF_STATS" }
+            ],
+            "trigger": "ON_PLAY"
+          }
+        ],
+        "type": "UNIT"
+      },
+      "card-neutral-insight": {
+        "cost": 2,
+        "factionId": "neutral",
+        "id": "card-neutral-insight",
+        "keywords": [],
+        "name": "Neutral Insight",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [
+              { "amount": 1, "target": "FRIENDLY_HERO", "type": "DRAW" }
+            ],
+            "trigger": "ON_PLAY"
+          }
+        ],
+        "type": "SPELL"
+      },
+      "card-neutral-medicine": {
+        "cost": 2,
+        "factionId": "neutral",
+        "id": "card-neutral-medicine",
+        "keywords": [],
+        "name": "Neutral Medicine",
+        "rarity": "COMMON",
+        "triggers": [
+          {
+            "conditions": [],
+            "effects": [
+              { "amount": 3, "target": "FRIENDLY_HERO", "type": "HEAL" }
+            ],
+            "trigger": "ON_PLAY"
+          }
+        ],
+        "type": "SPELL"
+      },
+      "card-neutral-scout": {
+        "attack": 1,
+        "cost": 1,
+        "factionId": "neutral",
+        "health": 1,
+        "id": "card-neutral-scout",
+        "keywords": [],
+        "name": "Neutral Scout",
+        "rarity": "COMMON",
+        "triggers": [],
+        "type": "UNIT"
+      }
+    },
+    "cash": { "balance": 100000, "ledger": [] },
+    "cohorts": [{ "count": 2, "id": "cohort-parity" }],
+    "dailyReports": {},
+    "day": 20,
+    "decks": {
+      "deck-fire-fixture": {
+        "cards": [
+          { "cardId": "card-fire-cub", "count": 2 },
+          { "cardId": "card-fire-charger", "count": 2 },
+          { "cardId": "card-fire-runner", "count": 2 },
+          { "cardId": "card-fire-herald", "count": 2 },
+          { "cardId": "card-fire-phoenix", "count": 2 },
+          { "cardId": "card-fire-guardian", "count": 2 },
+          { "cardId": "card-fire-drinker", "count": 2 },
+          { "cardId": "card-fire-twins", "count": 2 },
+          { "cardId": "card-fire-stalker", "count": 2 },
+          { "cardId": "card-neutral-scout", "count": 2 }
+        ],
+        "createdDay": 0,
+        "factionId": "fire",
+        "generation": 0,
+        "id": "deck-fire-fixture",
+        "originPlayerId": "player-0001",
+        "parentDeckIds": [],
+        "strategy": {}
+      },
+      "deck-machine-fixture": {
+        "cards": [
+          { "cardId": "card-machine-guard", "count": 2 },
+          { "cardId": "card-machine-rocket", "count": 2 },
+          { "cardId": "card-machine-repairer", "count": 2 },
+          { "cardId": "card-machine-salvager", "count": 2 },
+          { "cardId": "card-machine-buffer", "count": 2 },
+          { "cardId": "card-machine-disruptor", "count": 2 },
+          { "cardId": "card-machine-bolt", "count": 2 },
+          { "cardId": "card-machine-recall", "count": 2 },
+          { "cardId": "card-machine-fabricate", "count": 2 },
+          { "cardId": "card-neutral-scout", "count": 2 }
+        ],
+        "createdDay": 0,
+        "factionId": "machine",
+        "generation": 0,
+        "id": "deck-machine-fixture",
+        "originPlayerId": "player-0001",
+        "parentDeckIds": [],
+        "strategy": {}
+      }
+    },
+    "expansionProjects": {},
+    "expansions": {
+      "set-launch": { "id": "set-launch", "name": "Launch Set" }
+    },
+    "history": {
+      "events": [
+        {
+          "context": {
+            "reason": "{\"tournamentId\":\"tournament-parity-open\",\"name\":\"Parity Open\"}"
+          },
+          "day": 18,
+          "id": "tournament-scheduled-tournament-parity-open",
+          "type": "TOURNAMENT_SCHEDULED_LOCAL"
+        }
+      ]
+    },
+    "market": {
+      "listings": [
+        {
+          "ownerId": "player-0001",
+          "price": 2.5,
+          "printingId": "printing-parity-fire-card-fire-cub",
+          "quantity": 1
+        }
+      ],
+      "snapshots": {
+        "printing-parity-fire-card-fire-cub": {
+          "availableSupply": 1,
+          "dailyVolume": 0,
+          "lastPrice": 2.5,
+          "liquidity": 0.25,
+          "priceHistory": [{ "day": 19, "price": 2.5, "volume": 1 }],
+          "printingId": "printing-parity-fire-card-fire-cub"
+        }
+      }
+    },
+    "meta": {
+      "deckStats": {
+        "deck-fire-fixture": {
+          "averageGameLength": 8,
+          "confidence": "LOW",
+          "losses": 4,
+          "matches": 10,
+          "observedWinRate": 0.6,
+          "sampleCount": 10,
+          "usageRate": 0.5,
+          "wins": 6
+        },
+        "deck-machine-fixture": {
+          "averageGameLength": 8,
+          "confidence": "LOW",
+          "losses": 6,
+          "matches": 10,
+          "observedWinRate": 0.4,
+          "sampleCount": 10,
+          "usageRate": 0.5,
+          "wins": 4
+        }
+      },
+      "matchups": {
+        "deck-fire-fixture::deck-machine-fixture": {
+          "confidence": "LOW",
+          "deckAId": "deck-fire-fixture",
+          "deckAWins": 6,
+          "deckBId": "deck-machine-fixture",
+          "deckBWins": 4,
+          "matches": 10,
+          "observedDeckAWinRate": 0.6,
+          "sampleCount": 10
+        }
+      }
+    },
+    "metrics": {
+      "accessibility": 50,
+      "acquisitionToChurnRatio": 1,
+      "activePlayerTrend": 0,
+      "activePlayers": 2,
+      "brandTrust": 65,
+      "collectorHeat": 45,
+      "consecutiveDeclineDays": 0,
+      "consecutiveLowActivityDays": 0,
+      "ecosystemRisk": "STABLE",
+      "hype": 55,
+      "lifecycle": {
+        "active": 2,
+        "atRisk": 0,
+        "churned": 0,
+        "interested": 0,
+        "newByAge": [0, 0, 0, 0, 0, 0, 0],
+        "potential": 0,
+        "returning": 0
+      },
+      "lifecycleDeltas": {
+        "activeToAtRisk": 0,
+        "atRiskToChurned": 0,
+        "churnedToReturning": 0,
+        "interestedToNew": 0,
+        "newToActive": 0,
+        "potentialToInterested": 0,
+        "returningToActive": 0
+      },
+      "metaHealth": 50,
+      "previousActivePlayers": 2,
+      "retentionRate": 1,
+      "sentiment": 60
+    },
+    "operationEvidence": {
+      "playtests": { "reports": {}, "runs": {} },
+      "tournamentAttention": []
+    },
+    "operations": {
+      "operation-parity-policy": {
+        "completionDay": 23,
+        "createdDay": 20,
+        "id": "operation-parity-policy",
+        "payload": { "cardId": "card-machine-guard", "kind": "RESTRICTION" },
+        "progressDays": 0,
+        "startDay": 23,
+        "status": "PLANNED",
+        "type": "POLICY_CHANGE"
+      },
+      "operation-parity-tournament": {
+        "completionDay": 20,
+        "createdDay": 18,
+        "id": "operation-parity-tournament",
+        "payload": { "tournamentId": "tournament-parity-open" },
+        "progressDays": 0,
+        "startDay": 20,
+        "status": "PLANNED",
+        "type": "TOURNAMENT"
+      }
+    },
+    "players": {
+      "player-0001": {
+        "activity": "ACTIVE",
+        "collection": {
+          "printing-parity-fire-card-fire-charger": 4,
+          "printing-parity-fire-card-fire-cub": 4,
+          "printing-parity-fire-card-fire-drinker": 4,
+          "printing-parity-fire-card-fire-guardian": 4,
+          "printing-parity-fire-card-fire-herald": 4,
+          "printing-parity-fire-card-fire-phoenix": 4,
+          "printing-parity-fire-card-fire-runner": 4,
+          "printing-parity-fire-card-fire-stalker": 4,
+          "printing-parity-fire-card-fire-twins": 4,
+          "printing-parity-fire-card-neutral-scout": 4
+        },
+        "deckIds": ["deck-fire-fixture"],
+        "id": "player-0001",
+        "knowledge": {
+          "knownCardIds": [
+            "card-fire-charger",
+            "card-fire-cub",
+            "card-fire-drinker",
+            "card-fire-guardian",
+            "card-fire-herald",
+            "card-fire-phoenix",
+            "card-fire-runner",
+            "card-fire-stalker",
+            "card-fire-twins",
+            "card-neutral-scout"
+          ],
+          "knownDeckIds": ["deck-fire-fixture"]
+        },
+        "loyalty": 0.9136609524432681,
+        "motivation": {
+          "brewer": 0.08407594207061886,
+          "budgetSensitivity": 0.1930296521826934,
+          "casual": 0.7187105137669029,
+          "collector": 0.6518048397695215,
+          "competitive": 0.8603749025184877,
+          "whale": 0.0727053179626399
+        },
+        "satisfaction": 0.8,
+        "skill": 0.21162695927039576,
+        "tcgWallet": 183,
+        "tenureDays": 20
+      },
+      "player-0002": {
+        "activity": "ACTIVE",
+        "collection": {
+          "printing-parity-machine-card-machine-bolt": 2,
+          "printing-parity-machine-card-machine-buffer": 2,
+          "printing-parity-machine-card-machine-disruptor": 2,
+          "printing-parity-machine-card-machine-fabricate": 2,
+          "printing-parity-machine-card-machine-guard": 2,
+          "printing-parity-machine-card-machine-recall": 2,
+          "printing-parity-machine-card-machine-repairer": 2,
+          "printing-parity-machine-card-machine-rocket": 2,
+          "printing-parity-machine-card-machine-salvager": 2,
+          "printing-parity-machine-card-neutral-scout": 2
+        },
+        "deckIds": ["deck-machine-fixture"],
+        "id": "player-0002",
+        "knowledge": {
+          "knownCardIds": [
+            "card-machine-bolt",
+            "card-machine-buffer",
+            "card-machine-disruptor",
+            "card-machine-fabricate",
+            "card-machine-guard",
+            "card-machine-recall",
+            "card-machine-repairer",
+            "card-machine-rocket",
+            "card-machine-salvager",
+            "card-neutral-scout"
+          ],
+          "knownDeckIds": ["deck-machine-fixture"]
+        },
+        "loyalty": 0.36142111856625025,
+        "motivation": {
+          "brewer": 0.6506665731364356,
+          "budgetSensitivity": 0.1398684423647879,
+          "casual": 0.4741344303098788,
+          "collector": 0.39655175546381105,
+          "competitive": 0.6217142586277039,
+          "whale": 0.2607516546438997
+        },
+        "satisfaction": 0.8,
+        "skill": 0.5100758190337217,
+        "tcgWallet": 50,
+        "tenureDays": 20
+      }
+    },
+    "printRuns": {
+      "print-run-parity-fire": {
+        "cardIds": [
+          "card-fire-charger",
+          "card-fire-cub",
+          "card-fire-drinker",
+          "card-fire-guardian",
+          "card-fire-herald",
+          "card-fire-phoenix",
+          "card-fire-runner",
+          "card-fire-stalker",
+          "card-fire-twins",
+          "card-neutral-scout"
+        ],
+        "completionDay": 10,
+        "edition": "FIRST_EDITION",
+        "id": "print-run-parity-fire",
+        "orderedDay": 1,
+        "orderedQuantity": 100,
+        "printingIds": [
+          "printing-parity-fire-card-fire-charger",
+          "printing-parity-fire-card-fire-cub",
+          "printing-parity-fire-card-fire-drinker",
+          "printing-parity-fire-card-fire-guardian",
+          "printing-parity-fire-card-fire-herald",
+          "printing-parity-fire-card-fire-phoenix",
+          "printing-parity-fire-card-fire-runner",
+          "printing-parity-fire-card-fire-stalker",
+          "printing-parity-fire-card-fire-twins",
+          "printing-parity-fire-card-neutral-scout"
+        ],
+        "productId": "product-parity-starter-fire",
+        "productKind": "STARTER",
+        "quantity": 98,
+        "sourceExpansionId": "set-launch",
+        "status": "COMPLETED",
+        "totalCost": 450,
+        "unitCost": 4.5
+      },
+      "print-run-parity-machine": {
+        "cardIds": [
+          "card-machine-bolt",
+          "card-machine-buffer",
+          "card-machine-disruptor",
+          "card-machine-fabricate",
+          "card-machine-guard",
+          "card-machine-recall",
+          "card-machine-repairer",
+          "card-machine-rocket",
+          "card-machine-salvager",
+          "card-neutral-scout"
+        ],
+        "completionDay": 10,
+        "edition": "FIRST_EDITION",
+        "id": "print-run-parity-machine",
+        "orderedDay": 1,
+        "orderedQuantity": 100,
+        "printingIds": [
+          "printing-parity-machine-card-machine-bolt",
+          "printing-parity-machine-card-machine-buffer",
+          "printing-parity-machine-card-machine-disruptor",
+          "printing-parity-machine-card-machine-fabricate",
+          "printing-parity-machine-card-machine-guard",
+          "printing-parity-machine-card-machine-recall",
+          "printing-parity-machine-card-machine-repairer",
+          "printing-parity-machine-card-machine-rocket",
+          "printing-parity-machine-card-machine-salvager",
+          "printing-parity-machine-card-neutral-scout"
+        ],
+        "productId": "product-parity-starter-machine",
+        "productKind": "STARTER",
+        "quantity": 99,
+        "sourceExpansionId": "set-launch",
+        "status": "COMPLETED",
+        "totalCost": 450,
+        "unitCost": 4.5
+      }
+    },
+    "printings": {
+      "printing-parity-fire-card-fire-charger": {
+        "cardId": "card-fire-charger",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-fire-card-fire-charger",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-fire"
+      },
+      "printing-parity-fire-card-fire-cub": {
+        "cardId": "card-fire-cub",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-fire-card-fire-cub",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-fire"
+      },
+      "printing-parity-fire-card-fire-drinker": {
+        "cardId": "card-fire-drinker",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-fire-card-fire-drinker",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-fire"
+      },
+      "printing-parity-fire-card-fire-guardian": {
+        "cardId": "card-fire-guardian",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-fire-card-fire-guardian",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-fire"
+      },
+      "printing-parity-fire-card-fire-herald": {
+        "cardId": "card-fire-herald",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-fire-card-fire-herald",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-fire"
+      },
+      "printing-parity-fire-card-fire-phoenix": {
+        "cardId": "card-fire-phoenix",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-fire-card-fire-phoenix",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-fire"
+      },
+      "printing-parity-fire-card-fire-runner": {
+        "cardId": "card-fire-runner",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-fire-card-fire-runner",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-fire"
+      },
+      "printing-parity-fire-card-fire-stalker": {
+        "cardId": "card-fire-stalker",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-fire-card-fire-stalker",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-fire"
+      },
+      "printing-parity-fire-card-fire-twins": {
+        "cardId": "card-fire-twins",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-fire-card-fire-twins",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-fire"
+      },
+      "printing-parity-fire-card-neutral-scout": {
+        "cardId": "card-neutral-scout",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-fire-card-neutral-scout",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-fire"
+      },
+      "printing-parity-machine-card-machine-bolt": {
+        "cardId": "card-machine-bolt",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-machine-card-machine-bolt",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-machine"
+      },
+      "printing-parity-machine-card-machine-buffer": {
+        "cardId": "card-machine-buffer",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-machine-card-machine-buffer",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-machine"
+      },
+      "printing-parity-machine-card-machine-disruptor": {
+        "cardId": "card-machine-disruptor",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-machine-card-machine-disruptor",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-machine"
+      },
+      "printing-parity-machine-card-machine-fabricate": {
+        "cardId": "card-machine-fabricate",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-machine-card-machine-fabricate",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-machine"
+      },
+      "printing-parity-machine-card-machine-guard": {
+        "cardId": "card-machine-guard",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-machine-card-machine-guard",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-machine"
+      },
+      "printing-parity-machine-card-machine-recall": {
+        "cardId": "card-machine-recall",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-machine-card-machine-recall",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-machine"
+      },
+      "printing-parity-machine-card-machine-repairer": {
+        "cardId": "card-machine-repairer",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-machine-card-machine-repairer",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-machine"
+      },
+      "printing-parity-machine-card-machine-rocket": {
+        "cardId": "card-machine-rocket",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-machine-card-machine-rocket",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-machine"
+      },
+      "printing-parity-machine-card-machine-salvager": {
+        "cardId": "card-machine-salvager",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-machine-card-machine-salvager",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-machine"
+      },
+      "printing-parity-machine-card-neutral-scout": {
+        "cardId": "card-neutral-scout",
+        "edition": "FIRST_EDITION",
+        "expansionId": "set-launch",
+        "id": "printing-parity-machine-card-neutral-scout",
+        "sourceExpansionId": "set-launch",
+        "sourceProductId": "product-parity-starter-machine"
+      }
+    },
+    "products": {
+      "product-launch-booster": {
+        "cardIds": [
+          "card-fire-cub",
+          "card-fire-charger",
+          "card-fire-runner",
+          "card-fire-herald",
+          "card-fire-phoenix",
+          "card-fire-guardian",
+          "card-fire-drinker",
+          "card-fire-twins",
+          "card-fire-stalker",
+          "card-fire-venom",
+          "card-machine-guard",
+          "card-machine-rocket",
+          "card-machine-repairer",
+          "card-machine-salvager",
+          "card-machine-buffer",
+          "card-machine-disruptor",
+          "card-machine-bolt",
+          "card-machine-recall",
+          "card-machine-fabricate",
+          "card-machine-overclock",
+          "card-neutral-scout",
+          "card-neutral-medicine",
+          "card-neutral-insight",
+          "card-neutral-banner"
+        ],
+        "expansionId": "set-launch",
+        "id": "product-launch-booster",
+        "internalReleaseDay": 0,
+        "kind": "BOOSTER",
+        "msrp": 5,
+        "name": "Launch Booster",
+        "releaseStatus": "UNANNOUNCED"
+      },
+      "product-parity-starter-fire": {
+        "cardIds": [
+          "card-fire-charger",
+          "card-fire-cub",
+          "card-fire-drinker",
+          "card-fire-guardian",
+          "card-fire-herald",
+          "card-fire-phoenix",
+          "card-fire-runner",
+          "card-fire-stalker",
+          "card-fire-twins",
+          "card-neutral-scout"
+        ],
+        "expansionId": "set-launch",
+        "id": "product-parity-starter-fire",
+        "internalReleaseDay": 0,
+        "kind": "STARTER",
+        "msrp": 15,
+        "name": "Parity fire Starter",
+        "releaseStatus": "UNANNOUNCED"
+      },
+      "product-parity-starter-machine": {
+        "cardIds": [
+          "card-machine-bolt",
+          "card-machine-buffer",
+          "card-machine-disruptor",
+          "card-machine-fabricate",
+          "card-machine-guard",
+          "card-machine-recall",
+          "card-machine-repairer",
+          "card-machine-rocket",
+          "card-machine-salvager",
+          "card-neutral-scout"
+        ],
+        "expansionId": "set-launch",
+        "id": "product-parity-starter-machine",
+        "internalReleaseDay": 0,
+        "kind": "STARTER",
+        "msrp": 15,
+        "name": "Parity machine Starter",
+        "releaseStatus": "UNANNOUNCED"
+      }
+    },
+    "ruleVersion": "1",
+    "schemaVersion": 7,
+    "simulationVersion": "1",
+    "status": "LIVE",
+    "worldSeed": "web-desktop-simulation-parity"
+  },
+  "updatedAt": "2026-08-13T00:00:00.000Z",
+  "worldSeed": "web-desktop-simulation-parity"
+}
