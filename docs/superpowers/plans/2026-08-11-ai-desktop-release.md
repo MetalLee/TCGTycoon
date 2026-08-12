@@ -256,6 +256,7 @@ git commit -m "feat: add mockable AI gateway"
 - Create: `apps/api/src/prompts/card.ts`
 - Create: `apps/api/src/prompts/set.ts`
 - Create: `apps/api/src/prompts/community.ts`
+- Modify: `apps/api/src/config.ts`
 - Modify: `apps/api/src/providers/provider-factory.ts`
 - Modify: `.env.example`
 - Test: `apps/api/src/providers/openai-provider.test.ts`
@@ -265,7 +266,7 @@ git commit -m "feat: add mockable AI gateway"
 - Consumes: `GenerativeProvider`, AI contracts.
 - Produces: `OpenAIGenerativeProvider` using server-side official OpenAI SDK; text operations use the Responses API and strict JSON-schema structured output, then Zod/domain validation.
 
-- [ ] **Step 1: Add server-only OpenAI SDK dependency**
+- [x] **Step 1: Add server-only OpenAI SDK dependency**
 
 ```bash
 pnpm --filter @tcgtycoon/api add openai
@@ -273,7 +274,7 @@ pnpm --filter @tcgtycoon/api add openai
 
 The dependency must not appear in `apps/game` or simulation packages.
 
-- [ ] **Step 2: Write provider tests against an injected fake OpenAI client**
+- [x] **Step 2: Write provider tests against an injected fake OpenAI client**
 
 Do not hit the real network. Assert provider sends:
 
@@ -284,7 +285,7 @@ Do not hit the real network. Assert provider sends:
 
 and rejects output that fails the shared Zod contract.
 
-- [ ] **Step 3: Implement injectable OpenAI client adapter**
+- [x] **Step 3: Implement injectable OpenAI client adapter**
 
 Use a constructor accepting `OpenAI`-compatible client and config. Text call shape should use the official Responses API pattern:
 
@@ -309,7 +310,7 @@ return responseSchema.parse(parsedJson);
 
 Keep explicit JSON Schema objects alongside each shared contract for provider strict-output requests; Zod remains the final runtime validator.
 
-- [ ] **Step 4: Configure models via environment**
+- [x] **Step 4: Configure models via environment**
 
 `.env.example`:
 
@@ -322,11 +323,11 @@ OPENAI_IMAGE_MODEL=gpt-image-1
 
 Do not expose these as `VITE_*` variables.
 
-- [ ] **Step 5: Implement bounded retry on schema/domain failure**
+- [x] **Step 5: Implement bounded retry on schema/domain failure**
 
 At most two provider attempts for invalid model output. Retry prompt includes the validation error summary but never relaxes the Card DSL schema. Provider/API errors return typed gateway failures rather than fallback simulation mutations.
 
-- [ ] **Step 6: Verify server/client isolation and commit**
+- [x] **Step 6: Verify server/client isolation and commit**
 
 ```bash
 AI_MODE=mock pnpm test:ai
