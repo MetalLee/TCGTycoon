@@ -591,7 +591,7 @@ git commit -m "feat: scaffold publisher web application"
 - Consumes: `simulateDay`, WorldState, PublisherCommand, SaveRepository contract.
 - Produces: `GameSessionController.load`, `queueCommand`, `discardPendingCommand`, `endDay`, `subscribe`; worker protocol `SIMULATE_DAY_REQUEST|PROGRESS|RESULT|ERROR`.
 
-- [ ] **Step 1: Write failing atomic End Day test**
+- [x] **Step 1: Write failing atomic End Day test**
 
 With a fake worker/repository:
 
@@ -599,15 +599,15 @@ With a fake worker/repository:
 - save failure leaves current state/day unchanged,
 - pending commands clear only after successful commit.
 
-- [ ] **Step 2: Implement the worker protocol**
+- [x] **Step 2: Implement the worker protocol**
 
 Worker receives a structured clone of canonical state/commands/config and returns deterministic result. No AI/network imports.
 
-- [ ] **Step 3: Implement controller as the only mutable application-session boundary**
+- [x] **Step 3: Implement controller as the only mutable application-session boundary**
 
 React pages read snapshots and dispatch typed commands. Do not expose `setWorldState()` to feature components.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 ```bash
 pnpm --filter @tcgtycoon/game test -- GameSessionController.test.ts
