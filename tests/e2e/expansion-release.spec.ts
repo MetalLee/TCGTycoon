@@ -18,10 +18,23 @@ test("an offline expansion can be playtested, finalized, printed and released", 
 
   await page.getByRole("link", { name: "Expansions" }).click();
   await page.getByRole("link", { name: "Offline Fixture Expansion" }).click();
+  await page.getByRole("button", { name: "Edit" }).first().click();
+  const cost = page.getByLabel("Cost");
+  await cost.fill(String(Number(await cost.inputValue()) + 1));
+  await page.getByRole("button", { name: "Queue gameplay edit" }).click();
+  await endDay(page);
+  await page.getByRole("link", { name: "Playtest" }).click();
+  await expect(page.getByRole("link", { name: /QUICK report/ })).toBeVisible();
+  await page.getByRole("link", { name: /QUICK report/ }).click();
+  await expect(page.getByText("STALE evidence")).toBeVisible();
+  await page.getByRole("link", { name: "Expansions" }).click();
+  await page.getByRole("link", { name: "Offline Fixture Expansion" }).click();
   await page
     .getByRole("button", { name: "Queue irreversible Finalize" })
     .click();
   await endDay(page);
+  await page.getByRole("link", { name: "Expansions" }).click();
+  await page.getByRole("link", { name: "Offline Fixture Expansion" }).click();
   await expect(page.getByText("FINALIZED", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Gameplay finalized" }),

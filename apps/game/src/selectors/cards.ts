@@ -58,6 +58,12 @@ export type CardDetailView = Readonly<{
   listItem: CardListItem;
   knownSynergies: readonly KnownSynergy[];
   observedDeckCount: number;
+  tournamentDemand: Readonly<{
+    deckId: string;
+    tournamentId: string;
+    day: number;
+    tournamentPrestige: number;
+  }> | null;
   history: readonly Readonly<{
     id: string;
     day: number;
@@ -273,6 +279,21 @@ export function selectCardDetail(
 ): CardDetailView | null {
   const card = world.cards[id];
   if (card === undefined) return null;
+  const tournamentDemand = [
+    ...(world.operationEvidence?.tournamentAttention ?? []),
+  ]
+    .filter(
+      (attention) =>
+        world.decks[attention.deckId]?.cards.some(
+          (entry) => entry.cardId === id,
+        ) === true,
+    )
+    .sort(
+      (left, right) =>
+        right.day - left.day ||
+        right.tournamentPrestige - left.tournamentPrestige ||
+        compareText(left.deckId, right.deckId),
+    )[0];
   return {
     card,
     listItem: listItem(world, card),
@@ -280,6 +301,8 @@ export function selectCardDetail(
     observedDeckCount: Object.values(world.decks).filter((deck) =>
       deck.cards.some((entry) => entry.cardId === id),
     ).length,
+    tournamentDemand:
+      tournamentDemand === undefined ? null : { ...tournamentDemand },
     history: world.history.events
       .filter((event) => event.context?.reason?.includes(id) === true)
       .map((event) => ({ id: event.id, day: event.day, type: event.type }))

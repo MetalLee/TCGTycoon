@@ -217,9 +217,9 @@ function schedule(preset: TournamentSchedule["preset"]): TournamentSchedule {
 describe("official tournaments", () => {
   it("defines the approved player caps and preparation times", () => {
     expect(TOURNAMENT_CONFIG).toEqual({
-      LOCAL: { maxPlayers: 32, prepDays: 2 },
-      REGIONAL: { maxPlayers: 128, prepDays: 5 },
-      MAJOR: { maxPlayers: 512, prepDays: 10 },
+      LOCAL: { maxPlayers: 32, prepDays: 2, cashCost: 2_000 },
+      REGIONAL: { maxPlayers: 128, prepDays: 5, cashCost: 7_500 },
+      MAJOR: { maxPlayers: 512, prepDays: 10, cashCost: 20_000 },
     });
   });
 

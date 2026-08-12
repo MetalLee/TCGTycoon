@@ -160,7 +160,7 @@ describe("GameSessionController atomic End Day", () => {
     });
 
     repository.nextSave.resolve();
-    await endDay;
+    await expect(endDay).resolves.toEqual(result);
 
     expect(controller.getSnapshot()).toMatchObject({
       status: "IDLE",

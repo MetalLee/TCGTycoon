@@ -250,4 +250,70 @@ describe("official announcements", () => {
     expect(state.announcements[1]!.commitment?.status).toBe("BREACHED");
     expect(world.metrics.brandTrust).toBe(trustBefore);
   });
+
+  it("matches policy and tournament commitments to their structured event subjects", () => {
+    const world = createMarketingWorld("structured-operation-commitments");
+    const state = createAnnouncementState();
+    publishOfficialAnnouncement(world, state, {
+      id: "announcement-policy-promise",
+      day: 1,
+      topic: "BALANCE",
+      text: "A policy action is scheduled.",
+      boundAction: { type: "BALANCE_CHANGE", subjectId: "card-policy" },
+      commitment: {
+        id: "commitment-policy",
+        type: "ENACT_POLICY",
+        subjectId: "card-policy",
+        dueDay: 5,
+      },
+    });
+    publishOfficialAnnouncement(world, state, {
+      id: "announcement-tournament-promise",
+      day: 1,
+      topic: "TOURNAMENT",
+      text: "The event is scheduled.",
+      boundAction: {
+        type: "TOURNAMENT_PROMOTION",
+        subjectId: "tournament-promised",
+      },
+      commitment: {
+        id: "commitment-tournament",
+        type: "RUN_TOURNAMENT",
+        subjectId: "tournament-promised",
+        dueDay: 5,
+      },
+    });
+
+    const outcomes = evaluateCommitments(
+      state,
+      [
+        ...world.history.events,
+        {
+          id: "event-policy-effective",
+          day: 3,
+          type: "POLICY_CHANGE_EFFECTIVE",
+          context: { reason: "BAN:card-policy:banlist-3-operation-1" },
+        },
+        {
+          id: "event-tournament-completed",
+          day: 4,
+          type: "TOURNAMENT_COMPLETED",
+          context: {
+            reason: JSON.stringify({ tournamentId: "tournament-promised" }),
+          },
+        },
+      ],
+      5,
+    );
+
+    expect(outcomes.map((event) => event.type)).toEqual([
+      "COMMITMENT_FULFILLED",
+      "COMMITMENT_FULFILLED",
+    ]);
+    expect(
+      state.announcements.map(
+        (announcement) => announcement.commitment?.status,
+      ),
+    ).toEqual(["FULFILLED", "FULFILLED"]);
+  });
 });

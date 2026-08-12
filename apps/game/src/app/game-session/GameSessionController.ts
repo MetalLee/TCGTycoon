@@ -8,6 +8,7 @@ import type { SaveRepository } from "../../../../../packages/persistence/src/ind
 import type { BalanceConfig } from "../../../../../packages/sim-core/src/index";
 import type { SimulationWorkerTransport } from "../../workers/protocol";
 import { runEndDaySimulation } from "./end-day";
+import type { DaySimulationResult } from "../../../../../packages/sim-core/src/index";
 
 type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
@@ -149,7 +150,7 @@ export class GameSessionController {
     });
   }
 
-  async endDay(): Promise<void> {
+  async endDay(): Promise<DaySimulationResult> {
     this.#requireIdle("end the day");
     if (this.#save === null || this.#snapshot.world === null) {
       throw new Error("Cannot end day before loading a save");
@@ -196,6 +197,7 @@ export class GameSessionController {
         error: null,
       });
       this.#emit();
+      return immutableClone(result) as DaySimulationResult;
     } catch (error) {
       this.#save = currentSave;
       this.#snapshot = immutableClone({

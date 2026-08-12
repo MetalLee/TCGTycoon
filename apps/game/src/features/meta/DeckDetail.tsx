@@ -42,6 +42,13 @@ export function DeckDetail({ view }: DeckDetailProps) {
       </section>
 
       <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+        <h3 className="font-semibold">Replay evidence</h3>
+        <Link className="mt-3 inline-block text-emerald-300" to="/tournaments">
+          Open official tournaments and persisted match replays
+        </Link>
+      </section>
+
+      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
         <h3 className="font-semibold">Observed matchups</h3>
         {view.matchups.length === 0 ? (
           <p className="mt-3 text-sm text-slate-400">No matchup samples.</p>

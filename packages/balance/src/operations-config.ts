@@ -1,5 +1,6 @@
 export type OperationsConfig = {
   expansionDesignDaysBySize: Readonly<Record<24 | 32 | 36, number>>;
+  expansionDesignCashCostBySize: Readonly<Record<24 | 32 | 36, number>>;
   scheduledPolicyLeadDays: number;
   emergencyPolicyLeadDays: number;
   standardSetLimit: number;
@@ -10,6 +11,11 @@ export const OPERATIONS_CONFIG: OperationsConfig = {
     24: 4,
     32: 6,
     36: 8,
+  },
+  expansionDesignCashCostBySize: {
+    24: 5_000,
+    32: 7_500,
+    36: 10_000,
   },
   scheduledPolicyLeadDays: 3,
   emergencyPolicyLeadDays: 1,

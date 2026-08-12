@@ -35,6 +35,7 @@ export function CommunityPage() {
       {announcing && outlet.queueCommand && (
         <OfficialAnnouncementDialog
           queueCommand={outlet.queueCommand}
+          currentDay={outlet.world?.day ?? 0}
           onClose={() => setAnnouncing(false)}
         />
       )}

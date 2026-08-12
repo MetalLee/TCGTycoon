@@ -20,4 +20,13 @@ test("a completed tournament exposes its winning deck and match evidence", async
   await expect(winner.getByRole("link")).toBeVisible();
   await expect(page.getByText("Notable matches")).toBeVisible();
   await expect(page.getByRole("link", { name: /Final/ })).toBeVisible();
+  const winningDeckHref = await winner.getByRole("link").getAttribute("href");
+  await endDay(page);
+  await page.getByRole("link", { name: "Meta", exact: true }).click();
+  await page.locator(`a[href="${winningDeckHref}"]`).click();
+  await page.locator('a[href^="/cards/"]').first().click();
+  await page.getByRole("tab", { name: "Market" }).click();
+  await expect(
+    page.getByText(/recent tournament demand signal/i),
+  ).toBeVisible();
 });

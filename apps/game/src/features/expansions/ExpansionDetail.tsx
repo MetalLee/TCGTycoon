@@ -4,19 +4,15 @@ import type {
 } from "../../../../../packages/domain/src/index";
 import type { ExpansionPipelineProject } from "../../../../../packages/sim-core/src/index";
 import { SetReview } from "./SetReview";
+import type { CardId } from "../../../../../packages/domain/src/index";
+import { CardStudio } from "../cards/CardStudio";
 
 export type ExpansionDetailProps = {
   project: Readonly<ExpansionPipelineProject>;
   queueCommand: (command: PublisherCommand) => void;
   onAcceptCard: (cardId: Parameters<SetReviewProps["onAccept"]>[0]) => void;
   onEditCard: (cardId: Parameters<SetReviewProps["onEdit"]>[0]) => void;
-  onDeleteCard: (cardId: Parameters<SetReviewProps["onDelete"]>[0]) => void;
-  onRegenerateCard: (
-    cardId: Parameters<SetReviewProps["onRegenerate"]>[0],
-  ) => void;
-  onManualReplaceCard: (
-    cardId: Parameters<SetReviewProps["onManualReplace"]>[0],
-  ) => void;
+  selectedCardId?: CardId | undefined;
 };
 
 type SetReviewProps = React.ComponentProps<typeof SetReview>;
@@ -33,9 +29,7 @@ export function ExpansionDetail({
   queueCommand,
   onAcceptCard,
   onEditCard,
-  onDeleteCard,
-  onRegenerateCard,
-  onManualReplaceCard,
+  selectedCardId,
 }: ExpansionDetailProps) {
   const finalized =
     project.stage === "FINALIZED" ||
@@ -77,10 +71,15 @@ export function ExpansionDetail({
         project={project}
         onAccept={onAcceptCard}
         onEdit={onEditCard}
-        onDelete={onDeleteCard}
-        onRegenerate={onRegenerateCard}
-        onManualReplace={onManualReplaceCard}
       />
+      {selectedCardId !== undefined &&
+        project.cardDrafts[selectedCardId] !== undefined && (
+          <CardStudio
+            expansionId={project.id}
+            draft={project.cardDrafts[selectedCardId]!}
+            queueCommand={queueCommand}
+          />
+        )}
     </article>
   );
 }

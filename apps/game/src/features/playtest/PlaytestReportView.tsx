@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CardDefinition } from "../../../../../packages/domain/src/index";
 import type { PlaytestReport } from "../../../../../packages/sim-core/src/index";
 import { Link } from "react-router";
+import { EstimateValue } from "../../components/semantics/EstimateValue";
 
 const tabs = [
   "OVERVIEW",
@@ -87,7 +88,15 @@ export function PlaytestReportView({
               <p className="text-xs uppercase tracking-wider text-slate-400">
                 {label}
               </p>
-              <p className="mt-2 text-xl font-semibold">{value}</p>
+              {String(label).includes("estimate") ? (
+                <EstimateValue
+                  label={String(label)}
+                  value={value}
+                  basis={`${report.matchesRun} deterministic simulated matches`}
+                />
+              ) : (
+                <p className="mt-2 text-xl font-semibold">{value}</p>
+              )}
             </div>
           ))}
           {report.comboCandidates.length === 0 && (

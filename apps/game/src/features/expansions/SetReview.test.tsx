@@ -66,25 +66,13 @@ function createProject() {
 afterEach(cleanup);
 
 describe("SetReview", () => {
-  it("bulk accepts only legal low-risk proposals and exposes every review action", () => {
+  it("bulk accepts only legal low-risk proposals and opens structured editing", () => {
     const project = createProject();
     const before = structuredClone(project);
     const onAccept = vi.fn();
     const onEdit = vi.fn();
-    const onDelete = vi.fn();
-    const onRegenerate = vi.fn();
-    const onManualReplace = vi.fn();
 
-    render(
-      <SetReview
-        project={project}
-        onAccept={onAccept}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        onRegenerate={onRegenerate}
-        onManualReplace={onManualReplace}
-      />,
-    );
+    render(<SetReview project={project} onAccept={onAccept} onEdit={onEdit} />);
 
     fireEvent.click(
       screen.getByRole("button", { name: "Accept low-risk proposals" }),
@@ -95,19 +83,9 @@ describe("SetReview", () => {
     const reviewRow = screen.getByRole("row", { name: /Review Unit/ });
     fireEvent.click(within(reviewRow).getByRole("button", { name: "Accept" }));
     fireEvent.click(within(reviewRow).getByRole("button", { name: "Edit" }));
-    fireEvent.click(within(reviewRow).getByRole("button", { name: "Delete" }));
-    fireEvent.click(
-      within(reviewRow).getByRole("button", { name: "Regenerate" }),
-    );
-    fireEvent.click(
-      within(reviewRow).getByRole("button", { name: "Manual replacement" }),
-    );
 
     expect(onAccept).toHaveBeenLastCalledWith(cardId("card-review"));
     expect(onEdit).toHaveBeenCalledWith(cardId("card-review"));
-    expect(onDelete).toHaveBeenCalledWith(cardId("card-review"));
-    expect(onRegenerate).toHaveBeenCalledWith(cardId("card-review"));
-    expect(onManualReplace).toHaveBeenCalledWith(cardId("card-review"));
     expect(project).toEqual(before);
   });
 });

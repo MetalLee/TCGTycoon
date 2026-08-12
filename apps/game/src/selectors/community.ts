@@ -4,6 +4,7 @@ import type {
   WorldEvent,
   WorldState,
 } from "../../../../packages/domain/src/index";
+import { getAvailableProductInventory } from "../../../../packages/sim-core/src/index";
 
 export type CommunityPostCategory =
   "TRENDING" | "COMPETITIVE" | "COLLECTORS" | "OFFICIAL";
@@ -30,6 +31,10 @@ export type AgentProfileView = Readonly<{
   currentDeckName: string | null;
   posts: readonly CommunityPostIntent[];
 }>;
+
+function compareIds(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
 
 function safeRecord(reason: string | undefined): Record<string, unknown> {
   if (reason === undefined) return {};
@@ -155,7 +160,7 @@ function intentFromEvent(
 }
 
 export function selectCommunityPosts(world: WorldState): CommunityPostIntent[] {
-  return world.history.events
+  const observed = world.history.events
     .flatMap((event) => {
       const intent = intentFromEvent(world, event);
       return intent === null ? [] : [intent];
@@ -163,6 +168,58 @@ export function selectCommunityPosts(world: WorldState): CommunityPostIntent[] {
     .sort(
       (left, right) => right.day - left.day || (left.id < right.id ? -1 : 1),
     );
+  const complaints = Object.values(world.market.snapshots)
+    .filter(
+      (snapshot) => snapshot.availableSupply < 20 && snapshot.lastPrice > 0,
+    )
+    .sort((left, right) => compareIds(left.printingId, right.printingId))
+    .map((snapshot): CommunityPostIntent => {
+      const printing = world.printings[snapshot.printingId]!;
+      return {
+        id: `price-complaint-${snapshot.printingId}`,
+        day: world.day,
+        category: "COLLECTORS",
+        templateText: `${world.cards[printing.cardId]?.name ?? printing.cardId} is hard to find at a reasonable price. More physical supply would help.`,
+        links: [
+          entityLink(world, "CARD", printing.cardId),
+          entityLink(world, "PRINTING", snapshot.printingId),
+        ],
+      };
+    });
+  const complainedCardIds = new Set(
+    complaints.flatMap((complaint) =>
+      complaint.links
+        .filter((link) => link.kind === "CARD")
+        .map((link) => link.id),
+    ),
+  );
+  const productComplaints = Object.values(world.products)
+    .filter(
+      (product) =>
+        product.releaseStatus === "LIVE" &&
+        getAvailableProductInventory(world, product.id) < 20,
+    )
+    .sort((left, right) => compareIds(left.id, right.id))
+    .flatMap((product): CommunityPostIntent[] => {
+      const cardId = [...product.cardIds]
+        .sort(compareIds)
+        .find((candidate) => !complainedCardIds.has(candidate));
+      if (cardId === undefined) return [];
+      complainedCardIds.add(cardId);
+      return [
+        {
+          id: `product-supply-complaint-${product.id}`,
+          day: world.day,
+          category: "COLLECTORS",
+          templateText: `${world.cards[cardId]?.name ?? cardId} is hard to find at a reasonable price because ${product.name} has low primary inventory. More physical supply would help.`,
+          links: [
+            entityLink(world, "CARD", cardId),
+            entityLink(world, "PRODUCT", product.id),
+          ],
+        },
+      ];
+    });
+  return [...complaints, ...productComplaints, ...observed];
 }
 
 export function selectAgentProfile(

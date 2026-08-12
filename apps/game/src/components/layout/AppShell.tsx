@@ -1,5 +1,5 @@
 import { useState, useSyncExternalStore } from "react";
-import { NavLink, Outlet } from "react-router";
+import { NavLink, Outlet, useNavigate } from "react-router";
 import {
   type GameSessionController,
   type GameSessionSnapshot,
@@ -56,6 +56,7 @@ export type GameSessionOutlet = GameSessionSnapshot & {
 };
 
 export function AppShell({ controller }: AppShellProps) {
+  const navigate = useNavigate();
   const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
   const snapshot = useControllerSnapshot(controller);
@@ -131,8 +132,14 @@ export function AppShell({ controller }: AppShellProps) {
             onCancel={() => setEndDayOpen(false)}
             onProceed={async () => {
               if (controller === undefined) return;
-              await controller.endDay();
+              const result = await controller.endDay();
               setEndDayOpen(false);
+              await navigate(`/daily-report/${result.report.day}`, {
+                state: {
+                  report: result.report,
+                  notableEvents: result.notableEvents,
+                },
+              });
             }}
           />
         </div>

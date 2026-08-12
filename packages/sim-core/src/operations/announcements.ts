@@ -1,58 +1,26 @@
 import { MARKETING_CONFIG, type MarketingConfig } from "@tcgtycoon/balance";
 import type {
+  AnnouncementBoundAction,
+  AnnouncementState,
   AnnouncementTopic,
+  Commitment,
+  CommitmentStatus,
+  CommitmentType,
+  OfficialAnnouncement,
   WorldEvent,
   WorldState,
 } from "@tcgtycoon/domain";
 
-export const ANNOUNCEMENT_ACTION_TYPES = [
-  "EXPANSION_RELEASE",
-  "BALANCE_CHANGE",
-  "REPRINT_PLAN",
-  "TOURNAMENT_PROMOTION",
-  "DEVELOPMENT_UPDATE",
-  "ISSUE_RESPONSE",
-] as const;
-
-export type AnnouncementActionType = (typeof ANNOUNCEMENT_ACTION_TYPES)[number];
-
-export type AnnouncementBoundAction = {
-  type: AnnouncementActionType;
-  subjectId: string;
-};
-
-export const COMMITMENT_TYPES = [
-  "RELEASE_PRODUCT",
-  "COMPLETE_REPRINT",
-  "ENACT_POLICY",
-  "RUN_TOURNAMENT",
-  "FINALIZE_EXPANSION",
-] as const;
-
-export type CommitmentType = (typeof COMMITMENT_TYPES)[number];
-export type CommitmentStatus = "PENDING" | "FULFILLED" | "BREACHED";
-
-export type Commitment = {
-  id: string;
-  type: CommitmentType;
-  subjectId: string;
-  dueDay: number;
-  status: CommitmentStatus;
-};
-
-export type OfficialAnnouncement = {
-  id: string;
-  day: number;
-  topic: AnnouncementTopic;
-  text: string;
-  boundAction: AnnouncementBoundAction;
-  attention: number;
-  commitment?: Commitment;
-};
-
-export type AnnouncementState = {
-  announcements: OfficialAnnouncement[];
-};
+export type {
+  AnnouncementActionType,
+  AnnouncementBoundAction,
+  AnnouncementState,
+  Commitment,
+  CommitmentStatus,
+  CommitmentType,
+  OfficialAnnouncement,
+} from "@tcgtycoon/domain";
+export { ANNOUNCEMENT_ACTION_TYPES, COMMITMENT_TYPES } from "@tcgtycoon/domain";
 
 export type PublishOfficialAnnouncementInput = {
   id: string;
@@ -206,7 +174,20 @@ function eventMatchesCommitment(
   ) {
     return event.context?.productId === commitment.subjectId;
   }
-  return event.context?.reason === commitment.subjectId;
+  const reason = event.context?.reason;
+  if (reason === undefined) return false;
+  if (commitment.type === "FINALIZE_EXPANSION") {
+    return reason === commitment.subjectId;
+  }
+  if (commitment.type === "ENACT_POLICY") {
+    return reason.split(":").includes(commitment.subjectId);
+  }
+  try {
+    const result = JSON.parse(reason) as { tournamentId?: string };
+    return result.tournamentId === commitment.subjectId;
+  } catch {
+    return false;
+  }
 }
 
 function outcomeEvent(

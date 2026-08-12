@@ -11,6 +11,8 @@ import {
   type DeckDefinition,
   type FactionId,
   type OperationProject,
+  type PlaytestReportState,
+  type PlaytestRunState,
   type PlaytestTier,
 } from "@tcgtycoon/domain";
 import {
@@ -30,33 +32,7 @@ const CARDS_PER_PLAYTEST_DECK = 10;
 export type PlaytestStatus = "PLANNED" | "ACTIVE" | "READY" | "COMPLETED";
 export type PlaytestReportStatus = "FRESH" | "STALE";
 
-export type PlaytestRun = {
-  id: string;
-  expansionId: ExpansionPipelineProject["id"];
-  tier: PlaytestTier;
-  startDay: number;
-  completionDay: number;
-  durationDays: number;
-  elapsedDays: number;
-  status: PlaytestStatus;
-  matchBudget: number;
-  candidateDeckBudget: number;
-  cashCost: number;
-  worldSeed: string;
-  setup: boolean;
-  operation: OperationProject;
-  revisionSnapshot: Record<string, number>;
-  cards: CardDefinition[];
-  evidenceConfig: Pick<
-    PlaytestConfig,
-    | "comboMinimumActivations"
-    | "comboMinimumObservedWinRate"
-    | "highRiskMinimumMatches"
-    | "highRiskObservedWinRate"
-    | "anomalyReplayLimit"
-    | "shortMatchTurnThreshold"
-  >;
-};
+export type PlaytestRun = PlaytestRunState;
 
 export type PlaytestCandidateDeckStats = {
   deckId: DeckDefinition["id"];
@@ -94,24 +70,7 @@ export type PlaytestAnomaly = {
   replay: MatchReplay;
 };
 
-export type PlaytestReport = {
-  id: string;
-  expansionId: ExpansionPipelineProject["id"];
-  tier: PlaytestTier;
-  status: PlaytestReportStatus;
-  revisionSnapshot: Record<string, number>;
-  candidatesEvaluated: number;
-  matchesRun: number;
-  candidateDeckStats: PlaytestCandidateDeckStats[];
-  highRiskCards: PlaytestHighRiskCard[];
-  comboCandidates: PlaytestComboCandidate[];
-  firstPlayerWinRate: number;
-  averageTurns: number;
-  diversityEstimate: number;
-  triggerSafetyWarnings: PlaytestTriggerSafetyWarning[];
-  anomalies: PlaytestAnomaly[];
-  anomalyReplayReferences: string[];
-};
+export type PlaytestReport = PlaytestReportState;
 
 export type StartPlaytestOptions = {
   startDay: number;
@@ -241,7 +200,7 @@ export function startPlaytest(
   const completionDay = options.startDay + selected.durationDays - 1;
   const id = `playtest-${project.id}-${options.startDay}-${tier.toLowerCase()}`;
   const playtestOperationId = operationId(`operation-${id}`);
-  const operation: OperationProject = {
+  const operation: Extract<OperationProject, { type: "PLAYTEST" }> = {
     id: playtestOperationId,
     type: "PLAYTEST",
     createdDay: options.startDay,

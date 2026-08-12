@@ -1,6 +1,7 @@
 import type { WorldEvent } from "../../../../packages/domain/src/index";
 import type { DailyReport } from "../../../../packages/sim-core/src/index";
-import { useLocation, useParams } from "react-router";
+import { useLocation, useOutletContext, useParams } from "react-router";
+import type { GameSessionSnapshot } from "../app/game-session/GameSessionController";
 import { DailyReportView } from "../features/daily-report/DailyReportView";
 
 export type DailyReportRouteState = {
@@ -24,7 +25,14 @@ function isDailyReportRouteState(
 export function DailyReportPage() {
   const { day } = useParams();
   const location = useLocation();
-  const state = isDailyReportRouteState(location.state) ? location.state : null;
+  const snapshot = useOutletContext<GameSessionSnapshot>();
+  const persisted =
+    day === undefined ? undefined : snapshot.world?.dailyReports?.[day];
+  const state = isDailyReportRouteState(location.state)
+    ? location.state
+    : persisted === undefined
+      ? null
+      : { report: persisted.report, notableEvents: persisted.notableEvents };
 
   return (
     <section className="space-y-8">
@@ -46,7 +54,9 @@ export function DailyReportPage() {
         <DailyReportView
           report={state.report}
           notableEvents={state.notableEvents}
-          previousReport={state.previousReport}
+          {...("previousReport" in state && state.previousReport !== undefined
+            ? { previousReport: state.previousReport }
+            : {})}
         />
       )}
     </section>

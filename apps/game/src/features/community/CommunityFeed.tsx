@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { OpinionBlock } from "../../components/semantics/OpinionBlock";
 import type {
   CommunityPostCategory,
   CommunityPostIntent,
@@ -57,7 +58,9 @@ function CommunityPost({ post }: { post: CommunityPostIntent }) {
         <span>{post.category as CommunityPostCategory}</span>
         <span>Day {post.day}</span>
       </div>
-      <p className="mt-3 text-slate-200">{post.templateText}</p>
+      <OpinionBlock title="Community opinion" source={post.category}>
+        <p>{post.templateText}</p>
+      </OpinionBlock>
       {post.links.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-3 text-sm">
           {post.links.map((link) => (

@@ -947,3 +947,45 @@ Before Phase 4:
 10. FACT, ESTIMATE and OPINION are visually/semantically distinguishable.
 11. The six E2E flows pass with `AI_MODE=mock`.
 12. The core Web MVP is already a complete playable game before generative AI/Tauri are added.
+
+---
+
+## Phase 3B completion-remediation addendum (2026-08-12)
+
+The completion review found that the green gate did not exercise several required
+production integrations. Phase 3B is not complete until all items below are green.
+
+### Persistence and interfaces
+
+- Increment the persisted schema and migrate existing saves without discarding data.
+- Persist active `PlaytestRun`s, completed `PlaytestReport`s, and official
+  `AnnouncementState` in canonical `WorldState`.
+- `PUBLISH_ANNOUNCEMENT` may carry a typed structured commitment (`type`,
+  `subjectId`, and `dueDay`).
+- `GameSessionController.endDay()` returns the committed `DaySimulationResult` so
+  the shell can navigate to `/daily-report/:day` with the report and notable events
+  only after the atomic save succeeds.
+
+### Deterministic runtime integration
+
+- Advance and complete persisted playtests in the day loop; retain anomaly replay
+  action logs and mark prior reports stale after a gameplay revision.
+- Apply Ban/Restrict and Standard rotation legality to every deck used by normal
+  matches, mutations, and tournaments. Pass banned card IDs into competitive market
+  intent generation.
+- Feed tournament matches into Meta aggregation and persist tournament attention so
+  it affects next-day adoption/market inputs without changing match win rates.
+- Persist announcements, evaluate commitments every day, and emit fulfillment or
+  breach trust events exactly once.
+
+### Web acceptance
+
+- Set Review actions and Card Studio queue typed `PublisherCommand`s; no advertised
+  action may be wired to a no-op.
+- FACT, ESTIMATE, and OPINION semantics are used on actual user-facing content.
+- History and Settings are functional pages, not placeholders.
+- The six E2E specs must traverse the exact six journeys in the roadmap and assert
+  their canonical consequences, not reduced substitutes.
+- A deterministic 100-day fixture exercises expansion, playtest, finalize, print,
+  campaign, tournament, announcement, and policy commands in addition to stock
+  replenishment.

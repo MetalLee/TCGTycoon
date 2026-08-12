@@ -3,6 +3,7 @@ export * from "./commands";
 export * from "./community";
 export * from "./decks";
 export * from "./events";
+export * from "./evidence";
 export * from "./expansions";
 export * from "./ids";
 export * from "./market";

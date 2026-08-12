@@ -11,9 +11,6 @@ export type SetReviewProps = {
   project: Readonly<ExpansionPipelineProject>;
   onAccept: (cardId: CardId) => void;
   onEdit: (cardId: CardId) => void;
-  onDelete: (cardId: CardId) => void;
-  onRegenerate: (cardId: CardId) => void;
-  onManualReplace: (cardId: CardId) => void;
 };
 
 export function classifyProposalRisk(
@@ -29,14 +26,7 @@ export function classifyProposalRisk(
     : "REVIEW";
 }
 
-export function SetReview({
-  project,
-  onAccept,
-  onEdit,
-  onDelete,
-  onRegenerate,
-  onManualReplace,
-}: SetReviewProps) {
+export function SetReview({ project, onAccept, onEdit }: SetReviewProps) {
   const drafts = Object.values(project.cardDrafts).sort(
     (left, right) => left.slot.index - right.slot.index,
   );
@@ -107,9 +97,6 @@ export function SetReview({
                         [
                           ["Accept", onAccept],
                           ["Edit", onEdit],
-                          ["Delete", onDelete],
-                          ["Regenerate", onRegenerate],
-                          ["Manual replacement", onManualReplace],
                         ] as const
                       ).map(([label, action]) => (
                         <button

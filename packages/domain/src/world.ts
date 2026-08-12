@@ -1,9 +1,11 @@
 import type { CardDefinition } from "./cards";
 import type { WorldHistory } from "./events";
+import type { DailyReportRecord, OperationEvidence } from "./evidence";
 import type { MarketState } from "./market";
 import type { DeckGenome, MetaState } from "./meta";
 import type { WorldMetrics } from "./metrics";
 import type { OperationProject } from "./operations";
+import type { AnnouncementState } from "./community";
 import type { ExpansionPipelineProject } from "./expansions";
 import type { NamedAgent, PersistentPlayer, PopulationCohort } from "./players";
 import type { Expansion, Printing, PrintRun, ProductSku } from "./products";
@@ -20,6 +22,9 @@ export type CashLedgerEntry = {
     | "STARTER_REVENUE"
     | "PRINTING"
     | "PLAYTEST"
+    | "MARKETING"
+    | "TOURNAMENT"
+    | "EXPANSION_DESIGN"
     | "OPERATING_COST"
     | "INVENTORY_COST";
   sourceId?: string;
@@ -35,6 +40,9 @@ export type WorldState = {
   day: number;
   status: "SETUP" | "LIVE" | "GAME_OVER";
   operations?: Record<string, OperationProject>;
+  operationEvidence?: OperationEvidence;
+  announcementState?: AnnouncementState;
+  dailyReports?: Record<string, DailyReportRecord>;
   expansionProjects?: Record<string, ExpansionPipelineProject>;
   cards: Record<string, CardDefinition>;
   printings: Record<string, Printing>;

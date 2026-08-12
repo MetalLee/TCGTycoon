@@ -9,8 +9,64 @@ import { createPublisherTestWorld } from "./publisher-test-world";
 import { simulateDay } from "./simulate-day";
 
 describe("expansion publisher commands", () => {
+  it("persists and completes a Playtest report through the day loop", () => {
+    const world = createPublisherTestWorld("durable-playtest-report");
+    const id = expansionId("set-durable-playtest");
+    const worldCards = Object.values(world.cards);
+    worldCards[20]!.rarity = "RARE";
+    worldCards[21]!.rarity = "RARE";
+    worldCards[22]!.rarity = "LEGENDARY";
+    worldCards[23]!.rarity = "LEGENDARY";
+    const drafts = worldCards.map((card, index) => ({
+      ...structuredClone(card),
+      id: `card-durable-playtest-${String(index + 1).padStart(2, "0")}` as typeof card.id,
+    }));
+    let next = simulateDay(
+      world,
+      [
+        {
+          type: "CREATE_EXPANSION",
+          expansionId: id,
+          name: "Durable Playtest",
+          size: 24,
+          brief: {
+            theme: "Durable evidence",
+            focusFactionIds: [factionId("ember")],
+            strategicDirections: [],
+            productPositioning: "booster",
+          },
+        },
+        ...drafts.map((draft): PublisherCommand => ({
+          type: "UPDATE_CARD_DRAFT",
+          expansionId: id,
+          cardId: draft.id,
+          draft,
+        })),
+        { type: "START_PLAYTEST", expansionId: id, tier: "QUICK" },
+      ],
+      DEFAULT_BALANCE_CONFIG,
+    ).nextState;
+
+    expect(
+      Object.keys(next.operationEvidence?.playtests.runs ?? {}),
+    ).toHaveLength(1);
+    while (
+      Object.keys(next.operationEvidence?.playtests.reports ?? {}).length === 0
+    ) {
+      next = simulateDay(next, [], DEFAULT_BALANCE_CONFIG).nextState;
+    }
+    const report = Object.values(next.operationEvidence!.playtests.reports)[0]!;
+    expect(report).toMatchObject({
+      expansionId: id,
+      tier: "QUICK",
+      status: "FRESH",
+    });
+    expect(report.matchesRun).toBeGreaterThan(0);
+  }, 30_000);
+
   it("creates, playtests and irreversibly finalizes fixture drafts", () => {
     const world = createPublisherTestWorld("expansion-command-lifecycle");
+    const startingCash = world.cash.balance;
     const id = expansionId("set-fixture-expansion");
     const worldCards = Object.values(world.cards);
     worldCards[20]!.rarity = "RARE";
@@ -55,6 +111,13 @@ describe("expansion publisher commands", () => {
         (operation) => operation.type,
       ),
     ).toEqual(expect.arrayContaining(["EXPANSION_DESIGN", "PLAYTEST"]));
+    expect(result.nextState.cash.balance).toBeLessThan(startingCash);
+    expect(result.nextState.cash.ledger).toContainEqual(
+      expect.objectContaining({
+        category: "EXPANSION_DESIGN",
+        sourceId: expect.stringContaining("expansion-design"),
+      }),
+    );
     expect(result.nextState.products[`product-${id}-booster`]).toMatchObject({
       expansionId: id,
       kind: "BOOSTER",

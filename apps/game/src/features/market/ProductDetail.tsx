@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { PublisherCommand } from "../../../../../packages/domain/src/index";
 import type { ProductMarketView } from "../../selectors/market";
 
@@ -12,6 +13,11 @@ export function ProductDetail({
   queueCommand,
   currentDay,
 }: ProductDetailProps) {
+  const [newMsrp, setNewMsrp] = useState(view.msrp.toFixed(2));
+  useEffect(() => setNewMsrp(view.msrp.toFixed(2)), [view.id, view.msrp]);
+  const parsedMsrp = Number(newMsrp);
+  const canQueueMsrp =
+    Number.isFinite(parsedMsrp) && parsedMsrp > 0 && parsedMsrp !== view.msrp;
   return (
     <article className="space-y-5">
       <header>
@@ -68,18 +74,31 @@ export function ProductDetail({
               Queue release after production
             </button>
           )}
+          <label className="flex items-center gap-2 text-sm">
+            New MSRP
+            <input
+              aria-label="New MSRP"
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={newMsrp}
+              onChange={(event) => setNewMsrp(event.target.value)}
+              className="w-28 rounded border border-slate-700 bg-slate-950 p-2"
+            />
+          </label>
           <button
             type="button"
-            className="rounded border border-slate-700 px-4 py-2"
+            disabled={!canQueueMsrp}
+            className="rounded border border-slate-700 px-4 py-2 disabled:opacity-40"
             onClick={() =>
               queueCommand({
                 type: "ADJUST_MSRP",
                 productId: view.id,
-                newMsrp: view.msrp,
+                newMsrp: parsedMsrp,
               })
             }
           >
-            Queue MSRP review
+            Queue MSRP change
           </button>
         </div>
       )}

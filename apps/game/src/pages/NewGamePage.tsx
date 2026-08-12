@@ -31,6 +31,14 @@ export function NewGamePage() {
       schemaVersion: CURRENT_SCHEMA_VERSION,
       operations: result.world.operations ?? {},
       expansionProjects: result.world.expansionProjects ?? {},
+      operationEvidence: result.world.operationEvidence ?? {
+        playtests: { runs: {}, reports: {} },
+        tournamentAttention: [],
+      },
+      announcementState: result.world.announcementState ?? {
+        announcements: [],
+      },
+      dailyReports: result.world.dailyReports ?? {},
     };
     const envelope: SaveEnvelope = {
       saveId: slotId,

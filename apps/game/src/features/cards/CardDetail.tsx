@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { CardDetailView } from "../../selectors/cards";
+import { Link } from "react-router";
 
 const tabs = ["OVERVIEW", "PERFORMANCE", "MARKET", "HISTORY"] as const;
 type CardDetailTab = (typeof tabs)[number];
@@ -95,6 +96,18 @@ export function CardDetail({ view }: CardDetailProps) {
             {" · "}Daily volume {view.listItem.market.dailyVolume}
             {" · "}Supply {view.listItem.market.availableSupply}
           </p>
+          {view.tournamentDemand !== null && (
+            <p className="mt-3 rounded border border-amber-800 bg-amber-950/20 p-3 text-sm text-amber-200">
+              Recent tournament demand signal: deck{" "}
+              {view.tournamentDemand.deckId}
+              {" · "}prestige{" "}
+              {Math.round(view.tournamentDemand.tournamentPrestige * 100)}%
+              {" · "}Day {view.tournamentDemand.day}
+            </p>
+          )}
+          <Link className="mt-3 inline-block text-emerald-300" to="/market">
+            Open Market and related products
+          </Link>
         </section>
       )}
       {tab === "HISTORY" && (

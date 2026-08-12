@@ -1,6 +1,7 @@
 export * from "./cards/core-fixtures";
 export * from "./decks/core-fixtures";
 export * from "./publisher/basic-publisher-bot";
+export * from "./publisher/completion-publisher-bot";
 export * from "./setup/launch-set-fixture";
 export * from "./scenarios/balanced-world";
 export * from "./scenarios/broken-combo-world";

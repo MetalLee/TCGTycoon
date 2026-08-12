@@ -7,11 +7,11 @@ import {
   type AnnouncementTopic,
   type CampaignDurationDays,
   type CampaignType,
+  type CommitmentType,
 } from "./community";
 import {
-  EXPANSION_SIZES,
   type ExpansionBrief,
-  type ExpansionSize,
+  type PostLaunchExpansionSize,
 } from "./expansions";
 import {
   cardId,
@@ -34,7 +34,7 @@ export type PublisherCommand =
       type: "CREATE_EXPANSION";
       expansionId: ExpansionId;
       name: string;
-      size: ExpansionSize;
+      size: PostLaunchExpansionSize;
       brief: ExpansionBrief;
     }
   | {
@@ -103,6 +103,11 @@ export type PublisherCommand =
       topic: AnnouncementTopic;
       text: string;
       subjectId?: string;
+      commitment?: {
+        type: CommitmentType;
+        subjectId: string;
+        dueDay: number;
+      };
     };
 
 const cardIdSchema = z.string().min(1).transform(cardId);
@@ -111,6 +116,13 @@ const factionIdSchema = z.string().min(1).transform(factionId);
 const productIdSchema = z.string().min(1).transform(productId);
 const tournamentIdSchema = z.string().min(1).transform(tournamentId);
 const daySchema = z.number().int().nonnegative();
+const commitmentTypeSchema = z.enum([
+  "RELEASE_PRODUCT",
+  "COMPLETE_REPRINT",
+  "ENACT_POLICY",
+  "RUN_TOURNAMENT",
+  "FINALIZE_EXPANSION",
+]);
 const expansionBriefSchema = z
   .object({
     theme: z.string(),
@@ -126,7 +138,7 @@ export const publisherCommandSchema = z.discriminatedUnion("type", [
       type: z.literal("CREATE_EXPANSION"),
       expansionId: expansionIdSchema,
       name: z.string().min(1),
-      size: z.union(EXPANSION_SIZES.map((size) => z.literal(size))),
+      size: z.union([z.literal(24), z.literal(32), z.literal(36)]),
       brief: expansionBriefSchema,
     })
     .strict(),
@@ -232,6 +244,14 @@ export const publisherCommandSchema = z.discriminatedUnion("type", [
       topic: z.enum(ANNOUNCEMENT_TOPICS),
       text: z.string(),
       subjectId: z.string().min(1).optional(),
+      commitment: z
+        .object({
+          type: commitmentTypeSchema,
+          subjectId: z.string().min(1),
+          dueDay: daySchema,
+        })
+        .strict()
+        .optional(),
     })
     .strict(),
 ]);

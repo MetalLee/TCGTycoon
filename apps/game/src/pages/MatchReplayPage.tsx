@@ -7,6 +7,14 @@ function findReplay(
   world: NonNullable<GameSessionSnapshot["world"]>,
   id: string,
 ): PersistedMatchReplay | null {
+  for (const report of Object.values(
+    world.operationEvidence?.playtests.reports ?? {},
+  )) {
+    const replay = report.anomalies.find(
+      (anomaly) => anomaly.id === id,
+    )?.replay;
+    if (replay !== undefined) return replay as PersistedMatchReplay;
+  }
   for (const event of world.history.events) {
     if (
       event.type !== "TOURNAMENT_COMPLETED" ||

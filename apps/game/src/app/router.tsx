@@ -15,6 +15,8 @@ import { MatchReplayPage } from "../pages/MatchReplayPage";
 import { MetaPage } from "../pages/MetaPage";
 import { OperationsPage } from "../pages/OperationsPage";
 import { PlaceholderPage } from "../pages/PlaceholderPage";
+import { HistoryPage } from "../pages/HistoryPage";
+import { SettingsPage } from "../pages/SettingsPage";
 import { NewGamePage } from "../pages/NewGamePage";
 import { PlaytestPage } from "../pages/PlaytestPage";
 import { PlaytestReportPage } from "../pages/PlaytestReportPage";
@@ -60,8 +62,8 @@ export function createAppRoutes(
         },
         { path: "operations", element: <OperationsPage /> },
         { path: "daily-report/:day", element: <DailyReportPage /> },
-        page("history", "History"),
-        page("settings", "Settings"),
+        { path: "history", element: <HistoryPage /> },
+        { path: "settings", element: <SettingsPage /> },
         page("*", "Not Found"),
       ],
     },

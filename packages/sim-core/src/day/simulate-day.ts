@@ -1,6 +1,7 @@
 import {
   DECK_EVOLUTION_CONFIG,
   META_CONFIG,
+  MARKETING_CONFIG,
   METRICS_CONFIG,
   OPERATIONS_CONFIG,
   POPULATION_CONFIG,
@@ -65,6 +66,7 @@ import {
 import { processLifecycleDay } from "../population/lifecycle";
 import {
   createAnnouncementState,
+  evaluateCommitments,
   publishOfficialAnnouncement,
   type AnnouncementActionType,
 } from "../operations/announcements";
@@ -93,7 +95,12 @@ import {
   createExpansion,
   finalizeExpansion,
 } from "../operations/expansion-pipeline";
-import { startPlaytest } from "../operations/playtest";
+import {
+  advancePlaytest,
+  completePlaytest,
+  startPlaytest,
+  validatePlaytestReportRevisions,
+} from "../operations/playtest";
 import {
   registerTournamentEntrants,
   simulateTournament,
@@ -264,7 +271,19 @@ function scheduleCommand(
       context.state.operations[id] = change.operation;
       break;
     }
-    case "START_CAMPAIGN":
+    case "START_CAMPAIGN": {
+      const cashCost =
+        MARKETING_CONFIG.campaigns[command.campaignType].dailyCashCost *
+        command.durationDays;
+      if (context.state.cash.balance < cashCost) {
+        throw new Error(`Insufficient cash to start Campaign ${id}`);
+      }
+      appendCashEntry(context.state.cash, {
+        day: context.previousDay,
+        category: "MARKETING",
+        sourceId: id,
+        amount: -cashCost,
+      });
       scheduleCampaign(context.state, {
         id,
         campaignType: command.campaignType,
@@ -273,6 +292,7 @@ function scheduleCommand(
         startDay: command.startDay,
       });
       break;
+    }
     case "CREATE_TOURNAMENT": {
       const preset = TOURNAMENT_CONFIG[command.preset];
       if (command.eventDay - context.previousDay < preset.prepDays) {
@@ -280,6 +300,15 @@ function scheduleCommand(
           `${command.preset} tournaments require ${preset.prepDays} preparation days`,
         );
       }
+      if (context.state.cash.balance < preset.cashCost) {
+        throw new Error(`Insufficient cash to schedule Tournament ${id}`);
+      }
+      appendCashEntry(context.state.cash, {
+        day: context.previousDay,
+        category: "TOURNAMENT",
+        sourceId: id,
+        amount: -preset.cashCost,
+      });
       context.state.operations ??= {};
       context.state.operations[id] = {
         id,
@@ -306,16 +335,29 @@ function scheduleCommand(
     }
     case "PUBLISH_ANNOUNCEMENT": {
       const subjectId = command.subjectId ?? `topic:${command.topic}`;
-      publishOfficialAnnouncement(context.state, createAnnouncementState(), {
-        id,
-        day: context.previousDay,
-        topic: command.topic,
-        text: command.text,
-        boundAction: {
-          type: announcementActionType(command.topic),
-          subjectId,
+      context.state.announcementState ??= createAnnouncementState();
+      publishOfficialAnnouncement(
+        context.state,
+        context.state.announcementState,
+        {
+          id,
+          day: context.previousDay,
+          topic: command.topic,
+          text: command.text,
+          boundAction: {
+            type: announcementActionType(command.topic),
+            subjectId,
+          },
+          ...(command.commitment === undefined
+            ? {}
+            : {
+                commitment: {
+                  id: `${id}-commitment`,
+                  ...command.commitment,
+                },
+              }),
         },
-      });
+      );
       break;
     }
   }
@@ -420,6 +462,27 @@ function phase02AdvanceProjectsAndPlaytests(context: DayContext): void {
   for (const operation of Object.values(projects).sort((left, right) =>
     compareIds(left.id, right.id),
   )) {
+    if (operation.type === "PLAYTEST") {
+      const run = context.state.operationEvidence?.playtests.runs[operation.id];
+      if (run !== undefined && run.status !== "COMPLETED") {
+        advancePlaytest(run, context.previousDay);
+        context.state.operations![operation.id] = structuredClone(
+          run.operation,
+        );
+        if (run.status === "READY") {
+          const report = completePlaytest(run);
+          context.state.operationEvidence!.playtests.reports[report.id] =
+            report;
+          context.state.operations![operation.id] = structuredClone(
+            run.operation,
+          );
+          addNotableEvent(context, "PLAYTEST_COMPLETED", {
+            reason: `${operation.payload.expansionId}:${operation.payload.tier}:${report.id}`,
+          });
+        }
+        continue;
+      }
+    }
     if (operation.type === "EXPANSION_DESIGN") {
       const project =
         context.state.expansionProjects?.[operation.payload.expansionId];
@@ -602,6 +665,19 @@ function applyPublisherCommand(
           index,
           "expansion-design",
         );
+        const designCost =
+          OPERATIONS_CONFIG.expansionDesignCashCostBySize[command.size];
+        if (context.state.cash.balance < designCost) {
+          throw new Error(
+            `Insufficient cash to create Expansion ${command.expansionId}`,
+          );
+        }
+        appendCashEntry(context.state.cash, {
+          day: context.previousDay,
+          category: "EXPANSION_DESIGN",
+          sourceId: designOperationId,
+          amount: -designCost,
+        });
         const project = createExpansion({
           id: command.expansionId,
           operationId: designOperationId,
@@ -651,6 +727,13 @@ function applyPublisherCommand(
       applyCardDraftUpdate(project, command.cardId, {
         definition: command.draft,
       });
+      for (const report of Object.values(
+        context.state.operationEvidence?.playtests.reports ?? {},
+      )) {
+        if (report.expansionId === project.id) {
+          validatePlaytestReportRevisions(report, project);
+        }
+      }
       break;
     }
     case "START_PLAYTEST": {
@@ -673,6 +756,11 @@ function applyPublisherCommand(
       });
       context.state.operations ??= {};
       context.state.operations[run.operation.id] = run.operation;
+      context.state.operationEvidence ??= {
+        playtests: { runs: {}, reports: {} },
+        tournamentAttention: [],
+      };
+      context.state.operationEvidence.playtests.runs[run.operation.id] = run;
       break;
     }
     case "FINALIZE_EXPANSION": {
@@ -687,6 +775,11 @@ function applyPublisherCommand(
         }
         context.state.cards[card.id] = structuredClone(card);
       }
+      addNotableEvent(context, "EXPANSION_FINALIZED", {
+        reason: project.id,
+        publicCommitment: true,
+        trustSignal: "NONE",
+      });
       const boosterId = productId(`product-${project.id}-booster`);
       context.state.products[boosterId] = {
         id: boosterId,
@@ -705,9 +798,22 @@ function applyPublisherCommand(
 
 function phase03CommandsPrintCompletionAndReleases(context: DayContext): void {
   context.completedPrintRuns = completePrintRunsDueToday(context.state);
-  context.completedPrintRuns.forEach(() =>
-    addNotableEvent(context, "PRINT_RUN_COMPLETED"),
-  );
+  context.completedPrintRuns.forEach((completed) => {
+    addNotableEvent(context, "PRINT_RUN_COMPLETED", {
+      productId: completed.productId,
+    });
+    const run = context.state.printRuns[completed.printRunId]!;
+    const includesReprintPrinting = run.printingIds.some(
+      (id) => context.state.printings[id]?.edition === "REPRINT",
+    );
+    if (run.edition === "UNLIMITED" || includesReprintPrinting) {
+      addNotableEvent(context, "REPRINT_COMPLETED", {
+        productId: completed.productId,
+        publicCommitment: true,
+        trustSignal: "NONE",
+      });
+    }
+  });
   const releases = executeReleasesDueToday(
     context.state,
     context.config.release,
@@ -921,13 +1027,27 @@ function adoptionContext(
 ) {
   const player = context.state.players[playerId]!;
   const stats = context.state.meta.deckStats[deckId];
+  const recentTournamentPrestige = Math.max(
+    0,
+    ...(context.state.operationEvidence?.tournamentAttention ?? [])
+      .filter(
+        (event) =>
+          event.deckId === deckId &&
+          event.day >= context.previousDay - 7 &&
+          event.day <= context.previousDay,
+      )
+      .map((event) => event.tournamentPrestige),
+  );
   return {
     performance: stats?.observedWinRate ?? 0.5,
     socialExposure: player.knowledge.knownDeckIds.includes(deckId)
       ? DECK_EVOLUTION_CONFIG.knownDeckSocialExposure
       : DECK_EVOLUTION_CONFIG.inheritedDeckSocialExposure,
-    tournamentPrestige: clampUnit(
-      (stats?.sampleCount ?? 0) / META_CONFIG.confidenceMinimumSamples.high,
+    tournamentPrestige: Math.max(
+      recentTournamentPrestige,
+      clampUnit(
+        (stats?.sampleCount ?? 0) / META_CONFIG.confidenceMinimumSamples.high,
+      ),
     ),
     influencerExposure: Object.values(context.state.agents).some(
       (agent) => agent.playerId === player.id,
@@ -974,7 +1094,7 @@ function phase07BuildOrRepairDecks(context: DayContext): void {
       }
       const child = mutateDeck(ownedLegalDeck, player, context.state, rng);
       if (
-        deckIsStandardLegal(context, child) &&
+        !deckIsStandardLegal(context, child) ||
         !validateDeckForBanlist(
           toDeckDefinition(child),
           cards,
@@ -1045,6 +1165,13 @@ function phase08SampleNormalMatches(context: DayContext): void {
   context.matches = sampleDailyMatches(
     context.state,
     phaseRng(context.state, "normal-matches"),
+    (deck) =>
+      deckIsStandardLegal(context, deck) &&
+      validateDeckForBanlist(
+        toDeckDefinition(deck),
+        Object.values(context.state.cards),
+        context.activeBanlist,
+      ).valid,
   );
 }
 
@@ -1066,6 +1193,7 @@ function phase09RunScheduledTournaments(context: DayContext): void {
       context.state,
       schedule,
       context.activeBanlist,
+      (deck) => deckIsStandardLegal(context, deck),
     );
     if (registration.entrants.length < 2) {
       addNotableEvent(context, "TOURNAMENT_CANCELLED", {
@@ -1075,6 +1203,36 @@ function phase09RunScheduledTournaments(context: DayContext): void {
     }
     const result = simulateTournament(context.state, registration);
     context.tournamentResults.push(result);
+    context.state.operationEvidence ??= {
+      playtests: { runs: {}, reports: {} },
+      tournamentAttention: [],
+    };
+    context.state.operationEvidence.tournamentAttention = [
+      ...context.state.operationEvidence.tournamentAttention.filter(
+        (event) => event.day >= context.previousDay - 30,
+      ),
+      ...result.attentionEvents.map((event) => ({
+        day: event.day,
+        tournamentId: event.tournamentId,
+        deckId: event.deckId,
+        socialExposure: event.socialExposure,
+        tournamentPrestige: event.tournamentPrestige,
+      })),
+    ];
+    const sequenceOffset = context.matches.length;
+    context.matches.push(
+      ...result.matches.map((match, index) => ({
+        sequence: sequenceOffset + index,
+        playerAId: match.playerAId,
+        playerBId: match.playerBId,
+        deckAId: match.deckAId,
+        deckBId: match.deckBId,
+        winnerPlayerId: match.winnerPlayerId,
+        winnerDeckId: match.winnerDeckId,
+        loserDeckId: match.loserDeckId,
+        turns: match.turns,
+      })),
+    );
     addNotableEvent(context, "TOURNAMENT_COMPLETED", {
       reason: JSON.stringify(result),
       publicCommitment: true,
@@ -1093,7 +1251,23 @@ function phase10AggregateMetaAndKnowledge(context: DayContext): void {
 
 function phase11ClearSecondaryMarket(context: DayContext): void {
   refreshEndogenousListings(context.state);
-  const intents = generateMarketIntents(context.state);
+  const intents = generateMarketIntents(context.state, {
+    bannedCardIds: context.activeBanlist.bannedCardIds,
+    featuredDeckIds: (
+      context.state.operationEvidence?.tournamentAttention ?? []
+    )
+      .filter(
+        (event) =>
+          event.day >= context.previousDay - 7 &&
+          event.day <= context.previousDay,
+      )
+      .sort(
+        (left, right) =>
+          right.tournamentPrestige - left.tournamentPrestige ||
+          compareIds(left.deckId, right.deckId),
+      )
+      .map((event) => event.deckId),
+  });
   const printingIds = [
     ...new Set([
       ...intents.buys.map((intent) => intent.printingId),
@@ -1351,6 +1525,17 @@ function phase13StructuredCommunityEvents(context: DayContext): void {
   if (context.marketTrades > 0) {
     addNotableEvent(context, "SECONDARY_MARKET_TRADES");
   }
+  if (context.state.announcementState !== undefined) {
+    const outcomes = evaluateCommitments(
+      context.state.announcementState,
+      context.state.history.events,
+      context.previousDay,
+    );
+    for (const event of outcomes) {
+      context.state.history.events.push(event);
+      context.notableEvents.push(event);
+    }
+  }
 }
 
 function average(values: readonly number[], fallback: number): number {
@@ -1590,6 +1775,11 @@ export function simulateDay(
   phase16Increment(context);
   phase17EvaluateRiskGameOverMilestonesAndInvariants(context);
   const report = phase18CreateReport(context);
+  context.state.dailyReports ??= {};
+  context.state.dailyReports[String(report.day)] = {
+    report: structuredClone(report),
+    notableEvents: context.notableEvents.map((event) => structuredClone(event)),
+  };
 
   return {
     nextState: context.state,

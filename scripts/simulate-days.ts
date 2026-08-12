@@ -6,6 +6,7 @@ import {
 } from "../packages/sim-core/src/index";
 import {
   BasicPublisherBot,
+  CompletionPublisherBot,
   createBalancedWorld,
   createBrokenComboWorld,
   createCollectorBubbleWorld,
@@ -31,6 +32,7 @@ export type SimulationOptions = {
   days: number;
   seed: string;
   scenario: ScenarioName;
+  operationsFixture?: boolean;
 };
 
 export type SimulationSummary = {
@@ -110,13 +112,18 @@ export function parseSimulationArgs(
     days: Number(daysValue),
     seed,
     scenario: scenarioValue as ScenarioName,
+    ...(argv.includes("--operations-fixture")
+      ? { operationsFixture: true }
+      : {}),
   };
 }
 
 export function runSimulation(options: SimulationOptions): SimulationRunResult {
   validateOptions(options);
   const scenario = scenarioFactories[options.scenario](options.seed);
-  const bot = new BasicPublisherBot(scenario.botConfig);
+  const bot = options.operationsFixture
+    ? new CompletionPublisherBot()
+    : new BasicPublisherBot(scenario.botConfig);
   let state = scenario.world;
   let stateHash = hashWorldState(state);
 

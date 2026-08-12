@@ -348,6 +348,198 @@ const agentSchema = z
 const deckEntrySchema = z
   .object({ cardId: idSchema, count: z.union([z.literal(1), z.literal(2)]) })
   .strict();
+const deckDefinitionSchema = z
+  .object({
+    id: idSchema,
+    name: z.string(),
+    factionId: idSchema,
+    cards: z.array(deckEntrySchema),
+  })
+  .strict();
+const replayActionSchema = z
+  .object({
+    sequence: nonNegativeIntegerSchema,
+    turn: nonNegativeIntegerSchema,
+    side: z.enum(["A", "B"]),
+    type: z.string(),
+    cardId: idSchema.optional(),
+    instanceId: z.string().optional(),
+    amount: finiteNumberSchema.optional(),
+    maxMana: finiteNumberSchema.optional(),
+    returnedCardIds: z.array(idSchema).optional(),
+    replacementCardIds: z.array(idSchema).optional(),
+    targetId: z.string().optional(),
+    attackerId: z.string().optional(),
+  })
+  .strict();
+const durableReplaySchema = z
+  .object({
+    seed: z.string(),
+    ruleVersion: idSchema,
+    battleAiVersion: idSchema,
+    deckA: deckDefinitionSchema,
+    deckB: deckDefinitionSchema,
+    actionLog: z.array(replayActionSchema),
+  })
+  .strict();
+const playtestRunSchema = z
+  .object({
+    id: idSchema,
+    expansionId: idSchema,
+    tier: z.enum(["QUICK", "STANDARD", "DEEP"]),
+    startDay: nonNegativeIntegerSchema,
+    completionDay: nonNegativeIntegerSchema,
+    durationDays: nonNegativeIntegerSchema,
+    elapsedDays: nonNegativeIntegerSchema,
+    status: z.enum(["PLANNED", "ACTIVE", "READY", "COMPLETED"]),
+    matchBudget: nonNegativeIntegerSchema,
+    candidateDeckBudget: nonNegativeIntegerSchema,
+    cashCost: nonNegativeNumberSchema,
+    worldSeed: idSchema,
+    setup: z.boolean(),
+    operation: operationProjectSchema,
+    revisionSnapshot: recordOf(nonNegativeIntegerSchema),
+    cards: z.array(cardDefinitionSchema),
+    evidenceConfig: z
+      .object({
+        comboMinimumActivations: nonNegativeIntegerSchema,
+        comboMinimumObservedWinRate: unitNumberSchema,
+        highRiskMinimumMatches: nonNegativeIntegerSchema,
+        highRiskObservedWinRate: unitNumberSchema,
+        anomalyReplayLimit: nonNegativeIntegerSchema,
+        shortMatchTurnThreshold: nonNegativeIntegerSchema,
+      })
+      .strict(),
+  })
+  .strict();
+const playtestReportSchema = z
+  .object({
+    id: idSchema,
+    expansionId: idSchema,
+    tier: z.enum(["QUICK", "STANDARD", "DEEP"]),
+    status: z.enum(["FRESH", "STALE"]),
+    revisionSnapshot: recordOf(nonNegativeIntegerSchema),
+    candidatesEvaluated: nonNegativeIntegerSchema,
+    matchesRun: nonNegativeIntegerSchema,
+    candidateDeckStats: z.array(
+      z
+        .object({
+          deckId: idSchema,
+          cards: z.array(deckEntrySchema),
+          matches: nonNegativeIntegerSchema,
+          wins: nonNegativeIntegerSchema,
+          observedWinRate: unitNumberSchema,
+        })
+        .strict(),
+    ),
+    highRiskCards: z.array(
+      z
+        .object({
+          cardId: idSchema,
+          observedMatches: nonNegativeIntegerSchema,
+          observedWins: nonNegativeIntegerSchema,
+          observedWinRate: unitNumberSchema,
+        })
+        .strict(),
+    ),
+    comboCandidates: z.array(
+      z
+        .object({
+          cardIds: z.tuple([idSchema, idSchema]),
+          activations: nonNegativeIntegerSchema,
+          winsAfterActivation: nonNegativeIntegerSchema,
+          observedWinRate: unitNumberSchema,
+        })
+        .strict(),
+    ),
+    firstPlayerWinRate: unitNumberSchema,
+    averageTurns: nonNegativeNumberSchema,
+    diversityEstimate: unitNumberSchema,
+    triggerSafetyWarnings: z.array(
+      z
+        .object({
+          code: z.string(),
+          limit: z.string(),
+          occurrences: nonNegativeIntegerSchema,
+        })
+        .strict(),
+    ),
+    anomalies: z.array(
+      z
+        .object({
+          id: idSchema,
+          type: z.enum(["TRIGGER_SAFETY", "SHORT_MATCH"]),
+          matchSequence: nonNegativeIntegerSchema,
+          reason: z.string(),
+          replay: durableReplaySchema,
+        })
+        .strict(),
+    ),
+    anomalyReplayReferences: z.array(idSchema),
+  })
+  .strict();
+const operationEvidenceSchema = z
+  .object({
+    playtests: z
+      .object({
+        runs: recordOf(playtestRunSchema),
+        reports: recordOf(playtestReportSchema),
+      })
+      .strict(),
+    tournamentAttention: z.array(
+      z
+        .object({
+          day: nonNegativeIntegerSchema,
+          tournamentId: idSchema,
+          deckId: idSchema,
+          socialExposure: unitNumberSchema,
+          tournamentPrestige: unitNumberSchema,
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+const announcementStateSchema = z
+  .object({
+    announcements: z.array(
+      z
+        .object({
+          id: idSchema,
+          day: nonNegativeIntegerSchema,
+          topic: z.enum([
+            "EXPANSION",
+            "BALANCE",
+            "REPRINT",
+            "TOURNAMENT",
+            "DEVELOPMENT",
+            "APOLOGY_RESPONSE",
+          ]),
+          text: z.string(),
+          boundAction: z
+            .object({ type: z.string(), subjectId: idSchema })
+            .strict(),
+          attention: unitNumberSchema,
+          commitment: z
+            .object({
+              id: idSchema,
+              type: z.enum([
+                "RELEASE_PRODUCT",
+                "COMPLETE_REPRINT",
+                "ENACT_POLICY",
+                "RUN_TOURNAMENT",
+                "FINALIZE_EXPANSION",
+              ]),
+              subjectId: idSchema,
+              dueDay: nonNegativeIntegerSchema,
+              status: z.enum(["PENDING", "FULFILLED", "BREACHED"]),
+            })
+            .strict()
+            .optional(),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
 const deckGenomeSchema = z
   .object({
     id: idSchema,
@@ -428,6 +620,9 @@ const cashLedgerEntrySchema = z
       "STARTER_REVENUE",
       "PRINTING",
       "PLAYTEST",
+      "MARKETING",
+      "TOURNAMENT",
+      "EXPANSION_DESIGN",
       "OPERATING_COST",
       "INVENTORY_COST",
     ]),
@@ -466,6 +661,49 @@ const eventV4Schema = z
   })
   .strict();
 const historyV4Schema = z.object({ events: z.array(eventV4Schema) }).strict();
+const dailyReportRecordSchema = z
+  .object({
+    report: z
+      .object({
+        day: nonNegativeIntegerSchema,
+        completedPrintRuns: nonNegativeIntegerSchema,
+        unitsSold: nonNegativeIntegerSchema,
+        primaryRevenue: nonNegativeNumberSchema,
+        productsOpened: nonNegativeIntegerSchema,
+        matchesSampled: nonNegativeIntegerSchema,
+        marketTrades: nonNegativeIntegerSchema,
+        activePlayers: nonNegativeIntegerSchema,
+        accessibility: metricNumberSchema,
+        metaHealth: metricNumberSchema,
+        hype: metricNumberSchema,
+        collectorHeat: metricNumberSchema,
+        brandTrust: metricNumberSchema,
+        sentiment: metricNumberSchema,
+        lifecycleDeltas: z
+          .object({
+            potentialToInterested: nonNegativeIntegerSchema,
+            interestedToNew: nonNegativeIntegerSchema,
+            newToActive: nonNegativeIntegerSchema,
+            activeToAtRisk: nonNegativeIntegerSchema,
+            atRiskToChurned: nonNegativeIntegerSchema,
+            churnedToReturning: nonNegativeIntegerSchema,
+            returningToActive: nonNegativeIntegerSchema,
+          })
+          .strict(),
+        cashBalance: finiteNumberSchema,
+        ecosystemRisk: z.enum([
+          "STABLE",
+          "STRAINED",
+          "DECLINING",
+          "DEATH_SPIRAL",
+          "TERMINAL",
+        ]),
+        notableEventCount: nonNegativeIntegerSchema,
+      })
+      .strict(),
+    notableEvents: z.array(eventV4Schema),
+  })
+  .strict();
 const lifecycleStateSchema = z
   .object({
     potential: nonNegativeIntegerSchema,
@@ -1198,6 +1436,36 @@ export const worldStateV6Schema = z
         ]),
       })
       .strict(),
+  })
+  .strict()
+  .superRefine(validateWorldReferences);
+
+export const worldStateV7Schema = z
+  .object({
+    schemaVersion: z.literal(7),
+    ...commonWorldShapeV2,
+    operations: recordOf(operationProjectSchema),
+    expansionProjects: recordOf(expansionProjectV6Schema),
+    operationEvidence: operationEvidenceSchema,
+    announcementState: announcementStateSchema,
+    dailyReports: recordOf(dailyReportRecordSchema),
+    printings: recordOf(printingV3Schema),
+    products: recordOf(productV4Schema),
+    printRuns: recordOf(printRunV5Schema),
+    history: historyV4Schema,
+    market: z
+      .object({
+        listings: z.array(marketListingSchema),
+        snapshots: recordOf(printingMarketSnapshotSchema),
+      })
+      .strict(),
+    meta: z
+      .object({
+        deckStats: recordOf(metaDeckStatsV2Schema),
+        matchups: recordOf(matchupStatsSchema),
+      })
+      .strict(),
+    metrics: worldStateV6Schema.shape.metrics,
   })
   .strict()
   .superRefine(validateWorldReferences);

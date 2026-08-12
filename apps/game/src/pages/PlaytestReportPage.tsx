@@ -1,5 +1,6 @@
 import type { PlaytestReport } from "../../../../packages/sim-core/src/index";
-import { useLocation } from "react-router";
+import { useOutletContext, useParams } from "react-router";
+import type { GameSessionSnapshot } from "../app/game-session/GameSessionController";
 import { PlaytestReportView } from "../features/playtest/PlaytestReportView";
 
 function isPlaytestReport(value: unknown): value is PlaytestReport {
@@ -14,8 +15,13 @@ function isPlaytestReport(value: unknown): value is PlaytestReport {
 }
 
 export function PlaytestReportPage() {
-  const location = useLocation();
-  const report = isPlaytestReport(location.state) ? location.state : null;
+  const snapshot = useOutletContext<GameSessionSnapshot>();
+  const { reportId } = useParams();
+  const candidate =
+    reportId === undefined
+      ? undefined
+      : snapshot.world?.operationEvidence?.playtests.reports[reportId];
+  const report = isPlaytestReport(candidate) ? candidate : null;
   return (
     <section className="space-y-8">
       <h1 className="text-3xl font-semibold">Playtest Report</h1>
@@ -24,7 +30,12 @@ export function PlaytestReportPage() {
           This Playtest report is not available in the current session.
         </p>
       ) : (
-        <PlaytestReportView report={report} />
+        <PlaytestReportView
+          report={report}
+          {...(snapshot.world === null
+            ? {}
+            : { cards: snapshot.world.cards as never })}
+        />
       )}
     </section>
   );

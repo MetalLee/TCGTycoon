@@ -150,6 +150,7 @@ function eligibleDecks(
   world: WorldState,
   playerId: PlayerId,
   banlist: BanlistVersion,
+  deckEligible: (deck: DeckGenome) => boolean,
 ): DeckGenome[] {
   const player = world.players[playerId];
   if (player === undefined || player.activity === "CHURNED") {
@@ -161,6 +162,7 @@ function eligibleDecks(
     if (
       deck === undefined ||
       !playerOwnsGenome(player, world, deck) ||
+      !deckEligible(deck) ||
       !validateDeckForBanlist(toDeckDefinition(deck), cards, banlist).valid
     ) {
       return [];
@@ -173,6 +175,7 @@ export function registerTournamentEntrants(
   world: WorldState,
   schedule: TournamentSchedule,
   banlist: BanlistVersion,
+  deckEligible: (deck: DeckGenome) => boolean = () => true,
   config: Readonly<
     Record<TournamentPreset, TournamentPresetConfig>
   > = TOURNAMENT_CONFIG,
@@ -187,7 +190,7 @@ export function registerTournamentEntrants(
   const entrants = Object.values(world.players)
     .sort((left, right) => compareIds(left.id, right.id))
     .flatMap((player) => {
-      const deck = eligibleDecks(world, player.id, banlist)[0];
+      const deck = eligibleDecks(world, player.id, banlist, deckEligible)[0];
       return deck === undefined
         ? []
         : [{ playerId: player.id, deckId: deck.id, skill: player.skill }];

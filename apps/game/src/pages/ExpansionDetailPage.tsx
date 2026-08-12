@@ -6,12 +6,15 @@ import { useOutletContext, useParams } from "react-router";
 import type { GameSessionSnapshot } from "../app/game-session/GameSessionController";
 import { selectExpansions } from "../selectors/expansions";
 import { ExpansionDetail } from "../features/expansions/ExpansionDetail";
+import { useState } from "react";
+import type { CardId } from "../../../../packages/domain/src/index";
 
 type Outlet = GameSessionSnapshot & {
   queueCommand?: (command: PublisherCommand) => void;
 };
 
 export function ExpansionDetailPage() {
+  const [selectedCardId, setSelectedCardId] = useState<CardId>();
   const snapshot = useOutletContext<Outlet>();
   const { setId } = useParams();
   const expansion =
@@ -35,11 +38,9 @@ export function ExpansionDetailPage() {
         <ExpansionDetail
           project={project as never}
           queueCommand={snapshot.queueCommand}
-          onAcceptCard={() => undefined}
-          onEditCard={() => undefined}
-          onDeleteCard={() => undefined}
-          onRegenerateCard={() => undefined}
-          onManualReplaceCard={() => undefined}
+          onAcceptCard={(cardId) => setSelectedCardId(cardId)}
+          onEditCard={(cardId) => setSelectedCardId(cardId)}
+          selectedCardId={selectedCardId}
         />
       ) : (
         <article className="rounded-lg border border-slate-800 bg-slate-900/70 p-5">

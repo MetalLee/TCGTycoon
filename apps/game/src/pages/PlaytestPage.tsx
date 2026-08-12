@@ -1,4 +1,4 @@
-import { useOutletContext } from "react-router";
+import { Link, useOutletContext } from "react-router";
 import type { GameSessionSnapshot } from "../app/game-session/GameSessionController";
 import type { PublisherCommand } from "../../../../packages/domain/src/index";
 import { PlaytestLab } from "../features/playtest/PlaytestLab";
@@ -22,12 +22,31 @@ export function PlaytestPage() {
           Load a session with an expansion to configure a Playtest.
         </p>
       ) : (
-        <PlaytestLab
-          expansionId={expansion.id}
-          expansionName={expansion.name}
-          disabled={snapshot.queueCommand === undefined}
-          queueCommand={snapshot.queueCommand ?? (() => undefined)}
-        />
+        <>
+          <PlaytestLab
+            expansionId={expansion.id}
+            expansionName={expansion.name}
+            disabled={snapshot.queueCommand === undefined}
+            queueCommand={snapshot.queueCommand ?? (() => undefined)}
+          />
+          {snapshot.world?.operationEvidence !== undefined && (
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold">Completed reports</h2>
+              {Object.values(
+                snapshot.world.operationEvidence.playtests.reports,
+              ).map((report) => (
+                <Link
+                  key={report.id}
+                  className="block rounded border border-slate-800 p-4 text-emerald-300"
+                  to={`/playtest/${report.id}`}
+                >
+                  {report.tier} report · {report.matchesRun} matches ·{" "}
+                  {report.status}
+                </Link>
+              ))}
+            </section>
+          )}
+        </>
       )}
     </section>
   );
