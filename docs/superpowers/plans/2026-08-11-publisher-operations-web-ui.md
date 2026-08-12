@@ -513,11 +513,11 @@ git commit -m "feat: integrate publisher operations into day loop"
 - Consumes: no WorldState mutation yet.
 - Produces: Web app routes matching the spec and `UiStore` containing presentation-only state.
 
-- [ ] **Step 1: Add app dependencies**
+- [x] **Step 1: Add app dependencies**
 
 Use workspace commands to add React, React DOM, React Router, Zustand, Tailwind/Vite integration and testing-library dependencies. Use current compatible releases and commit the lockfile.
 
-- [ ] **Step 2: Write failing route smoke test**
+- [x] **Step 2: Write failing route smoke test**
 
 Assert routes exist for:
 
@@ -544,17 +544,17 @@ Assert routes exist for:
 /settings
 ```
 
-- [ ] **Step 3: Run and verify failure**
+- [x] **Step 3: Run and verify failure**
 
 ```bash
 pnpm --filter @tcgtycoon/game test -- router.test.tsx
 ```
 
-- [ ] **Step 4: Implement app shell and route placeholders**
+- [x] **Step 4: Implement app shell and route placeholders**
 
 `UiStore` may hold sidebar collapsed state, active table view and theme; it must not contain canonical cash/cards/players/world state.
 
-- [ ] **Step 5: Add root scripts**
+- [x] **Step 5: Add root scripts**
 
 ```json
 {
@@ -563,7 +563,7 @@ pnpm --filter @tcgtycoon/game test -- router.test.tsx
 }
 ```
 
-- [ ] **Step 6: Verify/commit**
+- [x] **Step 6: Verify/commit**
 
 ```bash
 pnpm typecheck

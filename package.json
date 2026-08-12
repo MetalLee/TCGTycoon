@@ -10,7 +10,9 @@
     "test:rules": "vitest run packages/rules-engine packages/domain",
     "test:scenarios": "vitest run tests/scenarios",
     "sim": "tsx scripts/simulate-days.ts",
-    "sim:match": "tsx scripts/simulate-match.ts"
+    "sim:match": "tsx scripts/simulate-match.ts",
+    "dev:web": "pnpm --filter @tcgtycoon/game dev",
+    "build:web": "pnpm --filter @tcgtycoon/game build"
   },
   "devDependencies": {
     "@eslint/js": "latest",
