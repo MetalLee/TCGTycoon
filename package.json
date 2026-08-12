@@ -12,6 +12,8 @@
     "test:e2e": "playwright test --config apps/game/playwright.config.ts",
     "sim": "tsx scripts/simulate-days.ts",
     "sim:match": "tsx scripts/simulate-match.ts",
+    "dev:api": "pnpm --filter @tcgtycoon/api dev",
+    "test:ai": "vitest run packages/ai-contracts apps/api",
     "dev:web": "pnpm --filter @tcgtycoon/game dev",
     "build:web": "pnpm --filter @tcgtycoon/game build"
   },

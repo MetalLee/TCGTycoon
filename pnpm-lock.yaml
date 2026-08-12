@@ -35,6 +35,34 @@ importers:
         specifier: latest
         version: 4.1.10(@types/node@26.2.0)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.11))
 
+  apps/api:
+    dependencies:
+      "@hono/node-server":
+        specifier: ^1.19.11
+        version: 1.19.17(hono@4.13.1)
+      "@tcgtycoon/ai-contracts":
+        specifier: workspace:*
+        version: link:../../packages/ai-contracts
+      hono:
+        specifier: ^4.12.8
+        version: 4.13.1
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      "@types/node":
+        specifier: 26.2.0
+        version: 26.2.0
+      tsx:
+        specifier: 4.23.11
+        version: 4.23.11
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@26.2.0)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.11))
+
   apps/game:
     dependencies:
       react:
@@ -86,6 +114,15 @@ importers:
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.2.0)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.11))
+
+  packages/ai-contracts:
+    dependencies:
+      "@tcgtycoon/domain":
+        specifier: workspace:*
+        version: link:../domain
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
 
   packages/balance: {}
 
@@ -558,6 +595,15 @@ packages:
     peerDependenciesMeta:
       "@noble/hashes":
         optional: true
+
+  "@hono/node-server@1.19.17":
+    resolution:
+      {
+        integrity: sha512-dSneS5qhiauZWGDCeK4o695Xd9nUNjviSZCMQrj10eetr8Uln1ucn6bbphOM6UynAMMtNIzZNSpL9vnASJwrPQ==,
+      }
+    engines: { node: ">=18.14.1" }
+    peerDependencies:
+      hono: ^4
 
   "@humanfs/core@0.19.2":
     resolution:
@@ -1573,6 +1619,13 @@ packages:
       {
         integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==,
       }
+
+  hono@4.13.1:
+    resolution:
+      {
+        integrity: sha512-kdJoFVv2xmayw6cY09H7AbMJMt8Jn5jdlEdXsP7AGBdF2DIptVlKlOLKXP41yPip4/a3yQPv9gVcJYI8YY04dw==,
+      }
+    engines: { node: ">=16.9.0" }
 
   html-encoding-sniffer@6.0.0:
     resolution:
@@ -2719,6 +2772,10 @@ snapshots:
 
   "@exodus/bytes@1.15.1": {}
 
+  "@hono/node-server@1.19.17(hono@4.13.1)":
+    dependencies:
+      hono: 4.13.1
+
   "@humanfs/core@0.19.2":
     dependencies:
       "@humanfs/types": 0.15.0
@@ -3307,6 +3364,8 @@ snapshots:
       is-glob: 4.0.3
 
   graceful-fs@4.2.11: {}
+
+  hono@4.13.1: {}
 
   html-encoding-sniffer@6.0.0:
     dependencies:

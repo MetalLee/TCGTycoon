@@ -106,7 +106,7 @@ tests/ai/
 - Consumes: Card DSL schemas and relevant Domain IDs.
 - Produces: Zod request/response contracts for all five AI capabilities and finite FactPacket structures.
 
-- [ ] **Step 1: Write failing contract tests**
+- [x] **Step 1: Write failing contract tests**
 
 Tests must prove:
 
@@ -116,17 +116,17 @@ Tests must prove:
 - Community response is `{ topic, stance, sentiment, referencedEntityIds, text }` with sentiment `[-1,1]`.
 - Art request carries a stable `assetPurpose` and visual brief, not WorldState.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/ai-contracts
 ```
 
-- [ ] **Step 3: Implement contracts by reusing Card DSL schemas**
+- [x] **Step 3: Implement contracts by reusing Card DSL schemas**
 
 Do not duplicate keyword/effect enums as unrelated strings. Import/reuse domain schemas/types so provider validation cannot drift from Rules Engine legality.
 
-- [ ] **Step 4: Implement finite Fact Packets**
+- [x] **Step 4: Implement finite Fact Packets**
 
 Example:
 
@@ -151,7 +151,7 @@ export const communityFactPacketSchema = z.object({
 
 No hidden WorldState blob is accepted.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/ai-contracts
@@ -188,7 +188,7 @@ git commit -m "feat: define schema validated AI contracts"
 - Consumes: AI contracts.
 - Produces: `GenerativeProvider` abstraction, `MockGenerativeProvider`, HTTP endpoints `/v1/world/assist`, `/v1/cards/propose`, `/v1/sets/complete`, `/v1/community/render`, `/v1/art/generate`.
 
-- [ ] **Step 1: Define provider interface in a failing test**
+- [x] **Step 1: Define provider interface in a failing test**
 
 Expected shape:
 
@@ -204,15 +204,15 @@ export interface GenerativeProvider {
 }
 ```
 
-- [ ] **Step 2: Add Hono and API test dependencies, run failing route tests**
+- [x] **Step 2: Add Hono and API test dependencies, run failing route tests**
 
 Each route must return 400 for invalid input and legal deterministic JSON under `AI_MODE=mock`.
 
-- [ ] **Step 3: Implement deterministic Mock provider**
+- [x] **Step 3: Implement deterministic Mock provider**
 
 Mock output derives from stable request fields and uses fixture legal Card DSL; it must not call `Math.random()` or network APIs. Same request returns byte-equivalent JSON.
 
-- [ ] **Step 4: Implement route schema validation**
+- [x] **Step 4: Implement route schema validation**
 
 Pattern:
 
@@ -222,7 +222,7 @@ const output = await provider.proposeCard(input);
 return c.json(cardProposalResponseSchema.parse(output));
 ```
 
-- [ ] **Step 5: Add root scripts and verify**
+- [x] **Step 5: Add root scripts and verify**
 
 ```json
 {
@@ -238,7 +238,7 @@ AI_MODE=mock pnpm test:ai
 pnpm typecheck
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api packages/ai-contracts package.json pnpm-lock.yaml
