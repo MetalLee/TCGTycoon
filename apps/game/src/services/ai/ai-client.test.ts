@@ -1,5 +1,7 @@
 import {
   cardProposalResponseSchema,
+  communityRenderRequestSchema,
+  communityRenderResponseSchema,
   setCompletionResponseSchema,
   worldAssistResponseSchema,
   type CardProposalRequest,
@@ -78,6 +80,37 @@ const setResponse = setCompletionResponseSchema.parse({
   proposals: [{ slotId: "slot-1", ...cardResponse }],
 });
 
+const communityRequest = communityRenderRequestSchema.parse({
+  day: 12,
+  agent: {
+    id: "agent-mika",
+    name: "Mika Vale",
+    role: "BREWER",
+    personalityTraits: ["curious"],
+    riskTolerance: 0.7,
+    brandAttitude: -0.2,
+    influence: 0.6,
+  },
+  knownFacts: [
+    {
+      kind: "META_USAGE",
+      entityId: "deck-grave-loop",
+      statement: "Grave Loop reached 18% observed usage.",
+    },
+  ],
+  recentMemories: [],
+  requestedTopic: "Grave Loop's current Meta presence",
+  requestedStance: "CONCERNED",
+});
+
+const communityResponse = communityRenderResponseSchema.parse({
+  topic: communityRequest.requestedTopic,
+  stance: communityRequest.requestedStance,
+  sentiment: -0.2,
+  referencedEntityIds: ["deck-grave-loop"],
+  text: "Mika expressed concern about Grave Loop.",
+});
+
 describe("AiClient", () => {
   it.each([
     {
@@ -103,6 +136,14 @@ describe("AiClient", () => {
       output: setResponse,
       invoke: (client: ReturnType<typeof createAiClient>) =>
         client.completeSet(setRequest),
+    },
+    {
+      name: "community rendering",
+      path: "/v1/community/render",
+      input: communityRequest,
+      output: communityResponse,
+      invoke: (client: ReturnType<typeof createAiClient>) =>
+        client.renderCommunityPost(communityRequest),
     },
   ])(
     "posts and validates $name responses",

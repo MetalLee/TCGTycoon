@@ -11,7 +11,7 @@ import {
   simulateDay,
 } from "../../../../../packages/sim-core/src/index";
 import { createTestWorld } from "../../../../../packages/testkit/src/index";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type {
   SimulationWorkerRequest,
   SimulationWorkerResponse,
@@ -201,6 +201,91 @@ describe("GameSessionController atomic End Day", () => {
       world: { day: save.state.day },
       pendingCommands: [pendingCommand],
       error: "disk full",
+    });
+  });
+
+  it("queues presentation enrichment only after save and ignores queue failure", async () => {
+    const save = createSave();
+    save.state.day = 1;
+    save.state.status = "LIVE";
+    const repository = new DeferredSaveRepository(save);
+    const worker = new FakeWorker();
+    const enqueue = vi.fn(() => {
+      throw new Error("AI offline");
+    });
+    const controller = new GameSessionController({
+      repository,
+      worker,
+      config: DEFAULT_BALANCE_CONFIG,
+      aiEnrichmentQueue: { enqueue },
+      now: () => "2026-08-12T01:00:00.000Z",
+    });
+    await controller.load(save.saveId);
+    controller.queueCommand(pendingCommand);
+
+    const endDay = controller.endDay();
+    const request = worker.requests[0];
+    if (request?.type !== "SIMULATE_DAY_REQUEST") {
+      throw new Error("Expected a simulation request");
+    }
+    const simulated = simulateDay(
+      request.state,
+      request.commands,
+      request.config,
+    );
+    const agent = Object.values(simulated.nextState.agents)[0]!;
+    const result = {
+      ...simulated,
+      communityPostIntents: [
+        {
+          id: "community-controller-intent",
+          day: simulated.report.day,
+          category: "OFFICIAL" as const,
+          author: {
+            id: agent.id,
+            name: agent.name,
+            role: agent.role,
+            personalityTraits: ["direct"],
+            riskTolerance: 0.5,
+            brandAttitude: agent.brandAttitude,
+            influence: agent.influence,
+          },
+          topic: "the publisher's official announcement",
+          stance: "NEUTRAL" as const,
+          sentiment: 0,
+          facts: [
+            {
+              kind: "OFFICIAL_ANNOUNCEMENT",
+              statement: "The publisher issued an official announcement.",
+            },
+          ],
+          recentMemories: [],
+          influence: agent.influence,
+          socialImpact: {
+            positiveAttention: 0,
+            negativeAttention: 0,
+            sentimentTarget: 50,
+          },
+          templateText: `${agent.name} commented on the publisher's official announcement.`,
+        },
+      ],
+    };
+    worker.respond({
+      type: "SIMULATE_DAY_RESULT",
+      requestId: request.requestId,
+      result,
+    });
+    await flushMicrotasks();
+
+    expect(enqueue).not.toHaveBeenCalled();
+    repository.nextSave.resolve();
+    await expect(endDay).resolves.toEqual(result);
+
+    expect(enqueue).toHaveBeenCalledTimes(result.communityPostIntents.length);
+    expect(controller.getSnapshot()).toMatchObject({
+      status: "IDLE",
+      world: { day: result.nextState.day },
+      error: null,
     });
   });
 });

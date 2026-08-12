@@ -9,6 +9,10 @@ import type { BalanceConfig } from "../../../../../packages/sim-core/src/index";
 import type { SimulationWorkerTransport } from "../../workers/protocol";
 import { runEndDaySimulation } from "./end-day";
 import type { DaySimulationResult } from "../../../../../packages/sim-core/src/index";
+import {
+  defaultAiEnrichmentQueue,
+  type AiEnrichmentQueue,
+} from "../../services/ai/ai-enrichment-queue";
 
 type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
@@ -40,6 +44,7 @@ export type GameSessionControllerOptions = {
   config: BalanceConfig;
   configForWorld?: (world: WorldState) => BalanceConfig;
   now?: () => string;
+  aiEnrichmentQueue?: Pick<AiEnrichmentQueue, "enqueue">;
 };
 
 function deepFreeze<T>(value: T, seen = new Set<object>()): DeepReadonly<T> {
@@ -65,6 +70,7 @@ export class GameSessionController {
   readonly #config: BalanceConfig;
   readonly #configForWorld: ((world: WorldState) => BalanceConfig) | undefined;
   readonly #now: () => string;
+  readonly #aiEnrichmentQueue: Pick<AiEnrichmentQueue, "enqueue">;
   readonly #listeners = new Set<() => void>();
   #save: SaveEnvelope | null = null;
   #requestSequence = 0;
@@ -83,6 +89,8 @@ export class GameSessionController {
     this.#config = structuredClone(options.config);
     this.#configForWorld = options.configForWorld;
     this.#now = options.now ?? (() => new Date().toISOString());
+    this.#aiEnrichmentQueue =
+      options.aiEnrichmentQueue ?? defaultAiEnrichmentQueue;
   }
 
   getSnapshot = (): GameSessionSnapshot => this.#snapshot;
@@ -197,6 +205,13 @@ export class GameSessionController {
         error: null,
       });
       this.#emit();
+      for (const intent of result.communityPostIntents) {
+        try {
+          this.#aiEnrichmentQueue.enqueue(structuredClone(intent));
+        } catch {
+          // AI enrichment is presentation-only and cannot fail a committed day.
+        }
+      }
       return immutableClone(result) as DaySimulationResult;
     } catch (error) {
       this.#save = currentSave;

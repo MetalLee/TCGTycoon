@@ -35,3 +35,4 @@ export * from "./products/production";
 export * from "./products/releases";
 export * from "./products/reprints";
 export * from "./society/knowledge";
+export * from "./society/community-intents";

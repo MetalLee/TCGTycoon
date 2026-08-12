@@ -96,6 +96,13 @@ function createAiClient(overrides: Partial<AiClient> = {}): AiClient {
         proposals: [{ slotId: "slot-0", ...cardProposal }],
       }),
     ),
+    renderCommunityPost: vi.fn(async (request) => ({
+      topic: request.requestedTopic,
+      stance: request.requestedStance,
+      sentiment: request.agent.brandAttitude,
+      referencedEntityIds: [],
+      text: `${request.agent.name} commented on ${request.requestedTopic}.`,
+    })),
     ...overrides,
   };
 }

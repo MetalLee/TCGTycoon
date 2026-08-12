@@ -453,8 +453,15 @@ git commit -m "feat: add optional AI design assistance"
 
 - Create: `packages/sim-core/src/society/community-intents.ts`
 - Modify: `packages/sim-core/src/day/simulate-day.ts`
+- Modify: `packages/sim-core/src/index.ts`
+- Modify: `apps/game/src/services/ai/ai-client.ts`
+- Modify: `apps/game/src/services/ai/ai-client.test.ts`
 - Modify: `apps/game/src/services/ai/ai-enrichment-queue.ts`
+- Modify: `apps/game/src/app/game-session/GameSessionController.ts`
+- Modify: `apps/game/src/app/game-session/GameSessionController.test.ts`
 - Modify: `apps/game/src/features/community/CommunityFeed.tsx`
+- Modify: `apps/game/src/selectors/community.ts`
+- Modify: `apps/game/src/features/cards/CardStudio.ai.test.tsx`
 - Test: `tests/determinism/community-ai-isolation.test.ts`
 - Test: `apps/game/src/services/ai/ai-enrichment-queue.test.ts`
 
@@ -463,15 +470,15 @@ git commit -m "feat: add optional AI design assistance"
 - Consumes: deterministic `CommunityPostIntent`, FactPacket builder, AI renderer.
 - Produces: stable post intent IDs, template fallback text and optional enriched prose stored as presentation/history enrichment without changing deterministic state hash inputs.
 
-- [ ] **Step 1: Write isolation test**
+- [x] **Step 1: Write isolation test**
 
 Run identical `simulateDay()` twice. Feed one run two completely different valid rendered text strings for the same intent. Assert the canonical deterministic next-state hash, metrics, prices, players and Meta remain identical.
 
-- [ ] **Step 2: Implement deterministic intent generation before commit**
+- [x] **Step 2: Implement deterministic intent generation before commit**
 
 Intent contains author/topic/stance/sentiment/facts/influence and precomputed numerical social impact. `simulateDay` output includes enrichment requests but does not await them.
 
-- [ ] **Step 3: Implement template fallback**
+- [x] **Step 3: Implement template fallback**
 
 Example deterministic fallback:
 
@@ -481,11 +488,11 @@ Mika expressed concern about Grave Loop's current Meta presence.
 
 This remains visible if gateway fails.
 
-- [ ] **Step 4: Implement enrichment queue**
+- [x] **Step 4: Implement enrichment queue**
 
 After successful save/day commit, queue `/v1/community/render` requests and attach prose to presentation history/cache by stable intent ID. Do not dispatch a second simulation action.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run tests/determinism/community-ai-isolation.test.ts apps/game/src/services/ai/ai-enrichment-queue.test.ts

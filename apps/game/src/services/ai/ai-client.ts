@@ -1,12 +1,16 @@
 import {
   cardProposalRequestSchema,
   cardProposalResponseSchema,
+  communityRenderRequestSchema,
+  communityRenderResponseSchema,
   setCompletionRequestSchema,
   setCompletionResponseSchema,
   worldAssistRequestSchema,
   worldAssistResponseSchema,
   type CardProposalRequest,
   type CardProposalResponse,
+  type CommunityRenderRequest,
+  type CommunityRenderResponse,
   type SetCompletionRequest,
   type SetCompletionResponse,
   type WorldAssistRequest,
@@ -41,6 +45,9 @@ export interface AiClient {
   assistWorld(input: WorldAssistRequest): Promise<WorldAssistResponse>;
   proposeCard(input: CardProposalRequest): Promise<CardProposalResponse>;
   completeSet(input: SetCompletionRequest): Promise<SetCompletionResponse>;
+  renderCommunityPost(
+    input: CommunityRenderRequest,
+  ): Promise<CommunityRenderResponse>;
 }
 
 type Schema<T> = {
@@ -137,6 +144,13 @@ export function createAiClient(options: AiClientOptions = {}): AiClient {
         input,
         setCompletionRequestSchema,
         setCompletionResponseSchema,
+      ),
+    renderCommunityPost: (input) =>
+      post(
+        "/v1/community/render",
+        input,
+        communityRenderRequestSchema,
+        communityRenderResponseSchema,
       ),
   };
 }
