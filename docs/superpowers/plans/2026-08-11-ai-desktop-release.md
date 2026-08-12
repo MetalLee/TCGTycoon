@@ -344,6 +344,7 @@ git commit -m "feat: add structured OpenAI generation provider"
 **Files:**
 
 - Create: `packages/domain/src/assets.ts`
+- Modify: `packages/domain/src/index.ts`
 - Create: `packages/persistence/src/contracts/asset-repository.ts`
 - Modify: `packages/persistence/src/index.ts`
 - Modify: `apps/api/src/providers/openai-provider.ts`
@@ -356,7 +357,7 @@ git commit -m "feat: add structured OpenAI generation provider"
 - Consumes: Art AI contract and provider config.
 - Produces: `AssetId`, `AssetMetadata`, `AssetRepository`, artwork response bytes/base64 transfer contract without embedding binary data in WorldState.
 
-- [ ] **Step 1: Write AssetRepository contract test**
+- [x] **Step 1: Write AssetRepository contract test**
 
 Interface:
 
@@ -375,15 +376,15 @@ export interface AssetRepository {
 }
 ```
 
-- [ ] **Step 2: Write artwork-provider fake-client test**
+- [x] **Step 2: Write artwork-provider fake-client test**
 
 Assert `generateArtwork` returns one image asset payload and uses configured image model. The game domain receives only an AssetId after client persistence.
 
-- [ ] **Step 3: Implement OpenAI image-generation adapter**
+- [x] **Step 3: Implement OpenAI image-generation adapter**
 
 Use the current official image generation capability behind `OpenAIGenerativeProvider`; isolate API response parsing in this provider. Do not make image generation a prerequisite for Finalize/Release. A failed image call returns a typed error so the client can use faction placeholder art.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 ```bash
 pnpm vitest run apps/api/src/providers/openai-art.test.ts packages/persistence/src/contracts/asset-repository.test.ts

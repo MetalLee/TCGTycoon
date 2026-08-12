@@ -1,4 +1,5 @@
 import {
+  artGenerateResponseSchema,
   cardProposalResponseSchema,
   communityRenderResponseSchema,
   setCompletionResponseSchema,
@@ -15,6 +16,7 @@ import {
   type WorldAssistResponse,
 } from "@tcgtycoon/ai-contracts";
 import { ZodError, type ZodType } from "zod";
+import { buildArtworkPrompt } from "../prompts/art";
 import {
   buildCardProposalPrompt,
   cardProposalJsonSchema,
@@ -55,6 +57,28 @@ export type OpenAIResponsesClient = {
     create(
       input: StructuredResponseRequest,
     ): PromiseLike<{ output_text: string }>;
+  };
+};
+
+export type ImageGenerationRequest = {
+  model: string;
+  prompt: string;
+  n: 1;
+  output_format: "png";
+};
+
+type ImageGenerationResponse = {
+  data?: Array<{
+    b64_json?: string;
+    revised_prompt?: string;
+  }>;
+};
+
+export type OpenAIClient = OpenAIResponsesClient & {
+  images: {
+    generate(
+      input: ImageGenerationRequest,
+    ): PromiseLike<ImageGenerationResponse>;
   };
 };
 
@@ -109,7 +133,8 @@ function validationSummary(error: unknown): string {
 
 export class OpenAIGenerativeProvider implements GenerativeProvider {
   constructor(
-    private readonly client: OpenAIResponsesClient,
+    private readonly client: OpenAIResponsesClient &
+      Partial<Pick<OpenAIClient, "images">>,
     private readonly config: OpenAIProviderConfig,
   ) {}
 
@@ -151,14 +176,55 @@ export class OpenAIGenerativeProvider implements GenerativeProvider {
     });
   }
 
-  generateArtwork(input: ArtGenerateRequest): Promise<ArtGenerateResponse> {
-    void input;
-    return Promise.reject(
-      new OpenAIProviderError(
+  async generateArtwork(
+    input: ArtGenerateRequest,
+  ): Promise<ArtGenerateResponse> {
+    if (this.client.images === undefined) {
+      throw new OpenAIProviderError(
         "UNSUPPORTED_CAPABILITY",
-        `Artwork generation is not implemented for ${this.config.imageModel}.`,
-      ),
-    );
+        "The configured OpenAI client does not support image generation.",
+      );
+    }
+
+    let response: ImageGenerationResponse;
+    try {
+      response = await this.client.images.generate({
+        model: this.config.imageModel,
+        prompt: buildArtworkPrompt(input),
+        n: 1,
+        output_format: "png",
+      });
+    } catch (error) {
+      throw new OpenAIProviderError(
+        "PROVIDER_ERROR",
+        "OpenAI image generation request failed.",
+        { cause: error },
+      );
+    }
+
+    const image = response.data?.length === 1 ? response.data[0] : undefined;
+    if (image?.b64_json === undefined || image.b64_json.length === 0) {
+      throw new OpenAIProviderError(
+        "INVALID_OUTPUT",
+        "OpenAI image generation did not return exactly one base64 image.",
+      );
+    }
+
+    try {
+      return artGenerateResponseSchema.parse({
+        mediaType: "image/png",
+        base64Data: image.b64_json,
+        ...(image.revised_prompt === undefined
+          ? {}
+          : { revisedPrompt: image.revised_prompt }),
+      });
+    } catch (error) {
+      throw new OpenAIProviderError(
+        "INVALID_OUTPUT",
+        `OpenAI image output failed validation: ${validationSummary(error)}`,
+        { cause: error },
+      );
+    }
   }
 
   private async generateStructured<T>(operation: TextOperation<T>): Promise<T> {
