@@ -23,5 +23,10 @@
   },
   "bundle": {
     "active": false
+  },
+  "plugins": {
+    "sql": {
+      "preload": ["sqlite:tcgtycoon.db"]
+    }
   }
 }

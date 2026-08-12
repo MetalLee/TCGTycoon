@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate, type RouteObject } from "react-router";
 import type { GameSessionController } from "./game-session/GameSessionController";
+import type { SaveRepository } from "../../../../packages/persistence/src/index";
 import { AppShell } from "../components/layout/AppShell";
 import { CardDetailPage } from "../pages/CardDetailPage";
 import { CardsPage } from "../pages/CardsPage";
@@ -31,11 +32,15 @@ function page(path: string, title: string): RouteObject {
 
 export function createAppRoutes(
   controller?: GameSessionController,
+  saveRepository?: SaveRepository,
 ): RouteObject[] {
   return [
     {
       element: (
-        <AppShell {...(controller === undefined ? {} : { controller })} />
+        <AppShell
+          {...(controller === undefined ? {} : { controller })}
+          {...(saveRepository === undefined ? {} : { saveRepository })}
+        />
       ),
       children: [
         { index: true, element: <Navigate to="/dashboard" replace /> },
@@ -70,8 +75,11 @@ export function createAppRoutes(
   ];
 }
 
-export function createAppRouter(controller?: GameSessionController) {
-  return createBrowserRouter(createAppRoutes(controller));
+export function createAppRouter(
+  controller?: GameSessionController,
+  saveRepository?: SaveRepository,
+) {
+  return createBrowserRouter(createAppRoutes(controller, saveRepository));
 }
 
 export const appRoutes = createAppRoutes();

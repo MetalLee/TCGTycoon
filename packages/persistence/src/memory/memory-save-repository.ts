@@ -4,27 +4,56 @@ import { migrateSave } from "../migrations/migrate-save";
 import { canonicalStringify } from "../serialization/canonical-json";
 
 export class MemorySaveRepository implements SaveRepository {
-  private readonly saves = new Map<SaveId, string>();
+  private readonly saves = new Map<
+    SaveId,
+    { current: string; previous?: string }
+  >();
 
   async list(): Promise<SaveMetadata[]> {
-    return [...this.saves.values()].map((serialized) => {
-      const { state, ...metadata } = this.deserialize(serialized);
-      void state;
-      return metadata;
-    });
+    return [...this.saves.values()]
+      .map(({ current }) => {
+        const { state, ...metadata } = this.deserialize(current);
+        void state;
+        return metadata;
+      })
+      .sort(
+        (left, right) =>
+          (right.updatedAt < left.updatedAt
+            ? -1
+            : right.updatedAt > left.updatedAt
+              ? 1
+              : 0) ||
+          (left.saveId < right.saveId
+            ? -1
+            : left.saveId > right.saveId
+              ? 1
+              : 0),
+      );
   }
 
   async load(id: SaveId): Promise<SaveEnvelope> {
-    const serialized = this.saves.get(id);
-    if (serialized === undefined) {
+    const record = this.saves.get(id);
+    if (record === undefined) {
       throw new Error(`Save not found: ${id}`);
     }
-    return this.deserialize(serialized);
+    return this.deserialize(record.current);
+  }
+
+  async loadPrevious(id: SaveId): Promise<SaveEnvelope> {
+    const previous = this.saves.get(id)?.previous;
+    if (previous === undefined) {
+      throw new Error(`Previous autosave not found: ${id}`);
+    }
+    return this.deserialize(previous);
   }
 
   async save(save: SaveEnvelope): Promise<void> {
     const validated = migrateSave(save);
-    this.saves.set(validated.saveId, canonicalStringify(validated));
+    const existing = this.saves.get(validated.saveId);
+    this.saves.set(validated.saveId, {
+      current: canonicalStringify(validated),
+      ...(existing === undefined ? {} : { previous: existing.current }),
+    });
   }
 
   async delete(id: SaveId): Promise<void> {

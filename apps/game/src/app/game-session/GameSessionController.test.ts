@@ -85,6 +85,11 @@ class DeferredSaveRepository implements SaveRepository {
     return structuredClone(this.initial);
   }
 
+  async loadPrevious(id: SaveId): Promise<SaveEnvelope> {
+    void id;
+    throw new Error("Previous autosave not found");
+  }
+
   async save(save: SaveEnvelope): Promise<void> {
     this.saved.push(structuredClone(save));
     return this.nextSave.promise;

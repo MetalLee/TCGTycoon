@@ -564,9 +564,27 @@ git commit -m "feat: wrap shared game in Tauri desktop shell"
 
 - Create: `packages/persistence/src/sqlite/sqlite-save-repository.ts`
 - Create: `packages/persistence/src/sqlite/sqlite-asset-repository.ts`
+- Create: `packages/persistence/src/sqlite/sqlite-database.ts`
+- Modify: `packages/persistence/src/contracts/save-repository.ts`
+- Modify: `packages/persistence/src/memory/memory-save-repository.ts`
+- Modify: `packages/persistence/src/indexeddb/dexie-db.ts`
+- Create: `packages/persistence/src/indexeddb/dexie-asset-repository.ts`
 - Modify: `packages/persistence/src/index.ts`
 - Modify: `apps/game/src/platform/save-repository.ts`
 - Create: `apps/game/src/platform/asset-repository.ts`
+- Create: `apps/game/src/platform/sqlite-database.ts`
+- Modify: `apps/game/src/app/GameApp.tsx`
+- Modify: `apps/game/src/app/router.tsx`
+- Modify: `apps/game/src/app/game-session/GameSessionController.test.ts`
+- Modify: `apps/game/src/components/layout/AppShell.tsx`
+- Modify: `apps/game/src/pages/NewGamePage.tsx`
+- Modify: `apps/game/package.json`
+- Create: `apps/desktop/src-tauri/build.rs`
+- Modify: `apps/desktop/src-tauri/Cargo.toml`
+- Modify: `apps/desktop/src-tauri/src/lib.rs`
+- Create: `apps/desktop/src-tauri/capabilities/default.json`
+- Modify: root `package.json`
+- Modify: `pnpm-lock.yaml`
 - Test: `tests/parity/save-repository-contract.test.ts`
 - Test: `tests/parity/web-desktop-save-roundtrip.test.ts`
 
@@ -575,28 +593,28 @@ git commit -m "feat: wrap shared game in Tauri desktop shell"
 - Consumes: shared SaveRepository/AssetRepository contracts.
 - Produces: SQLite-backed desktop implementations and runtime platform adapter selection.
 
-- [ ] **Step 1: Define one repository contract test suite used by Memory, Dexie and SQLite adapters**
+- [x] **Step 1: Define one repository contract test suite used by Memory, Dexie and SQLite adapters**
 
 Test list/save/load/delete and autosave/current+previous semantics through the same behavior function.
 
-- [ ] **Step 2: Implement SQLite schema/migrations**
+- [x] **Step 2: Implement SQLite schema/migrations**
 
 Store save metadata separately from canonical save payload. Assets are stored separately from WorldState. Use database transactions for save replacement and previous-autosave rotation.
 
-- [ ] **Step 3: Implement platform selection without leaking Tauri into game domain**
+- [x] **Step 3: Implement platform selection without leaking Tauri into game domain**
 
 `apps/game/src/platform/*` chooses browser vs Tauri adapter. Feature components consume repositories through application context/services.
 
-- [ ] **Step 4: Add Web/Desktop round-trip fixture test**
+- [x] **Step 4: Add Web/Desktop round-trip fixture test**
 
 Serialize canonical SaveEnvelope through Dexie-compatible/canonical representation and SQLite representation and assert `migrateSave/load` produces deep-equal canonical state.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run tests/parity
 pnpm typecheck
-git add packages/persistence apps/game/src/platform tests/parity
+git add packages/persistence apps/game/package.json apps/game/src/app apps/game/src/components/layout/AppShell.tsx apps/game/src/pages/NewGamePage.tsx apps/game/src/platform apps/desktop/src-tauri package.json pnpm-lock.yaml tests/parity
 git commit -m "feat: persist desktop saves and artwork in SQLite"
 ```
 

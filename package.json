@@ -24,6 +24,7 @@
     "@playwright/test": "^1.62.1",
     "@types/node": "latest",
     "eslint": "latest",
+    "fake-indexeddb": "^6.2.5",
     "prettier": "latest",
     "tsx": "latest",
     "typescript": "6.0.3",
