@@ -5,6 +5,7 @@ import {
   type GameSessionSnapshot,
 } from "../../app/game-session/GameSessionController";
 import type { PublisherCommand } from "../../../../../packages/domain/src/index";
+import type { SaveRepository } from "../../../../../packages/persistence/src/index";
 import { EndDayDialog } from "../../features/end-day/EndDayDialog";
 import { CommandPalette } from "../../features/search/CommandPalette";
 import { useUiStore } from "../../state/ui-store";
@@ -46,16 +47,18 @@ function useControllerSnapshot(
 
 export type AppShellProps = {
   controller?: GameSessionController;
+  saveRepository?: SaveRepository;
 };
 
 export type GameSessionOutlet = GameSessionSnapshot & {
+  saveRepository?: SaveRepository;
   queueCommand?: (command: PublisherCommand) => void;
   loadSave?: (
     saveId: NonNullable<GameSessionSnapshot["saveId"]>,
   ) => Promise<void>;
 };
 
-export function AppShell({ controller }: AppShellProps) {
+export function AppShell({ controller, saveRepository }: AppShellProps) {
   const navigate = useNavigate();
   const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
@@ -63,6 +66,7 @@ export function AppShell({ controller }: AppShellProps) {
   const [endDayOpen, setEndDayOpen] = useState(false);
   const outlet: GameSessionOutlet = {
     ...snapshot,
+    ...(saveRepository === undefined ? {} : { saveRepository }),
     ...(controller === undefined
       ? {}
       : {

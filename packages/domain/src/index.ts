@@ -1,3 +1,4 @@
+export * from "./assets";
 export * from "./cards";
 export * from "./commands";
 export * from "./community";

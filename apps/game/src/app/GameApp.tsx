@@ -1,5 +1,5 @@
 import { RouterProvider } from "react-router";
-import { webSaveRepository } from "../platform/save-repository";
+import { saveRepository } from "../platform/save-repository";
 import { DEFAULT_BALANCE_CONFIG } from "../../../../packages/sim-core/src/index";
 import { GameSessionController } from "./game-session/GameSessionController";
 import { createOfflineLaunchBalanceConfig } from "../features/new-game/setup-service";
@@ -11,13 +11,13 @@ const simulationWorker = new Worker(
 );
 
 const gameSessionController = new GameSessionController({
-  repository: webSaveRepository,
+  repository: saveRepository,
   worker: simulationWorker,
   config: DEFAULT_BALANCE_CONFIG,
   configForWorld: createOfflineLaunchBalanceConfig,
 });
 
-const gameRouter = createAppRouter(gameSessionController);
+const gameRouter = createAppRouter(gameSessionController, saveRepository);
 
 export function GameApp() {
   return <RouterProvider router={gameRouter} />;

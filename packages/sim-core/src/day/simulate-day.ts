@@ -123,11 +123,17 @@ import {
 } from "../products/primary-market";
 import { type BalanceConfig, hashWorldState, phaseRng } from "./day-context";
 import { validateWorldInvariants } from "./world-invariants";
+import {
+  createCommunityPostIntents,
+  type CommunityPostIntent,
+  type CommunitySocialImpact,
+} from "../society/community-intents";
 
 export type DaySimulationResult = {
   nextState: WorldState;
   report: DailyReport;
   notableEvents: WorldEvent[];
+  communityPostIntents: CommunityPostIntent[];
   stateHash: string;
 };
 
@@ -151,6 +157,9 @@ type DayContext = {
   metaHealth: number;
   ecosystemRisk: EcosystemRiskState;
   previousEcosystemRisk: EcosystemRiskState;
+  communityPostIntents: CommunityPostIntent[];
+  communitySocialImpact: CommunitySocialImpact | null;
+  historyEventStartIndex: number;
 };
 
 function compareIds(left: string, right: string): number {
@@ -1536,6 +1545,7 @@ function phase13StructuredCommunityEvents(context: DayContext): void {
       context.notableEvents.push(event);
     }
   }
+  context.communitySocialImpact = calculateCommunitySocialImpact(context);
 }
 
 function average(values: readonly number[], fallback: number): number {
@@ -1581,13 +1591,13 @@ function releaseTrustSignals(context: DayContext): {
   );
 }
 
-function phase14UpdateCoreWorldMetrics(context: DayContext): void {
-  const metrics = context.state.metrics;
+function calculateCommunitySocialImpact(
+  context: DayContext,
+): CommunitySocialImpact {
   const satisfaction = averagePlayerSatisfaction(context.state);
-  const playerCount = Math.max(1, metrics.activePlayers);
-  const snapshots = Object.values(context.state.market.snapshots);
+  const playerCount = Math.max(1, context.state.metrics.activePlayers);
   const releaseSignals = releaseTrustSignals(context);
-  const nextHealth = updateWorldMetrics(metrics, {
+  return {
     positiveAttention: clampUnit(
       (context.sales.unitsSold +
         context.matches.length / METRICS_CONFIG.signals.matchAttentionDivisor) /
@@ -1600,6 +1610,21 @@ function phase14UpdateCoreWorldMetrics(context: DayContext): void {
           METRICS_CONFIG.signals.releaseNegativeAttentionPerEvent,
     ),
     sentimentTarget: satisfaction * 100,
+  };
+}
+
+function phase14UpdateCoreWorldMetrics(context: DayContext): void {
+  const metrics = context.state.metrics;
+  const satisfaction = averagePlayerSatisfaction(context.state);
+  const playerCount = Math.max(1, metrics.activePlayers);
+  const snapshots = Object.values(context.state.market.snapshots);
+  const releaseSignals = releaseTrustSignals(context);
+  const socialImpact =
+    context.communitySocialImpact ?? calculateCommunitySocialImpact(context);
+  const nextHealth = updateWorldMetrics(metrics, {
+    positiveAttention: socialImpact.positiveAttention,
+    negativeAttention: socialImpact.negativeAttention,
+    sentimentTarget: socialImpact.sentimentTarget,
     collector: {
       tradingVolume: clampUnit(context.marketTrades / playerCount),
       liquidity: average(
@@ -1726,6 +1751,17 @@ function phase18CreateReport(context: DayContext): DailyReport {
   });
 }
 
+function createPostCommitEnrichmentRequests(context: DayContext): void {
+  const socialImpact =
+    context.communitySocialImpact ?? calculateCommunitySocialImpact(context);
+  context.communityPostIntents = createCommunityPostIntents({
+    world: context.state,
+    day: context.previousDay,
+    events: context.state.history.events.slice(context.historyEventStartIndex),
+    socialImpact,
+  });
+}
+
 export function simulateDay(
   state: WorldState,
   commands: readonly PublisherCommand[],
@@ -1752,6 +1788,9 @@ export function simulateDay(
     metaHealth: 0,
     ecosystemRisk: "STABLE",
     previousEcosystemRisk: state.metrics.ecosystemRisk,
+    communityPostIntents: [],
+    communitySocialImpact: null,
+    historyEventStartIndex: state.history.events.length,
   };
 
   context.commands.forEach((command, index) =>
@@ -1774,6 +1813,7 @@ export function simulateDay(
   phase15ApplyCashExpenses(context);
   phase16Increment(context);
   phase17EvaluateRiskGameOverMilestonesAndInvariants(context);
+  createPostCommitEnrichmentRequests(context);
   const report = phase18CreateReport(context);
   context.state.dailyReports ??= {};
   context.state.dailyReports[String(report.day)] = {
@@ -1785,6 +1825,9 @@ export function simulateDay(
     nextState: context.state,
     report,
     notableEvents: context.notableEvents.map((event) => ({ ...event })),
+    communityPostIntents: context.communityPostIntents.map((intent) =>
+      structuredClone(intent),
+    ),
     stateHash: hashWorldState(context.state),
   };
 }

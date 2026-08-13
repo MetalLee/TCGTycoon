@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from "react";
+import type { WorldAssistResponse } from "../../../../../packages/ai-contracts/src/index";
 import {
   parseCardDefinition,
   type CardDefinition,
@@ -9,15 +10,20 @@ import {
   type OfflineLaunchInput,
   type OfflineLaunchResult,
 } from "./setup-service";
+import { defaultAiClient, type AiClient } from "../../services/ai/ai-client";
 
 export type NewGameWizardProps = {
   onLaunch: (
     result: OfflineLaunchResult,
     input: OfflineLaunchInput,
   ) => void | Promise<void>;
+  aiClient?: Pick<AiClient, "assistWorld">;
 };
 
-export function NewGameWizard({ onLaunch }: NewGameWizardProps) {
+export function NewGameWizard({
+  onLaunch,
+  aiClient = defaultAiClient,
+}: NewGameWizardProps) {
   const fixture = useMemo(() => createLaunchSetFixture(), []);
   const [step, setStep] = useState<"BRAND" | "CARDS" | "PRODUCTION">("BRAND");
   const [gameName, setGameName] = useState("My Trading Card Game");
@@ -32,6 +38,48 @@ export function NewGameWizard({ onLaunch }: NewGameWizardProps) {
   const [starterPrintQuantity, setStarterPrintQuantity] = useState(250);
   const [error, setError] = useState<string | null>(null);
   const [launching, setLaunching] = useState(false);
+  const [worldSuggestion, setWorldSuggestion] =
+    useState<WorldAssistResponse | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  function parsedVisualKeywords(): string[] {
+    return visualKeywords
+      .split(",")
+      .map((keyword) => keyword.trim())
+      .filter((keyword) => keyword.length > 0);
+  }
+
+  async function suggestWorld(): Promise<void> {
+    setAiLoading(true);
+    setAiError(null);
+    setWorldSuggestion(null);
+    try {
+      setWorldSuggestion(
+        await aiClient.assistWorld({
+          gameName,
+          settingPrompt: setting,
+          visualKeywords: parsedVisualKeywords(),
+        }),
+      );
+    } catch (cause) {
+      setAiError(
+        `AI assistance unavailable: ${cause instanceof Error ? cause.message : String(cause)}`,
+      );
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  function acceptWorldSuggestion(): void {
+    if (worldSuggestion === null) return;
+    setSetting(worldSuggestion.settingSummary);
+    const suggestedKeywords = worldSuggestion.factions.flatMap(
+      (faction) => faction.visualKeywords,
+    );
+    setVisualKeywords([...new Set(suggestedKeywords)].join(", "));
+    setWorldSuggestion(null);
+  }
 
   function selectCard(index: number): void {
     setSelectedCardIndex(index);
@@ -123,6 +171,55 @@ export function NewGameWizard({ onLaunch }: NewGameWizardProps) {
               className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
             />
           </label>
+          <div className="space-y-3 rounded border border-sky-900 bg-sky-950/20 p-4">
+            <p className="text-sm text-slate-400">
+              AI faction concepts are optional. Review them before applying
+              their setting and visual direction.
+            </p>
+            <button
+              type="button"
+              disabled={aiLoading}
+              onClick={() => void suggestWorld()}
+              className="w-fit rounded border border-sky-700 px-4 py-2 text-sky-200 disabled:opacity-50"
+            >
+              {aiLoading
+                ? "Generating faction concepts..."
+                : "Suggest factions with AI"}
+            </button>
+            {worldSuggestion !== null && (
+              <article className="space-y-3 rounded border border-slate-700 bg-slate-950/60 p-3">
+                <h2 className="font-semibold text-sky-200">
+                  AI world suggestion
+                </h2>
+                <p>{worldSuggestion.settingSummary}</p>
+                <ul className="grid gap-2 sm:grid-cols-2">
+                  {worldSuggestion.factions.map((faction) => (
+                    <li
+                      key={faction.id}
+                      className="rounded border border-slate-800 p-2"
+                    >
+                      <p className="font-medium">{faction.name}</p>
+                      <p className="text-sm text-slate-400">
+                        {faction.concept}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  onClick={acceptWorldSuggestion}
+                  className="rounded bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950"
+                >
+                  Accept AI world suggestion
+                </button>
+              </article>
+            )}
+            {aiError !== null && (
+              <p role="alert" className="text-sm text-red-300">
+                {aiError}
+              </p>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setStep("CARDS")}

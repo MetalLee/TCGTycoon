@@ -4,7 +4,10 @@ import type {
   WorldEvent,
   WorldState,
 } from "../../../../packages/domain/src/index";
-import { getAvailableProductInventory } from "../../../../packages/sim-core/src/index";
+import {
+  communityPostIntentId,
+  getAvailableProductInventory,
+} from "../../../../packages/sim-core/src/index";
 
 export type CommunityPostCategory =
   "TRENDING" | "COMPETITIVE" | "COLLECTORS" | "OFFICIAL";
@@ -108,7 +111,7 @@ function intentFromEvent(
       ...(deckId ? [entityLink(world, "DECK", deckId)] : []),
     ];
     return {
-      id: event.id,
+      id: communityPostIntentId(world.worldSeed, event.id),
       day: event.day,
       category: "COMPETITIVE",
       templateText: `${name} concluded. The winning deck is now part of the public competitive record.`,
@@ -120,7 +123,7 @@ function intentFromEvent(
     const printingId = text(data.printingId);
     const price = typeof data.price === "number" ? data.price : undefined;
     return {
-      id: event.id,
+      id: communityPostIntentId(world.worldSeed, event.id),
       day: event.day,
       category: "COLLECTORS",
       templateText: `A card printing crossed ${price === undefined ? "a notable" : `$${price.toFixed(2)}`} market price milestone.`,
@@ -133,7 +136,7 @@ function intentFromEvent(
   if (event.type === "OFFICIAL_ANNOUNCEMENT") {
     const [, subjectId] = (event.context?.reason ?? "").split(":", 2);
     return {
-      id: event.id,
+      id: communityPostIntentId(world.worldSeed, event.id),
       day: event.day,
       category: "OFFICIAL",
       templateText:
@@ -149,7 +152,7 @@ function intentFromEvent(
     event.context?.productId !== undefined
   ) {
     return {
-      id: event.id,
+      id: communityPostIntentId(world.worldSeed, event.id),
       day: event.day,
       category: "TRENDING",
       templateText: `${world.products[event.context.productId]?.name ?? "A product"} is now live.`,

@@ -106,7 +106,7 @@ tests/ai/
 - Consumes: Card DSL schemas and relevant Domain IDs.
 - Produces: Zod request/response contracts for all five AI capabilities and finite FactPacket structures.
 
-- [ ] **Step 1: Write failing contract tests**
+- [x] **Step 1: Write failing contract tests**
 
 Tests must prove:
 
@@ -116,17 +116,17 @@ Tests must prove:
 - Community response is `{ topic, stance, sentiment, referencedEntityIds, text }` with sentiment `[-1,1]`.
 - Art request carries a stable `assetPurpose` and visual brief, not WorldState.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 pnpm vitest run packages/ai-contracts
 ```
 
-- [ ] **Step 3: Implement contracts by reusing Card DSL schemas**
+- [x] **Step 3: Implement contracts by reusing Card DSL schemas**
 
 Do not duplicate keyword/effect enums as unrelated strings. Import/reuse domain schemas/types so provider validation cannot drift from Rules Engine legality.
 
-- [ ] **Step 4: Implement finite Fact Packets**
+- [x] **Step 4: Implement finite Fact Packets**
 
 Example:
 
@@ -151,7 +151,7 @@ export const communityFactPacketSchema = z.object({
 
 No hidden WorldState blob is accepted.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run packages/ai-contracts
@@ -188,7 +188,7 @@ git commit -m "feat: define schema validated AI contracts"
 - Consumes: AI contracts.
 - Produces: `GenerativeProvider` abstraction, `MockGenerativeProvider`, HTTP endpoints `/v1/world/assist`, `/v1/cards/propose`, `/v1/sets/complete`, `/v1/community/render`, `/v1/art/generate`.
 
-- [ ] **Step 1: Define provider interface in a failing test**
+- [x] **Step 1: Define provider interface in a failing test**
 
 Expected shape:
 
@@ -204,15 +204,15 @@ export interface GenerativeProvider {
 }
 ```
 
-- [ ] **Step 2: Add Hono and API test dependencies, run failing route tests**
+- [x] **Step 2: Add Hono and API test dependencies, run failing route tests**
 
 Each route must return 400 for invalid input and legal deterministic JSON under `AI_MODE=mock`.
 
-- [ ] **Step 3: Implement deterministic Mock provider**
+- [x] **Step 3: Implement deterministic Mock provider**
 
 Mock output derives from stable request fields and uses fixture legal Card DSL; it must not call `Math.random()` or network APIs. Same request returns byte-equivalent JSON.
 
-- [ ] **Step 4: Implement route schema validation**
+- [x] **Step 4: Implement route schema validation**
 
 Pattern:
 
@@ -222,7 +222,7 @@ const output = await provider.proposeCard(input);
 return c.json(cardProposalResponseSchema.parse(output));
 ```
 
-- [ ] **Step 5: Add root scripts and verify**
+- [x] **Step 5: Add root scripts and verify**
 
 ```json
 {
@@ -238,7 +238,7 @@ AI_MODE=mock pnpm test:ai
 pnpm typecheck
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api packages/ai-contracts package.json pnpm-lock.yaml
@@ -256,6 +256,7 @@ git commit -m "feat: add mockable AI gateway"
 - Create: `apps/api/src/prompts/card.ts`
 - Create: `apps/api/src/prompts/set.ts`
 - Create: `apps/api/src/prompts/community.ts`
+- Modify: `apps/api/src/config.ts`
 - Modify: `apps/api/src/providers/provider-factory.ts`
 - Modify: `.env.example`
 - Test: `apps/api/src/providers/openai-provider.test.ts`
@@ -265,7 +266,7 @@ git commit -m "feat: add mockable AI gateway"
 - Consumes: `GenerativeProvider`, AI contracts.
 - Produces: `OpenAIGenerativeProvider` using server-side official OpenAI SDK; text operations use the Responses API and strict JSON-schema structured output, then Zod/domain validation.
 
-- [ ] **Step 1: Add server-only OpenAI SDK dependency**
+- [x] **Step 1: Add server-only OpenAI SDK dependency**
 
 ```bash
 pnpm --filter @tcgtycoon/api add openai
@@ -273,7 +274,7 @@ pnpm --filter @tcgtycoon/api add openai
 
 The dependency must not appear in `apps/game` or simulation packages.
 
-- [ ] **Step 2: Write provider tests against an injected fake OpenAI client**
+- [x] **Step 2: Write provider tests against an injected fake OpenAI client**
 
 Do not hit the real network. Assert provider sends:
 
@@ -284,7 +285,7 @@ Do not hit the real network. Assert provider sends:
 
 and rejects output that fails the shared Zod contract.
 
-- [ ] **Step 3: Implement injectable OpenAI client adapter**
+- [x] **Step 3: Implement injectable OpenAI client adapter**
 
 Use a constructor accepting `OpenAI`-compatible client and config. Text call shape should use the official Responses API pattern:
 
@@ -309,7 +310,7 @@ return responseSchema.parse(parsedJson);
 
 Keep explicit JSON Schema objects alongside each shared contract for provider strict-output requests; Zod remains the final runtime validator.
 
-- [ ] **Step 4: Configure models via environment**
+- [x] **Step 4: Configure models via environment**
 
 `.env.example`:
 
@@ -322,11 +323,11 @@ OPENAI_IMAGE_MODEL=gpt-image-1
 
 Do not expose these as `VITE_*` variables.
 
-- [ ] **Step 5: Implement bounded retry on schema/domain failure**
+- [x] **Step 5: Implement bounded retry on schema/domain failure**
 
 At most two provider attempts for invalid model output. Retry prompt includes the validation error summary but never relaxes the Card DSL schema. Provider/API errors return typed gateway failures rather than fallback simulation mutations.
 
-- [ ] **Step 6: Verify server/client isolation and commit**
+- [x] **Step 6: Verify server/client isolation and commit**
 
 ```bash
 AI_MODE=mock pnpm test:ai
@@ -343,6 +344,7 @@ git commit -m "feat: add structured OpenAI generation provider"
 **Files:**
 
 - Create: `packages/domain/src/assets.ts`
+- Modify: `packages/domain/src/index.ts`
 - Create: `packages/persistence/src/contracts/asset-repository.ts`
 - Modify: `packages/persistence/src/index.ts`
 - Modify: `apps/api/src/providers/openai-provider.ts`
@@ -355,7 +357,7 @@ git commit -m "feat: add structured OpenAI generation provider"
 - Consumes: Art AI contract and provider config.
 - Produces: `AssetId`, `AssetMetadata`, `AssetRepository`, artwork response bytes/base64 transfer contract without embedding binary data in WorldState.
 
-- [ ] **Step 1: Write AssetRepository contract test**
+- [x] **Step 1: Write AssetRepository contract test**
 
 Interface:
 
@@ -374,15 +376,15 @@ export interface AssetRepository {
 }
 ```
 
-- [ ] **Step 2: Write artwork-provider fake-client test**
+- [x] **Step 2: Write artwork-provider fake-client test**
 
 Assert `generateArtwork` returns one image asset payload and uses configured image model. The game domain receives only an AssetId after client persistence.
 
-- [ ] **Step 3: Implement OpenAI image-generation adapter**
+- [x] **Step 3: Implement OpenAI image-generation adapter**
 
 Use the current official image generation capability behind `OpenAIGenerativeProvider`; isolate API response parsing in this provider. Do not make image generation a prerequisite for Finalize/Release. A failed image call returns a typed error so the client can use faction placeholder art.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 ```bash
 pnpm vitest run apps/api/src/providers/openai-art.test.ts packages/persistence/src/contracts/asset-repository.test.ts
@@ -402,6 +404,8 @@ git commit -m "feat: isolate generated artwork assets"
 - Modify: `apps/game/src/features/new-game/NewGameWizard.tsx`
 - Modify: `apps/game/src/features/cards/CardStudio.tsx`
 - Modify: `apps/game/src/features/expansions/SetReview.tsx`
+- Modify: `apps/game/src/features/expansions/ExpansionDetail.tsx`
+- Modify: `apps/game/vite.config.ts`
 - Test: `apps/game/src/services/ai/ai-client.test.ts`
 - Test: `apps/game/src/features/cards/CardStudio.ai.test.tsx`
 
@@ -410,7 +414,7 @@ git commit -m "feat: isolate generated artwork assets"
 - Consumes: Gateway endpoints/contracts and existing PublisherCommand flow.
 - Produces: optional world/faction suggestions, card proposals and set-completion proposals that require player acceptance before queuing canonical edits.
 
-- [ ] **Step 1: Write failing Card Studio AI acceptance test**
+- [x] **Step 1: Write failing Card Studio AI acceptance test**
 
 Flow:
 
@@ -420,19 +424,19 @@ Flow:
 4. World snapshot remains unchanged.
 5. Only clicking Accept queues `UPDATE_CARD_DRAFT`.
 
-- [ ] **Step 2: Implement typed `AiClient`**
+- [x] **Step 2: Implement typed `AiClient`**
 
 Every response passes shared contract parse in the browser even though the server already validated it. Network timeout/error returns UI status, never a simulation command.
 
-- [ ] **Step 3: Integrate New Game/Set Review**
+- [x] **Step 3: Integrate New Game/Set Review**
 
 AI can propose four faction concepts and complete set slots, but offline manual/Mock flow remains available.
 
-- [ ] **Step 4: Verify AI-offline fallback**
+- [x] **Step 4: Verify AI-offline fallback**
 
 Run component tests with AiClient rejecting all requests; structured editing and Launch remain usable.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 pnpm --filter @tcgtycoon/game test -- CardStudio.ai ai-client
@@ -449,8 +453,15 @@ git commit -m "feat: add optional AI design assistance"
 
 - Create: `packages/sim-core/src/society/community-intents.ts`
 - Modify: `packages/sim-core/src/day/simulate-day.ts`
+- Modify: `packages/sim-core/src/index.ts`
+- Modify: `apps/game/src/services/ai/ai-client.ts`
+- Modify: `apps/game/src/services/ai/ai-client.test.ts`
 - Modify: `apps/game/src/services/ai/ai-enrichment-queue.ts`
+- Modify: `apps/game/src/app/game-session/GameSessionController.ts`
+- Modify: `apps/game/src/app/game-session/GameSessionController.test.ts`
 - Modify: `apps/game/src/features/community/CommunityFeed.tsx`
+- Modify: `apps/game/src/selectors/community.ts`
+- Modify: `apps/game/src/features/cards/CardStudio.ai.test.tsx`
 - Test: `tests/determinism/community-ai-isolation.test.ts`
 - Test: `apps/game/src/services/ai/ai-enrichment-queue.test.ts`
 
@@ -459,15 +470,15 @@ git commit -m "feat: add optional AI design assistance"
 - Consumes: deterministic `CommunityPostIntent`, FactPacket builder, AI renderer.
 - Produces: stable post intent IDs, template fallback text and optional enriched prose stored as presentation/history enrichment without changing deterministic state hash inputs.
 
-- [ ] **Step 1: Write isolation test**
+- [x] **Step 1: Write isolation test**
 
 Run identical `simulateDay()` twice. Feed one run two completely different valid rendered text strings for the same intent. Assert the canonical deterministic next-state hash, metrics, prices, players and Meta remain identical.
 
-- [ ] **Step 2: Implement deterministic intent generation before commit**
+- [x] **Step 2: Implement deterministic intent generation before commit**
 
 Intent contains author/topic/stance/sentiment/facts/influence and precomputed numerical social impact. `simulateDay` output includes enrichment requests but does not await them.
 
-- [ ] **Step 3: Implement template fallback**
+- [x] **Step 3: Implement template fallback**
 
 Example deterministic fallback:
 
@@ -477,11 +488,11 @@ Mika expressed concern about Grave Loop's current Meta presence.
 
 This remains visible if gateway fails.
 
-- [ ] **Step 4: Implement enrichment queue**
+- [x] **Step 4: Implement enrichment queue**
 
 After successful save/day commit, queue `/v1/community/render` requests and attach prose to presentation history/cache by stable intent ID. Do not dispatch a second simulation action.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run tests/determinism/community-ai-isolation.test.ts apps/game/src/services/ai/ai-enrichment-queue.test.ts
@@ -510,11 +521,11 @@ git commit -m "feat: enrich community narrative after simulation"
 - Consumes: `apps/game` dev server/build output.
 - Produces: Tauri desktop wrapper with no duplicate React application.
 
-- [ ] **Step 1: Write config parity test**
+- [x] **Step 1: Write config parity test**
 
 Parse `tauri.conf.json` and assert desktop `beforeDevCommand`/`beforeBuildCommand` use the shared game app and configured frontend URL/dist path; there is no separate desktop React source tree.
 
-- [ ] **Step 2: Initialize Tauri v2 configuration**
+- [x] **Step 2: Initialize Tauri v2 configuration**
 
 Desktop package scripts should conceptually provide:
 
@@ -534,11 +545,11 @@ Root:
 }
 ```
 
-- [ ] **Step 3: Run desktop dev/build configuration verification**
+- [x] **Step 3: Run desktop dev/build configuration verification**
 
 At minimum run Tauri config check/build prerequisite command available in the installed toolchain plus root typecheck.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/desktop package.json pnpm-lock.yaml tests/parity/desktop-config.test.ts
@@ -553,9 +564,27 @@ git commit -m "feat: wrap shared game in Tauri desktop shell"
 
 - Create: `packages/persistence/src/sqlite/sqlite-save-repository.ts`
 - Create: `packages/persistence/src/sqlite/sqlite-asset-repository.ts`
+- Create: `packages/persistence/src/sqlite/sqlite-database.ts`
+- Modify: `packages/persistence/src/contracts/save-repository.ts`
+- Modify: `packages/persistence/src/memory/memory-save-repository.ts`
+- Modify: `packages/persistence/src/indexeddb/dexie-db.ts`
+- Create: `packages/persistence/src/indexeddb/dexie-asset-repository.ts`
 - Modify: `packages/persistence/src/index.ts`
 - Modify: `apps/game/src/platform/save-repository.ts`
 - Create: `apps/game/src/platform/asset-repository.ts`
+- Create: `apps/game/src/platform/sqlite-database.ts`
+- Modify: `apps/game/src/app/GameApp.tsx`
+- Modify: `apps/game/src/app/router.tsx`
+- Modify: `apps/game/src/app/game-session/GameSessionController.test.ts`
+- Modify: `apps/game/src/components/layout/AppShell.tsx`
+- Modify: `apps/game/src/pages/NewGamePage.tsx`
+- Modify: `apps/game/package.json`
+- Create: `apps/desktop/src-tauri/build.rs`
+- Modify: `apps/desktop/src-tauri/Cargo.toml`
+- Modify: `apps/desktop/src-tauri/src/lib.rs`
+- Create: `apps/desktop/src-tauri/capabilities/default.json`
+- Modify: root `package.json`
+- Modify: `pnpm-lock.yaml`
 - Test: `tests/parity/save-repository-contract.test.ts`
 - Test: `tests/parity/web-desktop-save-roundtrip.test.ts`
 
@@ -564,28 +593,28 @@ git commit -m "feat: wrap shared game in Tauri desktop shell"
 - Consumes: shared SaveRepository/AssetRepository contracts.
 - Produces: SQLite-backed desktop implementations and runtime platform adapter selection.
 
-- [ ] **Step 1: Define one repository contract test suite used by Memory, Dexie and SQLite adapters**
+- [x] **Step 1: Define one repository contract test suite used by Memory, Dexie and SQLite adapters**
 
 Test list/save/load/delete and autosave/current+previous semantics through the same behavior function.
 
-- [ ] **Step 2: Implement SQLite schema/migrations**
+- [x] **Step 2: Implement SQLite schema/migrations**
 
 Store save metadata separately from canonical save payload. Assets are stored separately from WorldState. Use database transactions for save replacement and previous-autosave rotation.
 
-- [ ] **Step 3: Implement platform selection without leaking Tauri into game domain**
+- [x] **Step 3: Implement platform selection without leaking Tauri into game domain**
 
 `apps/game/src/platform/*` chooses browser vs Tauri adapter. Feature components consume repositories through application context/services.
 
-- [ ] **Step 4: Add Web/Desktop round-trip fixture test**
+- [x] **Step 4: Add Web/Desktop round-trip fixture test**
 
 Serialize canonical SaveEnvelope through Dexie-compatible/canonical representation and SQLite representation and assert `migrateSave/load` produces deep-equal canonical state.
 
-- [ ] **Step 5: Verify/commit**
+- [x] **Step 5: Verify/commit**
 
 ```bash
 pnpm vitest run tests/parity
 pnpm typecheck
-git add packages/persistence apps/game/src/platform tests/parity
+git add packages/persistence apps/game/package.json apps/game/src/app apps/game/src/components/layout/AppShell.tsx apps/game/src/pages/NewGamePage.tsx apps/game/src/platform apps/desktop/src-tauri package.json pnpm-lock.yaml tests/parity
 git commit -m "feat: persist desktop saves and artwork in SQLite"
 ```
 
@@ -604,11 +633,11 @@ git commit -m "feat: persist desktop saves and artwork in SQLite"
 - Consumes: canonical fixture save and simulation core.
 - Produces: stable parity regression hash used by Web/Desktop builds.
 
-- [ ] **Step 1: Generate a committed canonical fixture from code**
+- [x] **Step 1: Generate a committed canonical fixture from code**
 
 Fixture includes real Cards, Products, Players, Collections, Meta and pending operations but no AI-rendered binary/text cache required for simulation.
 
-- [ ] **Step 2: Run the same command set through browser-compatible and Node/desktop-compatible execution paths**
+- [x] **Step 2: Run the same command set through browser-compatible and Node/desktop-compatible execution paths**
 
 Assert identical:
 
@@ -617,11 +646,11 @@ Assert identical:
 - important match hashes,
 - Cash/metrics/market quantities.
 
-- [ ] **Step 3: Verify no wall-clock dependence**
+- [x] **Step 3: Verify no wall-clock dependence**
 
 Run parity tests with different mocked system times/timezones; outputs must remain identical.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 pnpm vitest run tests/parity/simulation-parity.test.ts
@@ -649,7 +678,7 @@ git commit -m "test: lock web desktop simulation parity"
 - Consumes: Phase 2/3 headless simulator, migrations and Publisher Bot.
 - Produces: `pnpm test:long-run` and multi-seed balance smoke runner.
 
-- [ ] **Step 1: Add test scripts**
+- [x] **Step 1: Add test scripts**
 
 ```json
 {
@@ -659,19 +688,19 @@ git commit -m "test: lock web desktop simulation parity"
 }
 ```
 
-- [ ] **Step 2: Implement 1000/3000-day invariant tests**
+- [x] **Step 2: Implement 1000/3000-day invariant tests**
 
 Tests assert finite values, valid references, no negative supply, valid day progression and no stuck simulation. Do not assert one exact player count; assert configured sane bounds/trends for prepared scenarios.
 
-- [ ] **Step 3: Implement 100-seed smoke runner**
+- [x] **Step 3: Implement 100-seed smoke runner**
 
 Summarize distributions for lifespan, max Active Players, ending Cash, number of expansions/bans, top deck dominance and invalid/crashed seeds. Exit nonzero if any invariant/crash occurs.
 
-- [ ] **Step 4: Add migration fixture regression**
+- [x] **Step 4: Add migration fixture regression**
 
 Keep at least one committed old-schema SaveEnvelope fixture once schema v2 exists; until then round-trip the current fixture and assert the migration API is invoked.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 pnpm test:long-run

@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Link } from "react-router";
 import { OpinionBlock } from "../../components/semantics/OpinionBlock";
 import type {
   CommunityPostCategory,
   CommunityPostIntent,
 } from "../../selectors/community";
+import {
+  communityPresentationHistory,
+  type CommunityPresentationHistory,
+} from "../../services/ai/ai-enrichment-queue";
 
-export type CommunityFeedProps = { posts: readonly CommunityPostIntent[] };
+export type CommunityFeedProps = {
+  posts: readonly CommunityPostIntent[];
+  presentationHistory?: CommunityPresentationHistory;
+};
 const categories = [
   "ALL",
   "TRENDING",
@@ -15,8 +22,16 @@ const categories = [
   "OFFICIAL",
 ] as const;
 
-export function CommunityFeed({ posts }: CommunityFeedProps) {
+export function CommunityFeed({
+  posts,
+  presentationHistory = communityPresentationHistory,
+}: CommunityFeedProps) {
   const [category, setCategory] = useState<(typeof categories)[number]>("ALL");
+  useSyncExternalStore(
+    presentationHistory.subscribe,
+    presentationHistory.getSnapshot,
+    presentationHistory.getSnapshot,
+  );
   const visible =
     category === "ALL"
       ? posts
@@ -43,7 +58,11 @@ export function CommunityFeed({ posts }: CommunityFeedProps) {
       ) : (
         <ol className="space-y-4">
           {visible.map((post) => (
-            <CommunityPost key={post.id} post={post} />
+            <CommunityPost
+              key={post.id}
+              post={post}
+              text={presentationHistory.get(post.id)?.text ?? post.templateText}
+            />
           ))}
         </ol>
       )}
@@ -51,7 +70,13 @@ export function CommunityFeed({ posts }: CommunityFeedProps) {
   );
 }
 
-function CommunityPost({ post }: { post: CommunityPostIntent }) {
+function CommunityPost({
+  post,
+  text,
+}: {
+  post: CommunityPostIntent;
+  text: string;
+}) {
   return (
     <li className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
       <div className="flex justify-between text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -59,7 +84,7 @@ function CommunityPost({ post }: { post: CommunityPostIntent }) {
         <span>Day {post.day}</span>
       </div>
       <OpinionBlock title="Community opinion" source={post.category}>
-        <p>{post.templateText}</p>
+        <p>{text}</p>
       </OpinionBlock>
       {post.links.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-3 text-sm">

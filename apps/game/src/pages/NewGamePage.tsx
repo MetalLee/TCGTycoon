@@ -11,12 +11,12 @@ import type {
   OfflineLaunchResult,
 } from "../features/new-game/setup-service";
 import { SaveSlotList } from "../features/saves/SaveSlotList";
-import { webSaveRepository } from "../platform/save-repository";
 import type { GameSessionOutlet } from "../components/layout/AppShell";
 
 export function NewGamePage() {
   const navigate = useNavigate();
   const session = useOutletContext<GameSessionOutlet>();
+  const repository = session.saveRepository;
   const [refreshToken, setRefreshToken] = useState(0);
   const [createdSlot, setCreatedSlot] = useState<string | null>(null);
 
@@ -24,6 +24,8 @@ export function NewGamePage() {
     result: OfflineLaunchResult,
     input: OfflineLaunchInput,
   ): Promise<void> {
+    if (repository === undefined)
+      throw new Error("Save repository unavailable");
     const timestamp = new Date().toISOString();
     const slotId = saveId(`save-${input.seed}`);
     const state = {
@@ -52,7 +54,7 @@ export function NewGamePage() {
       updatedAt: timestamp,
       state,
     };
-    await webSaveRepository.save(envelope);
+    await repository.save(envelope);
     await session.loadSave?.(slotId);
     setCreatedSlot(slotId);
     setRefreshToken((current) => current + 1);
@@ -83,14 +85,16 @@ export function NewGamePage() {
         </p>
       )}
       <NewGameWizard onLaunch={saveLaunch} />
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">Save slots</h2>
-        <SaveSlotList
-          repository={webSaveRepository}
-          refreshToken={refreshToken}
-          onLoad={loadSlot}
-        />
-      </section>
+      {repository !== undefined && (
+        <section className="space-y-3">
+          <h2 className="text-xl font-semibold">Save slots</h2>
+          <SaveSlotList
+            repository={repository}
+            refreshToken={refreshToken}
+            onLoad={loadSlot}
+          />
+        </section>
+      )}
     </section>
   );
 }
